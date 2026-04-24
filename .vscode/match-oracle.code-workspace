@@ -1,0 +1,24 @@
+{
+  "folders": [
+    { "name": "📱 Mobile App",    "path": "./mobile" },
+    { "name": "🐍 Backend API",   "path": "./backend" },
+    { "name": "📚 Dokumentation", "path": "./docs" },
+    { "name": "🗄️ Datenbank",    "path": "./database" },
+    { "name": "🐳 Docker",        "path": "./docker" }
+  ],
+  "settings": {
+    "workbench.colorTheme": "Default Dark Modern",
+    "editor.fontSize": 14
+  },
+  "extensions": {
+    "recommendations": [
+      "ms-python.python",
+      "ms-python.black-formatter",
+      "bradlc.vscode-tailwindcss",
+      "esbenp.prettier-vscode",
+      "ms-azuretools.vscode-docker",
+      "yzhang.markdown-all-in-one",
+      "shd101wyy.markdown-preview-enhanced"
+    ]
+  }
+}

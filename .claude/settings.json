@@ -1,0 +1,107 @@
+{
+  "version": "1.0",
+  "project_name": "Bundesliga Match Analyzer",
+  "description": "KI-gestützte Fußball-Prognose-App für Bundesliga 1+2, Premier League, DFB-Pokal",
+  "python": {
+    "version": "3.11",
+    "venv_path": "backend/venv",
+    "lint": {
+      "enabled": true,
+      "tool": "flake8",
+      "config": "--max-line-length=88 --ignore=E203,W503"
+    },
+    "formatter": {
+      "enabled": true,
+      "tool": "black",
+      "config": "--line-length=88"
+    }
+  },
+  "typescript": {
+    "version": "5.0",
+    "node_version": "20 LTS",
+    "formatter": {
+      "enabled": true,
+      "tool": "prettier",
+      "config": "--print-width 100 --use-tabs false"
+    },
+    "linter": {
+      "enabled": true,
+      "tool": "eslint",
+      "config": "extends airbnb-typescript"
+    }
+  },
+  "commands": {
+    "enabled": true,
+    "paths": [".claude/commands"]
+  },
+  "skills": {
+    "enabled": true,
+    "paths": [".claude/skills"],
+    "auto_activate": true
+  },
+  "agents": {
+    "enabled": true,
+    "config_path": ".claude/agents"
+  },
+  "mcp": {
+    "enabled": true,
+    "config_path": ".claude/.mcp.json"
+  },
+  "testing": {
+    "backend": {
+      "framework": "pytest",
+      "command": "pytest backend/tests/ -v --cov=backend --cov-report=html",
+      "min_coverage": 80
+    },
+    "mobile": {
+      "framework": "jest",
+      "command": "npm test -- --coverage",
+      "min_coverage": 70
+    }
+  },
+  "git": {
+    "enabled": true,
+    "pre_commit": {
+      "enabled": true,
+      "checks": ["secrets", "format", "lint"]
+    },
+    "branch_naming": {
+      "pattern": "^(feature|fix|refactor|test|docs|chore)/[a-z0-9-]+$",
+      "example": "feature/weekend-calculator"
+    },
+    "commit_lint": {
+      "enabled": true,
+      "scopes": ["auth", "weekend", "predictions", "mobile", "database", "ml"]
+    }
+  },
+  "deployment": {
+    "staging": {
+      "platform": "railway",
+      "env_file": ".env.staging"
+    },
+    "production": {
+      "platform": "railway",
+      "env_file": ".env.production"
+    }
+  },
+  "performance": {
+    "targets": {
+      "weekend_calculate_response": "< 500ms",
+      "api_response_avg": "< 200ms",
+      "mobile_app_load_cold": "< 2s",
+      "weekend_calc_total": "< 10s"
+    }
+  },
+  "documentation": {
+    "paths": ["docs/"],
+    "auto_generate": {
+      "api": true,
+      "db_schema": true
+    }
+  },
+  "notifications": {
+    "on_error": true,
+    "on_test_failure": true,
+    "slack_webhook": "${SLACK_WEBHOOK_URL}"
+  }
+}

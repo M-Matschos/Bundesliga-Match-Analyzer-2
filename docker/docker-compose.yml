@@ -1,0 +1,69 @@
+version: '3.9'
+
+services:
+  api:
+    build:
+      context: ../backend
+      dockerfile: ../docker/Dockerfile.api
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://oracle:oracle@db:5432/match_oracle
+      - REDIS_URL=redis://redis:6379/0
+    env_file:
+      - ../.env
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    volumes:
+      - ../backend:/app
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+
+  db:
+    image: timescale/timescaledb:latest-pg16
+    environment:
+      POSTGRES_USER: oracle
+      POSTGRES_PASSWORD: oracle
+      POSTGRES_DB: match_oracle
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ../database/schema.sql:/docker-entrypoint-initdb.d/01_schema.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U oracle -d match_oracle"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+
+  celery:
+    build:
+      context: ../backend
+      dockerfile: ../docker/Dockerfile.api
+    command: celery -A app.core.celery worker --loglevel=info
+    env_file:
+      - ../.env
+    depends_on:
+      - db
+      - redis
+
+  celery-beat:
+    build:
+      context: ../backend
+      dockerfile: ../docker/Dockerfile.api
+    command: celery -A app.core.celery beat --loglevel=info
+    env_file:
+      - ../.env
+    depends_on:
+      - db
+      - redis
+
+volumes:
+  postgres_data:

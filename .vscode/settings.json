@@ -1,0 +1,21 @@
+{
+  "editor.formatOnSave": true,
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "[python]": {
+    "editor.defaultFormatter": "ms-python.black-formatter"
+  },
+  "python.linting.enabled": true,
+  "python.linting.pylintEnabled": false,
+  "python.linting.flake8Enabled": true,
+  "files.exclude": {
+    "**/__pycache__": true,
+    "**/.pytest_cache": true,
+    "**/node_modules": true,
+    "**/.expo": true
+  },
+  "editor.rulers": [88],
+  "workbench.colorCustomizations": {
+    "titleBar.activeBackground": "#1A3A5C",
+    "titleBar.activeForeground": "#FFFFFF"
+  }
+}

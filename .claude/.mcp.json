@@ -1,0 +1,148 @@
+{
+  "version": "1.0",
+  "mcpServers": {
+    "github": {
+      "enabled": false,
+      "description": "GitHub API access (PR, Issues, Repos)",
+      "notes": "Enable if using GitHub for repo management"
+    },
+    "postgresql": {
+      "enabled": true,
+      "description": "Direct PostgreSQL database queries",
+      "connection": {
+        "host": "localhost",
+        "port": 5432,
+        "database": "matchoracle",
+        "user": "${DB_USER}",
+        "password": "${DB_PASSWORD}"
+      },
+      "notes": "Development only. Production uses Railway managed DB."
+    },
+    "redis": {
+      "enabled": true,
+      "description": "Redis cache operations",
+      "connection": {
+        "host": "localhost",
+        "port": 6379,
+        "password": "${REDIS_PASSWORD}"
+      },
+      "notes": "Cache read/write for predictions and sessions"
+    },
+    "slack": {
+      "enabled": false,
+      "description": "Slack notifications and messages",
+      "webhook_url": "${SLACK_WEBHOOK_URL}",
+      "notes": "Enable for error notifications in Slack channels"
+    },
+    "supabase": {
+      "enabled": false,
+      "description": "Supabase (PostgreSQL + Auth + Storage)",
+      "notes": "Alternative to Railway if considering serverless"
+    }
+  },
+  "externalApis": {
+    "api_football": {
+      "enabled": true,
+      "endpoint": "https://v3.football.api-sports.io",
+      "api_key": "${API_FOOTBALL_KEY}",
+      "rate_limit": {
+        "tier": "free",
+        "requests_per_day": 100,
+        "note": "Free tier sufficient for development. Upgrade to Pro (7500/day) for production."
+      },
+      "cache_ttl": {
+        "fixtures": 21600,
+        "statistics": 3600,
+        "comment": "6h for fixtures, 1h for stats"
+      }
+    },
+    "football_data_org": {
+      "enabled": true,
+      "endpoint": "https://www.football-data.org/api",
+      "api_key": "${FOOTBALL_DATA_KEY}",
+      "rate_limit": {
+        "requests_per_minute": 10,
+        "comment": "Backup data source"
+      },
+      "cache_ttl": 1800
+    },
+    "odds_api": {
+      "enabled": true,
+      "endpoint": "https://api.the-odds-api.com/v4",
+      "api_key": "${ODDS_API_KEY}",
+      "rate_limit": {
+        "tier": "free",
+        "requests_per_month": 500,
+        "comment": "For value bet detection against bookmaker odds"
+      },
+      "cache_ttl": 1800
+    },
+    "openweather": {
+      "enabled": true,
+      "endpoint": "https://api.openweathermap.org/data/3.0",
+      "api_key": "${OPENWEATHER_KEY}",
+      "rate_limit": {
+        "requests_per_day": 1000,
+        "comment": "Weather data for stadium conditions"
+      },
+      "cache_ttl": 10800
+    },
+    "tipico": {
+      "enabled": true,
+      "type": "affiliate",
+      "affiliate_id": "${TIPICO_AFFILIATE_ID}",
+      "comment": "Deeplinks for native betting integration, no API access"
+    }
+  },
+  "webhooks": {
+    "github_ci": {
+      "enabled": false,
+      "endpoint": "https://api.matchoracle.app/webhooks/github",
+      "events": ["push", "pull_request", "workflow_run"]
+    },
+    "sentry_errors": {
+      "enabled": false,
+      "endpoint": "https://api.matchoracle.app/webhooks/sentry",
+      "description": "Error notifications from Sentry"
+    }
+  },
+  "development_tools": {
+    "docker_compose": {
+      "enabled": true,
+      "file": "docker/docker-compose.yml",
+      "services": ["postgres", "redis", "adminer"],
+      "startup_command": "docker-compose up -d"
+    },
+    "swagger_ui": {
+      "enabled": true,
+      "url": "http://localhost:8000/docs",
+      "description": "FastAPI Swagger UI for API testing"
+    },
+    "redis_commander": {
+      "enabled": false,
+      "url": "http://localhost:8081",
+      "notes": "Optional Redis UI for debugging cache"
+    }
+  },
+  "environment_variables": {
+    "development": {
+      "file": ".env",
+      "required": [
+        "DATABASE_URL",
+        "REDIS_URL",
+        "API_FOOTBALL_KEY",
+        "OPENWEATHER_KEY",
+        "JWT_SECRET"
+      ]
+    },
+    "staging": {
+      "file": ".env.staging",
+      "notes": "Railway environment variables"
+    },
+    "production": {
+      "file": ".env.production",
+      "sensitive": true,
+      "notes": "Only admins have access"
+    }
+  }
+}

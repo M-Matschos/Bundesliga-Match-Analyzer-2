@@ -1,0 +1,204 @@
+{
+  "version": "1.0",
+  "description": "Event hooks for automated workflows and validations",
+  "hooks": {
+    "PreToolUse": [
+      {
+        "name": "block_secrets_in_code",
+        "trigger": "tool_name == 'Write' || tool_name == 'Edit'",
+        "condition": "file contains: [API_KEY, SECRET, PASSWORD, TOKEN] && file path matches: [*.py, *.ts, *.json] && file NOT .env*",
+        "action": "block_and_warn",
+        "message": "🚨 Detected potential secret in code. Move to .env instead."
+      },
+      {
+        "name": "validate_python_syntax",
+        "trigger": "tool_name == 'Write' && file_type == '.py'",
+        "action": "run_command",
+        "command": "python -m py_compile {file_path}",
+        "fail_message": "Python syntax error. Fix before proceeding."
+      },
+      {
+        "name": "validate_typescript",
+        "trigger": "tool_name == 'Write' && file_type == '.ts'",
+        "action": "run_command",
+        "command": "npx tsc --noEmit {file_path}",
+        "fail_message": "TypeScript compilation error."
+      }
+    ],
+    "PostToolUse": [
+      {
+        "name": "auto_format_python",
+        "trigger": "tool_name == 'Write' && file_type == '.py'",
+        "condition": "file_size < 1000 lines",
+        "action": "run_command",
+        "command": "black {file_path} --line-length=88",
+        "message": "✅ Auto-formatted with Black"
+      },
+      {
+        "name": "auto_format_typescript",
+        "trigger": "tool_name == 'Write' && file_type == '.ts'",
+        "action": "run_command",
+        "command": "prettier --write {file_path}",
+        "message": "✅ Auto-formatted with Prettier"
+      },
+      {
+        "name": "run_linter_on_backend_files",
+        "trigger": "tool_name == 'Edit' && file_path contains 'backend/'",
+        "condition": "changed lines < 50",
+        "action": "run_command",
+        "command": "flake8 {file_path} --max-line-length=88 --ignore=E203,W503",
+        "fail_message": "⚠️  Linting issues found. Review output.",
+        "continue_on_error": true
+      },
+      {
+        "name": "update_test_coverage",
+        "trigger": "tool_name == 'Edit' && file_path matches 'backend/app/**/*.py'",
+        "condition": "NOT matches 'tests/' && NOT matches '__init__.py'",
+        "action": "run_command",
+        "command": "pytest backend/tests/ -q --tb=no",
+        "message": "🧪 Running tests on affected module..."
+      }
+    ],
+    "SessionStart": [
+      {
+        "name": "load_project_context",
+        "action": "load_file",
+        "file": "CLAUDE.md",
+        "message": "📖 Loaded project context (Tech Stack, Conventions, Testing)"
+      },
+      {
+        "name": "verify_environment",
+        "action": "run_command",
+        "command": "bash -c 'python --version && node --version && docker --version && psql --version'",
+        "message": "✅ Environment verified"
+      },
+      {
+        "name": "remind_git_workflow",
+        "action": "notify",
+        "message": "🔀 Git Workflow: Branch → PR → Review → Main. Use semantic commits."
+      }
+    ],
+    "SessionEnd": [
+      {
+        "name": "commit_summary",
+        "action": "notify",
+        "message": "📋 Session Summary: Check git status for uncommitted changes"
+      },
+      {
+        "name": "save_session_notes",
+        "action": "run_command",
+        "command": "git log --oneline -5",
+        "message": "📝 Recent commits"
+      }
+    ],
+    "PreCommit": [
+      {
+        "name": "detect_secrets",
+        "action": "run_command",
+        "command": "bash -c 'git diff --cached | grep -iE \"password|secret|api.{0,5}key|token|credentials\" && echo \"SECRETS FOUND\" || echo \"OK\"'",
+        "fail_message": "🚨 CRITICAL: Secrets detected in staged files!",
+        "block": true
+      },
+      {
+        "name": "validate_commit_message",
+        "action": "run_command",
+        "command": "bash -c '[[ \"$1\" =~ ^(feat|fix|refactor|test|docs|chore)\\( ]] && echo \"OK\" || echo \"INVALID\"'",
+        "fail_message": "❌ Commit message format invalid. Use: feat(scope): message",
+        "block": false
+      },
+      {
+        "name": "run_linters",
+        "action": "run_command",
+        "command": "bash -c 'black --check backend/ && prettier --check mobile/src'",
+        "message": "✅ Linting passed"
+      },
+      {
+        "name": "ensure_tests_pass",
+        "action": "run_command",
+        "command": "pytest backend/tests/unit/ -q --tb=short",
+        "fail_message": "❌ Tests failed. Fix before committing.",
+        "block": false
+      }
+    ],
+    "NotificationWebhook": [
+      {
+        "name": "notify_on_critical_security",
+        "trigger": "message contains 'CRITICAL' && message contains 'security'",
+        "action": "post_to_webhook",
+        "webhook": "${SLACK_WEBHOOK_URL}",
+        "payload": {
+          "text": "🚨 CRITICAL SECURITY ISSUE: {message}",
+          "attachments": [{"color": "danger"}]
+        }
+      },
+      {
+        "name": "notify_on_test_failure",
+        "trigger": "message contains 'test' && message contains 'failed'",
+        "action": "post_to_webhook",
+        "webhook": "${SLACK_WEBHOOK_URL}",
+        "payload": {
+          "text": "❌ Test Suite Failed: {message}",
+          "attachments": [{"color": "warning"}]
+        }
+      }
+    ]
+  },
+  "automation_rules": {
+    "description": "Rules for automated actions based on conditions",
+    "rules": [
+      {
+        "name": "auto_add_type_hints",
+        "when": "python_function created without type hints",
+        "then": "suggest type hints based on function usage"
+      },
+      {
+        "name": "auto_test_generation",
+        "when": "new public function/component added",
+        "then": "generate test template with basic cases"
+      },
+      {
+        "name": "auto_documentation",
+        "when": "new API endpoint added",
+        "then": "generate Swagger doc template"
+      },
+      {
+        "name": "auto_version_bump",
+        "when": "commit to main branch",
+        "then": "suggest semantic version bump (major.minor.patch)"
+      }
+    ]
+  },
+  "developer_reminders": {
+    "before_testing": [
+      "Ensure database is running: docker-compose up -d postgres redis",
+      "Load latest seed data: python scripts/seed_database.py --leagues bundesliga",
+      "Set .env variables: export $(cat .env | xargs)"
+    ],
+    "before_commit": [
+      "Run /test-all to ensure all tests pass",
+      "Run /review to check code quality",
+      "Run /security-check --fast for security scan",
+      "Check /git status for untracked files"
+    ],
+    "before_push": [
+      "Ensure branch is up-to-date with main",
+      "Verify commit message follows convention",
+      "Double-check: no .env, no secrets, no large binaries"
+    ],
+    "before_deploy": [
+      "All tests pass",
+      "No CRITICAL security issues",
+      "Version bumped in package.json + requirements.txt",
+      "CHANGELOG.md updated",
+      "PR reviewed and approved"
+    ]
+  },
+  "configuration": {
+    "auto_format_on_save": true,
+    "auto_lint_on_save": true,
+    "auto_test_on_edit": true,
+    "pre_commit_checks_enabled": true,
+    "slack_notifications_enabled": false,
+    "verbose_logging": false
+  }
+}

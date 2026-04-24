@@ -1,0 +1,92 @@
+/**
+ * Summary Bar — Aggregate Statistics
+ */
+
+import React from 'react'
+import { View, Text, StyleSheet } from 'react-native'
+import { COLORS, SPACING, RADIUS } from '../theme/colors'
+
+interface SummaryBarProps {
+  totalMatches: number
+  highConfidence: number
+  valueBets: number
+  avgConfidence?: number
+}
+
+export default function SummaryBar({
+  totalMatches,
+  highConfidence,
+  valueBets,
+  avgConfidence,
+}: SummaryBarProps) {
+  return (
+    <View style={styles.container}>
+      <View style={styles.stat}>
+        <Text style={styles.label}>Gesamt</Text>
+        <Text style={styles.value}>{totalMatches}</Text>
+      </View>
+
+      <View style={styles.divider} />
+
+      <View style={styles.stat}>
+        <Text style={styles.label}>Hohes Vertrauen</Text>
+        <Text style={[styles.value, { color: COLORS.greenLight }]}>
+          {highConfidence}
+        </Text>
+      </View>
+
+      <View style={styles.divider} />
+
+      <View style={styles.stat}>
+        <Text style={styles.label}>Value Bets</Text>
+        <Text style={[styles.value, { color: COLORS.valueBet }]}>
+          {valueBets}
+        </Text>
+      </View>
+
+      {avgConfidence !== undefined && (
+        <>
+          <View style={styles.divider} />
+          <View style={styles.stat}>
+            <Text style={styles.label}>Ø Konfidenz</Text>
+            <Text style={styles.value}>{Math.round(avgConfidence * 100)}%</Text>
+          </View>
+        </>
+      )}
+    </View>
+  )
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flexDirection: 'row',
+    backgroundColor: COLORS.surface,
+    borderRadius: RADIUS.lg,
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.md,
+    marginHorizontal: SPACING.lg,
+    marginVertical: SPACING.md,
+    alignItems: 'center',
+  },
+  stat: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  label: {
+    fontSize: 11,
+    color: COLORS.textMuted,
+    marginBottom: 4,
+    fontWeight: '500',
+  },
+  value: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: COLORS.blueLight,
+  },
+  divider: {
+    width: 1,
+    height: 40,
+    backgroundColor: COLORS.border,
+    marginHorizontal: SPACING.sm,
+  },
+})
