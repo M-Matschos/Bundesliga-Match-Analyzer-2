@@ -1,12 +1,17 @@
-// Jest setup file
-// Note: jest-native causes issues with react-native ES6 imports
-// Using standard Jest matchers instead
+// Jest setup file for Bundesliga Match Analyzer
+// Configures mocks for React Native, Expo, Firebase, and other dependencies
 
-// Define React Native globals
+// ============================================================================
+// GLOBALS & INITIALIZATION
+// ============================================================================
+
 global.__DEV__ = true
 global.fetch = jest.fn()
 
-// Mock Expo modules
+// ============================================================================
+// EXPO & NOTIFICATION MOCKS
+// ============================================================================
+
 const mockNotificationHandlers = {}
 jest.mock('expo-notifications', () => ({
   PermissionStatus: {
@@ -25,7 +30,7 @@ jest.mock('expo-notifications', () => ({
   getNotificationChannelAsync: jest.fn(),
   getPermissionsAsync: jest.fn(),
 }))
-// Expose handlers for tests
+
 global.mockNotificationHandlers = mockNotificationHandlers
 
 jest.mock('expo-device', () => ({
@@ -34,14 +39,37 @@ jest.mock('expo-device', () => ({
   osBuildId: '12.0',
 }))
 
+jest.mock('expo-constants', () => ({
+  expoConfig: {
+    extra: {
+      BACKEND_URL: 'http://localhost:8000',
+    },
+  },
+  default: {
+    expoConfig: {
+      extra: {
+        BACKEND_URL: 'http://localhost:8000',
+      },
+    },
+  },
+}), { virtual: true })
+
+jest.mock('expo-linear-gradient', () => ({
+  LinearGradient: 'LinearGradient',
+}), { virtual: true })
+
+// ============================================================================
+// FIREBASE MOCKS
+// ============================================================================
+
 jest.mock('@react-native-firebase/messaging', () => {
   const mockMessaging = jest.fn(() => ({
-    getToken: jest.fn(),
-    onMessage: jest.fn(),
-    onNotificationOpenedApp: jest.fn(),
-    requestPermission: jest.fn(),
-    hasPermission: jest.fn(),
-    isDeviceRegisteredForRemoteMessages: jest.fn(),
+    getToken: jest.fn().mockResolvedValue('test_token_123'),
+    onMessage: jest.fn(() => jest.fn()),
+    onNotificationOpenedApp: jest.fn(() => jest.fn()),
+    requestPermission: jest.fn().mockResolvedValue(1),
+    hasPermission: jest.fn().mockResolvedValue(1),
+    isDeviceRegisteredForRemoteMessages: jest.fn().mockResolvedValue(true),
     setAutoInitEnabled: jest.fn(),
   }))
   mockMessaging.AuthorizationStatus = {
@@ -53,17 +81,28 @@ jest.mock('@react-native-firebase/messaging', () => {
   return mockMessaging
 })
 
-// Mock AsyncStorage
-jest.mock('@react-native-async-storage/async-storage', () => ({
-  default: {
-    getItem: jest.fn(),
-    setItem: jest.fn(),
-    removeItem: jest.fn(),
-    clear: jest.fn(),
-  },
-}))
+// ============================================================================
+// ASYNC STORAGE MOCKS
+// ============================================================================
 
-// Mock axios
+const mockAsyncStorage = {
+  getItem: jest.fn(async (key) => null),
+  setItem: jest.fn(async (key, value) => undefined),
+  removeItem: jest.fn(async (key) => undefined),
+  clear: jest.fn(async () => undefined),
+  multiGet: jest.fn(async (keys) => keys.map(key => [key, null])),
+  multiSet: jest.fn(async (items) => undefined),
+  getAllKeys: jest.fn(async () => []),
+  flushGetRequests: jest.fn(async () => undefined),
+}
+
+jest.mock('@react-native-async-storage/async-storage', () => mockAsyncStorage)
+global.mockAsyncStorage = mockAsyncStorage
+
+// ============================================================================
+// NETWORK MOCKS
+// ============================================================================
+
 jest.mock('axios', () => {
   const mockGet = jest.fn()
   const mockPost = jest.fn()
@@ -84,101 +123,188 @@ jest.mock('axios', () => {
   }
 })
 
-// Mock React Native's Dimensions API
-jest.mock('react-native', () => {
-  return {
-    Dimensions: {
-      get: jest.fn((dim) => ({
-        width: 375,
-        height: 812,
-        scale: 1,
-        fontScale: 1,
-      })),
-      addEventListener: jest.fn(() => ({ remove: jest.fn() })),
-      removeEventListener: jest.fn(),
-    },
-    View: 'View',
-    Text: 'Text',
-    ScrollView: 'ScrollView',
-    TouchableOpacity: 'TouchableOpacity',
-    Animated: {
-      View: 'AnimatedView',
-      timing: jest.fn(() => ({ start: jest.fn() })),
-      Value: jest.fn(),
-    },
-    StyleSheet: {
-      create: (obj) => obj,
-    },
-    Platform: {
-      OS: 'ios',
-      select: jest.fn((obj) => obj.ios),
-    },
-    useColorScheme: jest.fn(() => 'light'),
-  }
-})
+// ============================================================================
+// REACT NATIVE MOCKS
+// ============================================================================
 
-// Mock @testing-library/react-native before it tries to import react-native
-jest.mock('@testing-library/react-native', () => {
-  const React = require('react')
-  const renderResult = {
-    getByText: jest.fn(() => ({})),
-    getByTestId: jest.fn(() => ({})),
-    queryByTestId: jest.fn(() => null),
-    queryByText: jest.fn(() => null),
-    getAllByText: jest.fn(() => []),
-    getAllByTestId: jest.fn(() => []),
-    UNSAFE_getAllByType: jest.fn(() => []),
-    rerender: jest.fn(),
-  }
+const mockColorScheme = 'light'
 
-  return {
-    render: jest.fn(() => renderResult),
-    screen: {
-      getByText: jest.fn(() => ({})),
-      getByTestId: jest.fn(() => ({})),
-      getByPlaceholderText: jest.fn(() => ({})),
-      queryByTestId: jest.fn(() => null),
-      queryByText: jest.fn(() => null),
-      queryByPlaceholderText: jest.fn(() => null),
-      getAllByText: jest.fn(() => []),
-      getAllByTestId: jest.fn(() => []),
-      getAllByPlaceholderText: jest.fn(() => []),
+jest.mock('react-native', () => ({
+  Dimensions: {
+    get: jest.fn((dim) => ({
+      width: 375,
+      height: 812,
+      scale: 1,
+      fontScale: 1,
+    })),
+    addEventListener: jest.fn(() => ({ remove: jest.fn() })),
+    removeEventListener: jest.fn(),
+  },
+  View: 'View',
+  Text: 'Text',
+  ScrollView: 'ScrollView',
+  FlatList: 'FlatList',
+  SectionList: 'SectionList',
+  TouchableOpacity: 'TouchableOpacity',
+  TouchableHighlight: 'TouchableHighlight',
+  TouchableWithoutFeedback: 'TouchableWithoutFeedback',
+  ActivityIndicator: 'ActivityIndicator',
+  RefreshControl: 'RefreshControl',
+  Image: 'Image',
+  ImageBackground: 'ImageBackground',
+  Switch: 'Switch',
+  TextInput: 'TextInput',
+  Keyboard: {
+    addListener: jest.fn(() => ({ remove: jest.fn() })),
+    dismiss: jest.fn(),
+  },
+  KeyboardAvoidingView: 'KeyboardAvoidingView',
+  Modal: 'Modal',
+  StatusBar: {
+    setBarStyle: jest.fn(),
+    setBackgroundColor: jest.fn(),
+    setTranslucent: jest.fn(),
+  },
+  SafeAreaView: 'SafeAreaView',
+  Platform: {
+    OS: 'ios',
+    select: jest.fn((obj) => obj.ios),
+    Version: 14,
+  },
+  useColorScheme: jest.fn(() => mockColorScheme),
+  useWindowDimensions: jest.fn(() => ({
+    width: 375,
+    height: 812,
+    scale: 1,
+    fontScale: 1,
+  })),
+  AppState: {
+    currentState: 'active',
+    addEventListener: jest.fn(() => ({ remove: jest.fn() })),
+  },
+  UIManager: {
+    setLayoutAnimationEnabledExperimental: jest.fn(),
+  },
+  Animated: {
+    View: 'AnimatedView',
+    ScrollView: 'AnimatedScrollView',
+    timing: jest.fn((value, config) => ({
+      start: jest.fn(),
+    })),
+    Value: jest.fn(() => ({
+      setValue: jest.fn(),
+      addListener: jest.fn(),
+      removeListener: jest.fn(),
+    })),
+    createValue: jest.fn(() => ({
+      setValue: jest.fn(),
+      addListener: jest.fn(),
+    })),
+  },
+  StyleSheet: {
+    create: (obj) => obj,
+  },
+  LayoutAnimation: {
+    configureNext: jest.fn(),
+    Presets: {
+      easeInEaseOut: {},
+      linear: {},
+      spring: {},
     },
-    renderHook: jest.fn((callback) => {
-      let result = { current: undefined }
-      try {
-        result.current = callback()
-      } catch (error) {
-        result.current = callback()
-      }
-      return {
-        result,
-        rerender: jest.fn(),
-      }
-    }),
-    act: jest.fn((callback) => {
-      const result = callback()
-      if (result instanceof Promise) {
-        return result
-      }
-      return Promise.resolve(result)
-    }),
-    waitFor: jest.fn((callback) => {
-      try {
-        const result = callback()
-        if (result instanceof Promise) {
-          return result
-        }
-        return Promise.resolve()
-      } catch (error) {
-        return Promise.reject(error)
-      }
-    }),
-    fireEvent: { press: jest.fn(), changeText: jest.fn() },
-  }
-})
+  },
+}))
 
-// Mock react-test-renderer to avoid runtime issues
+global.mockColorScheme = mockColorScheme
+
+// ============================================================================
+// REACT NAVIGATION MOCKS
+// ============================================================================
+
+const mockNavigation = {
+  navigate: jest.fn(),
+  goBack: jest.fn(),
+  push: jest.fn(),
+  pop: jest.fn(),
+  popToTop: jest.fn(),
+  setParams: jest.fn(),
+  replace: jest.fn(),
+  reset: jest.fn(),
+  dispatch: jest.fn(),
+  canGoBack: jest.fn(() => true),
+  isFocused: jest.fn(() => true),
+  addListener: jest.fn(() => jest.fn()),
+}
+
+jest.mock('@react-navigation/native', () => ({
+  NavigationContainer: 'NavigationContainer',
+  useNavigation: jest.fn(() => mockNavigation),
+  useRoute: jest.fn(() => ({
+    params: {},
+    key: 'test-route',
+    name: 'test-screen',
+  })),
+  useFocusEffect: jest.fn((callback) => {
+    if (typeof callback === 'function') {
+      callback()
+    }
+  }),
+  useIsFocused: jest.fn(() => true),
+  CommonActions: {
+    navigate: jest.fn((name) => ({ type: 'NAVIGATE', payload: { name } })),
+    goBack: jest.fn(() => ({ type: 'GO_BACK' })),
+    reset: jest.fn((payload) => ({ type: 'RESET', payload })),
+  },
+}))
+
+global.mockNavigation = mockNavigation
+
+jest.mock('@react-navigation/native-stack', () => ({
+  createNativeStackNavigator: jest.fn(() => ({
+    Navigator: 'StackNavigator',
+    Screen: 'StackScreen',
+  })),
+}))
+
+jest.mock('@react-navigation/bottom-tabs', () => ({
+  createBottomTabNavigator: jest.fn(() => ({
+    Navigator: 'TabNavigator',
+    Screen: 'TabScreen',
+  })),
+}))
+
+// ============================================================================
+// GESTURE & UI MOCKS
+// ============================================================================
+
+jest.mock('react-native-gesture-handler', () => ({
+  GestureHandlerRootView: ({ children }) => children,
+  Swipeable: 'Swipeable',
+  PanGestureHandler: 'PanGestureHandler',
+  LongPressGestureHandler: 'LongPressGestureHandler',
+  TapGestureHandler: 'TapGestureHandler',
+}), { virtual: true })
+
+jest.mock('@react-native-community/blur', () => ({
+  BlurView: 'BlurView',
+}), { virtual: true })
+
+jest.mock('react-native-screens', () => ({
+  enableScreens: jest.fn(),
+  Screen: 'Screen',
+  ScreenStack: 'ScreenStack',
+}), { virtual: true })
+
+jest.mock('@react-native-toast-community/toast', () => ({
+  useToast: jest.fn(() => ({
+    show: jest.fn(),
+    hideAll: jest.fn(),
+  })),
+}), { virtual: true })
+
+// ============================================================================
+// TESTING LIBRARY SETUP
+// ============================================================================
+
 jest.mock('react-test-renderer', () => ({
   create: jest.fn(() => ({
     root: { instance: null },
@@ -187,82 +313,19 @@ jest.mock('react-test-renderer', () => ({
   act: jest.fn((callback) => callback()),
 }), { virtual: true })
 
-// Mock @react-navigation/native-stack
-jest.mock('@react-navigation/native-stack', () => ({
-  createNativeStackNavigator: jest.fn(() => ({
-    Navigator: 'StackNavigator',
-    Screen: 'StackScreen',
-  })),
-}))
+// ============================================================================
+// CONSOLE & WARNINGS
+// ============================================================================
 
-// Mock @react-navigation/native
-jest.mock('@react-navigation/native', () => ({
-  NavigationContainer: 'NavigationContainer',
-  useNavigation: jest.fn(() => ({
-    navigate: jest.fn(),
-    goBack: jest.fn(),
-    push: jest.fn(),
-  })),
-  useRoute: jest.fn(() => ({
-    params: {},
-  })),
-}))
-
-// Mock react-native-screens
-jest.mock('react-native-screens', () => ({
-  enableScreens: jest.fn(),
-  Screen: 'Screen',
-  ScreenStack: 'ScreenStack',
-}), { virtual: true })
-
-// Mock @react-native-community/blur
-jest.mock('@react-native-community/blur', () => ({
-  BlurView: 'BlurView',
-}), { virtual: true })
-
-// Mock react-native-gesture-handler
-jest.mock('react-native-gesture-handler', () => ({
-  GestureHandlerRootView: ({ children }) => children,
-  Swipeable: 'Swipeable',
-  PanGestureHandler: 'PanGestureHandler',
-}), { virtual: true })
-
-// Mock expo-linear-gradient
-jest.mock('expo-linear-gradient', () => ({
-  LinearGradient: 'LinearGradient',
-}), { virtual: true })
-
-// Mock expo-constants
-jest.mock('expo-constants', () => ({
-  expoConfig: {
-    extra: {
-      BACKEND_URL: 'http://localhost:8000',
-    },
-  },
-  default: {
-    expoConfig: {
-      extra: {
-        BACKEND_URL: 'http://localhost:8000',
-      },
-    },
-  },
-}), { virtual: true })
-
-// Mock @react-native-toast-community/toast
-jest.mock('@react-native-toast-community/toast', () => ({
-  useToast: jest.fn(() => ({
-    show: jest.fn(),
-    hideAll: jest.fn(),
-  })),
-}), { virtual: true })
-
-// Suppress console errors in tests (optional)
 const originalError = console.error
 beforeAll(() => {
   console.error = (...args) => {
     if (
       typeof args[0] === 'string' &&
-      args[0].includes('Warning: ReactDOM.render')
+      (args[0].includes('Warning: ReactDOM.render') ||
+        args[0].includes('Non-serializable values') ||
+        args[0].includes('Animated') ||
+        args[0].includes('useNativeDriver'))
     ) {
       return
     }
@@ -272,4 +335,95 @@ beforeAll(() => {
 
 afterAll(() => {
   console.error = originalError
+})
+
+// ============================================================================
+// MOCK FACTORIES FOR TESTS
+// ============================================================================
+
+/**
+ * Factory to create mock user objects
+ */
+global.createMockUser = (overrides = {}) => ({
+  id: 'test-user-123',
+  email: 'test@example.com',
+  name: 'Test User',
+  avatar: 'https://example.com/avatar.jpg',
+  verified: true,
+  ...overrides,
+})
+
+/**
+ * Factory to create mock match objects
+ */
+global.createMockMatch = (overrides = {}) => ({
+  id: 'match-123',
+  homeTeam: { id: 'team-1', name: 'Bayern Munich', logo: 'https://example.com/team1.png' },
+  awayTeam: { id: 'team-2', name: 'Borussia Dortmund', logo: 'https://example.com/team2.png' },
+  homeScore: 2,
+  awayScore: 1,
+  status: 'finished',
+  date: new Date().toISOString(),
+  prediction: { confidence: 0.85, outcome: 'home_win' },
+  odds: { home: 1.5, draw: 3.5, away: 5.0 },
+  ...overrides,
+})
+
+/**
+ * Factory to create mock notification objects
+ */
+global.createMockNotification = (overrides = {}) => ({
+  id: 'notif-123',
+  title: 'Test Notification',
+  body: 'This is a test notification',
+  type: 'info',
+  read: false,
+  timestamp: new Date().toISOString(),
+  data: {},
+  ...overrides,
+})
+
+/**
+ * Factory to create mock theme objects
+ */
+global.createMockTheme = (overrides = {}) => ({
+  mode: 'light',
+  colors: {
+    background: '#FFFFFF',
+    text: '#000000',
+    primary: '#2196F3',
+    secondary: '#FF9800',
+    ...overrides,
+  },
+})
+
+/**
+ * Clear AsyncStorage mocks between tests
+ */
+global.clearAsyncStorageMocks = () => {
+  mockAsyncStorage.getItem.mockClear()
+  mockAsyncStorage.setItem.mockClear()
+  mockAsyncStorage.removeItem.mockClear()
+  mockAsyncStorage.clear.mockClear()
+  mockAsyncStorage.multiGet.mockClear()
+  mockAsyncStorage.multiSet.mockClear()
+}
+
+/**
+ * Clear navigation mocks between tests
+ */
+global.clearNavigationMocks = () => {
+  mockNavigation.navigate.mockClear()
+  mockNavigation.goBack.mockClear()
+  mockNavigation.push.mockClear()
+  mockNavigation.dispatch.mockClear()
+}
+
+/**
+ * Setup after each test
+ */
+afterEach(() => {
+  jest.clearAllMocks()
+  clearAsyncStorageMocks()
+  clearNavigationMocks()
 })
