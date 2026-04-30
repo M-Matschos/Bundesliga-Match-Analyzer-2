@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react'
+import React, { useEffect, useRef, useMemo } from 'react'
 import {
   View,
   Text,
@@ -6,8 +6,8 @@ import {
   TouchableOpacity,
   StyleSheet,
 } from 'react-native'
-import { colors } from '../theme/colors'
-import { typography } from '../theme/typography'
+import { getColors } from '../theme/colors'
+import { useThemeColors } from '../hooks/useTheme'
 
 interface ToastProps {
   message: string
@@ -16,7 +16,9 @@ interface ToastProps {
 }
 
 export default function Toast({ message, type, onDismiss }: ToastProps) {
+  const colors = useThemeColors()
   const translateY = useRef(new Animated.Value(200)).current
+  const styles = useMemo(() => createStyles(colors), [colors])
 
   useEffect(() => {
     // Slide in animation
@@ -41,7 +43,7 @@ export default function Toast({ message, type, onDismiss }: ToastProps) {
   const getToastStyle = () => {
     switch (type) {
       case 'success':
-        return { backgroundColor: colors.green, borderLeftColor: colors.greenLight }
+        return { backgroundColor: colors.greenLight, borderLeftColor: colors.green }
       case 'error':
         return { backgroundColor: colors.red, borderLeftColor: colors.orange }
       case 'info':
@@ -86,7 +88,7 @@ export default function Toast({ message, type, onDismiss }: ToastProps) {
           <Text style={styles.icon}>{getIcon()}</Text>
           <Text
             style={[
-              typography.bodySM,
+              styles.message,
               {
                 color: colors.text,
                 flex: 1,
@@ -113,7 +115,7 @@ export default function Toast({ message, type, onDismiss }: ToastProps) {
   )
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ReturnType<typeof getColors>) => StyleSheet.create({
   container: {
     marginBottom: 12,
     width: '100%',
@@ -132,8 +134,12 @@ const styles = StyleSheet.create({
   icon: {
     fontSize: 18,
     fontWeight: '600',
-    color: colors.text,
+    color: '#FFF',
     minWidth: 24,
     textAlign: 'center',
+  },
+  message: {
+    fontSize: 14,
+    fontWeight: '500',
   },
 })

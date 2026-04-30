@@ -1,11 +1,11 @@
-import React, { useEffect, useRef } from 'react'
+import React, { useEffect, useRef, useMemo } from 'react'
 import {
   View,
   Animated,
   StyleSheet,
-  AccessibilityInfo,
 } from 'react-native'
 import { getColors } from '../theme/colors'
+import { useThemeColors } from '../hooks/useTheme'
 
 type SpinnerSize = 'sm' | 'md' | 'lg'
 
@@ -17,9 +17,10 @@ interface SpinnerProps {
 
 export default function Spinner({
   size = 'md',
-  color = colors.blue,
+  color,
   testID = 'spinner',
 }: SpinnerProps) {
+  const colors = useThemeColors()
   const spinValue = useRef(new Animated.Value(0)).current
 
   useEffect(() => {
@@ -48,6 +49,8 @@ export default function Spinner({
   })
 
   const sizeConfig = getSizeConfig(size)
+  const styles = useMemo(() => createStyles(colors), [colors])
+  const spinnerColor = color || colors.primary
 
   return (
     <View
@@ -64,7 +67,7 @@ export default function Spinner({
             width: sizeConfig.size,
             height: sizeConfig.size,
             borderWidth: sizeConfig.borderWidth,
-            borderColor: color,
+            borderColor: spinnerColor,
             borderTopColor: 'transparent',
             borderRadius: sizeConfig.size / 2,
             transform: [{ rotate: spin }],
@@ -93,7 +96,7 @@ function getSizeConfig(size: SpinnerSize): SizeConfig {
   }
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ReturnType<typeof getColors>) => StyleSheet.create({
   container: {
     justifyContent: 'center',
     alignItems: 'center',

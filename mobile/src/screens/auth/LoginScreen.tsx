@@ -1,4 +1,4 @@
-﻿import React, { useState } from 'react'
+﻿import React, { useState, useMemo } from 'react'
 import {
   View,
   Text,
@@ -119,6 +119,103 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
    */
   const isFormValid = email && password && !emailError && !passwordError
 
+  /**
+   * Create dynamic styles based on current theme
+   */
+  const styles = useMemo(
+    () =>
+      StyleSheet.create({
+        container: {
+          flex: 1,
+          backgroundColor: colors.background,
+        },
+        scrollContent: {
+          flexGrow: 1,
+          paddingHorizontal: SPACING.lg,
+          paddingVertical: SPACING.xl,
+          justifyContent: 'center',
+        },
+        headerSection: {
+          marginBottom: SPACING.xl,
+          marginTop: SPACING.lg,
+        },
+        title: {
+          fontSize: 32,
+          fontWeight: '700',
+          color: colors.text,
+          marginBottom: SPACING.xs,
+          fontFamily: FONTS.heading,
+        },
+        subtitle: {
+          fontSize: 16,
+          color: colors.textSecond,
+          fontFamily: FONTS.body,
+          lineHeight: 24,
+        },
+        formSection: {
+          marginBottom: SPACING.xl,
+        },
+        forgotPasswordButton: {
+          alignSelf: 'flex-end',
+          marginTop: SPACING.sm,
+          paddingVertical: SPACING.xs,
+          paddingHorizontal: SPACING.sm,
+        },
+        forgotPasswordText: {
+          fontSize: 14,
+          color: colors.blue,
+          fontFamily: FONTS.label,
+          fontWeight: '500',
+        },
+        loginButton: {
+          backgroundColor: colors.blue,
+          borderRadius: 12,
+          paddingVertical: SPACING.md,
+          paddingHorizontal: SPACING.lg,
+          alignItems: 'center',
+          justifyContent: 'center',
+          minHeight: 48,
+          marginBottom: SPACING.lg,
+          elevation: 4,
+          shadowColor: colors.blue,
+          shadowOffset: { width: 0, height: 2 },
+          shadowOpacity: 0.25,
+          shadowRadius: 4,
+        },
+        loginButtonDisabled: {
+          backgroundColor: colors.border,
+          opacity: 0.6,
+          elevation: 0,
+          shadowOpacity: 0,
+        },
+        loginButtonText: {
+          fontSize: 16,
+          fontWeight: '600',
+          color: colors.text,
+          fontFamily: FONTS.label,
+        },
+        registerSection: {
+          flexDirection: 'row',
+          justifyContent: 'center',
+          alignItems: 'center',
+          marginTop: SPACING.md,
+        },
+        registerText: {
+          fontSize: 14,
+          color: colors.textSecond,
+          fontFamily: FONTS.body,
+        },
+        registerLink: {
+          fontSize: 14,
+          color: colors.blue,
+          fontWeight: '600',
+          fontFamily: FONTS.label,
+          marginLeft: SPACING.xs,
+        },
+      }),
+    [colors]
+  )
+
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -193,7 +290,7 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
           accessibilityState={{ disabled: !isFormValid || loading }}
         >
           {loading ? (
-            <ActivityIndicator color={colors.white} size="small" />
+            <ActivityIndicator color={colors.text} size="small" />
           ) : (
             <Text style={styles.loginButtonText}>Anmelden</Text>
           )}
@@ -216,93 +313,3 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
     </KeyboardAvoidingView>
   )
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
-  scrollContent: {
-    flexGrow: 1,
-    paddingHorizontal: SPACING.lg,
-    paddingVertical: SPACING.xl,
-    justifyContent: 'center',
-  },
-  headerSection: {
-    marginBottom: SPACING.xl,
-    marginTop: SPACING.lg,
-  },
-  title: {
-    fontSize: 32,
-    fontWeight: '700',
-    color: colors.text,
-    marginBottom: SPACING.xs,
-    fontFamily: FONTS.heading,
-  },
-  subtitle: {
-    fontSize: 16,
-    color: colors.textSecond,
-    fontFamily: FONTS.body,
-    lineHeight: 24,
-  },
-  formSection: {
-    marginBottom: SPACING.xl,
-  },
-  forgotPasswordButton: {
-    alignSelf: 'flex-end',
-    marginTop: SPACING.sm,
-    paddingVertical: SPACING.xs,
-    paddingHorizontal: SPACING.sm,
-  },
-  forgotPasswordText: {
-    fontSize: 14,
-    color: colors.blue,
-    fontFamily: FONTS.label,
-    fontWeight: '500',
-  },
-  loginButton: {
-    backgroundColor: colors.blue,
-    borderRadius: 12,
-    paddingVertical: SPACING.md,
-    paddingHorizontal: SPACING.lg,
-    alignItems: 'center',
-    justifyContent: 'center',
-    minHeight: 48,
-    marginBottom: SPACING.lg,
-    elevation: 4,
-    shadowColor: colors.blue,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-  },
-  loginButtonDisabled: {
-    backgroundColor: colors.border,
-    opacity: 0.6,
-    elevation: 0,
-    shadowOpacity: 0,
-  },
-  loginButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: colors.white,
-    fontFamily: FONTS.label,
-  },
-  registerSection: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginTop: SPACING.md,
-  },
-  registerText: {
-    fontSize: 14,
-    color: colors.textSecond,
-    fontFamily: FONTS.body,
-  },
-  registerLink: {
-    fontSize: 14,
-    color: colors.blue,
-    fontWeight: '600',
-    marginLeft: SPACING.xs,
-    fontFamily: FONTS.label,
-  },
-})

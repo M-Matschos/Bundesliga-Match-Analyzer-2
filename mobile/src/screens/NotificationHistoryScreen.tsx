@@ -27,6 +27,8 @@ export default function NotificationHistoryScreen() {
     clearNotifications,
     markAsRead,
   } = useNotification()
+  const { mode } = useTheme()
+  const colors = getColors(mode)
   const [refreshing, setRefreshing] = React.useState(false)
 
   const handleRefresh = React.useCallback(async () => {
@@ -61,38 +63,76 @@ export default function NotificationHistoryScreen() {
 
   const renderNotificationItem = ({ item }: { item: any }) => (
     <TouchableOpacity
-      style={[
-        styles.notificationItem,
-        !item.read && styles.notificationItemUnread,
-      ]}
+      style={{
+        flexDirection: 'row',
+        paddingHorizontal: SPACING.lg,
+        paddingVertical: SPACING.medium,
+        backgroundColor: !item.read ? colors.blue + '08' : colors.surface,
+        justifyContent: 'space-between',
+        alignItems: 'center',
+      }}
       onPress={() => handleNotificationPress(item.id)}
       activeOpacity={0.7}
     >
-      <View style={styles.notificationContent}>
+      <View style={{ flex: 1, marginRight: SPACING.medium }}>
         <Text
-          style={[styles.notificationTitle, !item.read && styles.textBold]}
+          style={{
+            fontSize: 14,
+            color: colors.text,
+            marginBottom: 4,
+            fontWeight: !item.read ? '600' : '500',
+          }}
           numberOfLines={2}
         >
           {item.title}
         </Text>
         <Text
-          style={[styles.notificationBody, !item.read && styles.textBold]}
+          style={{
+            fontSize: 13,
+            color: colors.textSecond,
+            marginBottom: 6,
+            fontWeight: !item.read ? '600' : '400',
+          }}
           numberOfLines={2}
         >
           {item.body}
         </Text>
-        <Text style={styles.notificationTime}>
+        <Text style={{ fontSize: 12, color: colors.textMuted }}>
           {formatTime(item.receivedAt)}
         </Text>
       </View>
-      {!item.read && <View style={styles.unreadIndicator} />}
+      {!item.read && (
+        <View
+          style={{
+            width: 8,
+            height: 8,
+            borderRadius: 4,
+            backgroundColor: colors.blue,
+          }}
+        />
+      )}
     </TouchableOpacity>
   )
 
   const renderEmptyState = () => (
-    <View style={styles.emptyContainer}>
-      <Text style={styles.emptyTitle}>Keine Benachrichtigungen</Text>
-      <Text style={styles.emptyDescription}>
+    <View style={{ alignItems: 'center', paddingHorizontal: SPACING.lg }}>
+      <Text
+        style={{
+          fontSize: 16,
+          fontWeight: '600',
+          color: colors.text,
+          marginBottom: SPACING.sm,
+        }}
+      >
+        Keine Benachrichtigungen
+      </Text>
+      <Text
+        style={{
+          fontSize: 14,
+          color: colors.textSecond,
+          textAlign: 'center',
+        }}
+      >
         Hier erscheinen alle deine Bundesliga-Benachrichtigungen
       </Text>
     </View>
@@ -100,39 +140,105 @@ export default function NotificationHistoryScreen() {
 
   if (initializationError) {
     return (
-      <View style={styles.errorContainer}>
-        <Text style={styles.errorTitle}>Fehler beim Laden</Text>
-        <Text style={styles.errorDescription}>{initializationError}</Text>
+      <View
+        style={{
+          flex: 1,
+          justifyContent: 'center',
+          alignItems: 'center',
+          backgroundColor: colors.background,
+          paddingHorizontal: SPACING.lg,
+        }}
+      >
+        <Text
+          style={{
+            fontSize: 16,
+            fontWeight: '600',
+            color: colors.red,
+            marginBottom: SPACING.sm,
+          }}
+        >
+          Fehler beim Laden
+        </Text>
+        <Text
+          style={{
+            fontSize: 14,
+            color: colors.textSecond,
+            textAlign: 'center',
+          }}
+        >
+          {initializationError}
+        </Text>
       </View>
     )
   }
 
   if (!isInitialized) {
     return (
-      <View style={styles.loadingContainer}>
-        <Text style={styles.loadingText}>Initialisiere Benachrichtigungen...</Text>
+      <View
+        style={{
+          flex: 1,
+          justifyContent: 'center',
+          alignItems: 'center',
+          backgroundColor: colors.background,
+        }}
+      >
+        <Text style={{ fontSize: 14, color: colors.textSecond }}>
+          Initialisiere Benachrichtigungen...
+        </Text>
       </View>
     )
   }
 
   return (
-    <View style={styles.container}>
+    <View style={{ flex: 1, backgroundColor: colors.background }}>
       {/* Header */}
-      <View style={styles.header}>
+      <View
+        style={{
+          flexDirection: 'row',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          paddingHorizontal: SPACING.lg,
+          paddingVertical: SPACING.lg,
+          backgroundColor: colors.surface,
+          borderBottomWidth: 1,
+          borderBottomColor: colors.border,
+        }}
+      >
         <View>
-          <Text style={styles.headerTitle}>Benachrichtigungen</Text>
+          <Text
+            style={{
+              fontSize: 18,
+              fontWeight: '700',
+              color: colors.text,
+            }}
+          >
+            Benachrichtigungen
+          </Text>
           {unreadCount > 0 && (
-            <Text style={styles.headerSubtitle}>
+            <Text style={{ fontSize: 12, color: colors.textSecond, marginTop: 4 }}>
               {unreadCount} ungelesen
             </Text>
           )}
         </View>
         {notifications.length > 0 && (
           <TouchableOpacity
-            style={styles.clearButton}
+            style={{
+              paddingHorizontal: SPACING.medium,
+              paddingVertical: SPACING.sm,
+              borderRadius: 6,
+              backgroundColor: colors.red + '20',
+            }}
             onPress={handleClear}
           >
-            <Text style={styles.clearButtonText}>Löschen</Text>
+            <Text
+              style={{
+                fontSize: 14,
+                fontWeight: '600',
+                color: colors.red,
+              }}
+            >
+              Löschen
+            </Text>
           </TouchableOpacity>
         )}
       </View>
@@ -144,7 +250,12 @@ export default function NotificationHistoryScreen() {
         keyExtractor={(item) => item.id}
         scrollEnabled={true}
         contentContainerStyle={
-          notifications.length === 0 ? styles.emptyListContainer : undefined
+          notifications.length === 0
+            ? {
+                flexGrow: 1,
+                justifyContent: 'center',
+              }
+            : undefined
         }
         ListEmptyComponent={renderEmptyState}
         refreshControl={
@@ -155,137 +266,16 @@ export default function NotificationHistoryScreen() {
             colors={[colors.blue]}
           />
         }
-        ItemSeparatorComponent={() => <View style={styles.separator} />}
+        ItemSeparatorComponent={() => (
+          <View
+            style={{
+              height: 1,
+              backgroundColor: colors.border,
+              marginHorizontal: SPACING.lg,
+            }}
+          />
+        )}
       />
     </View>
   )
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: SPACING.large,
-    paddingVertical: SPACING.large,
-    backgroundColor: colors.surface,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-  },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: colors.text,
-  },
-  headerSubtitle: {
-    fontSize: 12,
-    color: colors.textSecondary,
-    marginTop: 4,
-  },
-  clearButton: {
-    paddingHorizontal: SPACING.medium,
-    paddingVertical: SPACING.small,
-    borderRadius: 6,
-    backgroundColor: colors.error + '20',
-  },
-  clearButtonText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: colors.error,
-  },
-  notificationItem: {
-    flexDirection: 'row',
-    paddingHorizontal: SPACING.large,
-    paddingVertical: SPACING.medium,
-    backgroundColor: colors.surface,
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  notificationItemUnread: {
-    backgroundColor: colors.blue + '08',
-  },
-  notificationContent: {
-    flex: 1,
-    marginRight: SPACING.medium,
-  },
-  notificationTitle: {
-    fontSize: 14,
-    color: colors.text,
-    marginBottom: 4,
-    fontWeight: '500',
-  },
-  notificationBody: {
-    fontSize: 13,
-    color: colors.textSecondary,
-    marginBottom: 6,
-  },
-  notificationTime: {
-    fontSize: 12,
-    color: colors.textTertiary,
-  },
-  textBold: {
-    fontWeight: '600',
-  },
-  unreadIndicator: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: colors.blue,
-  },
-  separator: {
-    height: 1,
-    backgroundColor: colors.border,
-    marginHorizontal: SPACING.large,
-  },
-  emptyListContainer: {
-    flexGrow: 1,
-    justifyContent: 'center',
-  },
-  emptyContainer: {
-    alignItems: 'center',
-    paddingHorizontal: SPACING.large,
-  },
-  emptyTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: colors.text,
-    marginBottom: SPACING.small,
-  },
-  emptyDescription: {
-    fontSize: 14,
-    color: colors.textSecondary,
-    textAlign: 'center',
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: colors.background,
-  },
-  loadingText: {
-    fontSize: 14,
-    color: colors.textSecondary,
-  },
-  errorContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: colors.background,
-    paddingHorizontal: SPACING.large,
-  },
-  errorTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: colors.error,
-    marginBottom: SPACING.small,
-  },
-  errorDescription: {
-    fontSize: 14,
-    color: colors.textSecondary,
-    textAlign: 'center',
-  },
-})

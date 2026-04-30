@@ -15,7 +15,7 @@
  * />
  */
 
-import React, { useState, useCallback } from 'react'
+import React, { useState, useCallback, useMemo } from 'react'
 import {
   View,
   TextInput,
@@ -24,7 +24,8 @@ import {
   StyleSheet,
   AccessibilityInfo,
 } from 'react-native'
-import { colors, spacing, typography } from '../theme'
+import { getColors, SPACING, RADIUS } from '../theme/colors'
+import { useThemeColors } from '../hooks/useTheme'
 
 interface FormInputGroupProps {
   label: string
@@ -63,6 +64,7 @@ export default function FormInputGroup({
   autoComplete = 'off',
   testID,
 }: FormInputGroupProps) {
+  const colors = useThemeColors()
   const [isFocused, setIsFocused] = useState(false)
   const hasError = !!error
   const showSuccess = typeof success === 'string' ? success : success && !hasError
@@ -75,78 +77,14 @@ export default function FormInputGroup({
 
   // Dynamic border color based on state
   const borderColor = hasError
-    ? colors.danger
+    ? colors.red
     : isFocused
     ? colors.primary
     : showSuccess
-    ? colors.success
+    ? colors.green
     : colors.border
 
-  const styles = StyleSheet.create({
-    container: {
-      marginBottom: spacing.lg,
-    },
-    label: {
-      fontSize: typography.body.sm.size,
-      fontWeight: `${typography.body.sm.weight}` as any,
-      color: colors.text.primary,
-      marginBottom: spacing.sm,
-      flexDirection: 'row',
-    },
-    labelText: {
-      flex: 1,
-    },
-    labelRequired: {
-      color: colors.danger,
-      marginLeft: spacing.xs,
-    },
-    inputContainer: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      borderWidth: 1,
-      borderColor,
-      borderRadius: 6,
-      paddingHorizontal: spacing.md,
-      paddingVertical: spacing.sm,
-      backgroundColor: colors.surface,
-    },
-    input: {
-      flex: 1,
-      fontSize: typography.body.md.size,
-      fontWeight: `${typography.body.md.weight}` as any,
-      color: colors.text.primary,
-      paddingVertical: spacing.sm,
-    },
-    spinner: {
-      marginLeft: spacing.sm,
-    },
-    messageContainer: {
-      marginTop: spacing.xs,
-      flexDirection: 'row',
-      alignItems: 'flex-start',
-    },
-    messageIcon: {
-      marginRight: spacing.xs,
-      fontSize: 14,
-    },
-    messageText: {
-      flex: 1,
-      fontSize: typography.label.sm.size,
-      fontWeight: `${typography.label.sm.weight}` as any,
-    },
-    errorMessage: {
-      color: colors.danger,
-    },
-    successMessage: {
-      color: colors.success,
-    },
-    hint: {
-      fontSize: typography.label.sm.size,
-      fontWeight: `${typography.label.sm.weight}` as any,
-      color: colors.text.muted,
-      marginTop: spacing.xs,
-    },
-  })
+  const styles = useMemo(() => createStyles(colors, borderColor), [colors, borderColor])
 
   return (
     <View style={styles.container}>
@@ -165,7 +103,7 @@ export default function FormInputGroup({
           onFocus={handleFocus}
           onBlur={handleBlur}
           placeholder={placeholder}
-          placeholderTextColor={colors.text.muted}
+          placeholderTextColor={colors.textMuted}
           secureTextEntry={secureTextEntry}
           keyboardType={keyboardType}
           autoCapitalize={autoCapitalize}
@@ -214,3 +152,69 @@ export default function FormInputGroup({
     </View>
   )
 }
+
+const createStyles = (colors: ReturnType<typeof getColors>, borderColor: string) => StyleSheet.create({
+  container: {
+    marginBottom: SPACING.lg,
+  },
+  label: {
+    fontSize: 12,
+    fontWeight: '500',
+    color: colors.text,
+    marginBottom: SPACING.sm,
+    flexDirection: 'row' as any,
+  },
+  labelText: {
+    flex: 1,
+  },
+  labelRequired: {
+    color: colors.red,
+    marginLeft: SPACING.xs,
+  },
+  inputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor,
+    borderRadius: RADIUS.sm,
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.sm,
+    backgroundColor: colors.surface,
+  },
+  input: {
+    flex: 1,
+    fontSize: 14,
+    fontWeight: '500',
+    color: colors.text,
+    paddingVertical: SPACING.sm,
+  },
+  spinner: {
+    marginLeft: SPACING.sm,
+  },
+  messageContainer: {
+    marginTop: SPACING.xs,
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+  },
+  messageIcon: {
+    marginRight: SPACING.xs,
+    fontSize: 14,
+  },
+  messageText: {
+    flex: 1,
+    fontSize: 12,
+    fontWeight: '500',
+  },
+  errorMessage: {
+    color: colors.red,
+  },
+  successMessage: {
+    color: colors.green,
+  },
+  hint: {
+    fontSize: 12,
+    fontWeight: '500',
+    color: colors.textMuted,
+    marginTop: SPACING.xs,
+  },
+})

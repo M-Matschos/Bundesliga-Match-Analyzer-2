@@ -1,7 +1,7 @@
 import React from 'react'
 import { View, Text, ScrollView, TouchableOpacity } from 'react-native'
-import { colors } from '../theme/colors'
-import { typography } from '../theme/typography'
+import { getColors } from '../theme/colors'
+import { useThemeColors } from '../hooks/useTheme'
 
 interface Props {
   children: React.ReactNode
@@ -67,6 +67,8 @@ interface FallbackProps {
 }
 
 function DefaultErrorFallback({ error, onRetry, errorCount = 0 }: FallbackProps) {
+  const colors = useThemeColors()
+
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
       <ScrollView
@@ -82,29 +84,26 @@ function DefaultErrorFallback({ error, onRetry, errorCount = 0 }: FallbackProps)
 
         {/* Error Title */}
         <Text
-          style={[
-            typography.headingMD,
-            {
-              color: colors.red,
-              marginBottom: 16,
-              textAlign: 'center',
-            },
-          ]}
+          style={{
+            fontSize: 20,
+            fontWeight: '600',
+            color: colors.red,
+            marginBottom: 16,
+            textAlign: 'center',
+          }}
         >
           Etwas ist schiefgelaufen
         </Text>
 
         {/* Error Message */}
         <Text
-          style={[
-            typography.bodySM,
-            {
-              color: colors.textSecond,
-              marginBottom: 24,
-              textAlign: 'center',
-              lineHeight: 20,
-            },
-          ]}
+          style={{
+            fontSize: 13,
+            color: colors.textSecond,
+            marginBottom: 24,
+            textAlign: 'center',
+            lineHeight: 20,
+          }}
         >
           {error.message || 'Ein unbekannter Fehler ist aufgetreten'}
         </Text>
@@ -123,27 +122,22 @@ function DefaultErrorFallback({ error, onRetry, errorCount = 0 }: FallbackProps)
             }}
           >
             <Text
-              style={[
-                typography.labelSM,
-                {
-                  color: colors.textMuted,
-                  fontFamily: 'monospace',
-                  marginBottom: 8,
-                },
-              ]}
+              style={{
+                fontSize: 12,
+                color: colors.textMuted,
+                fontFamily: 'monospace',
+                marginBottom: 8,
+              }}
             >
               {error.name}: {error.message}
             </Text>
             {error.stack && (
               <Text
-                style={[
-                  typography.labelSM,
-                  {
-                    color: colors.textMuted,
-                    fontFamily: 'monospace',
-                    fontSize: 10,
-                  },
-                ]}
+                style={{
+                  fontSize: 10,
+                  color: colors.textMuted,
+                  fontFamily: 'monospace',
+                }}
                 numberOfLines={5}
               >
                 {error.stack.split('\n').slice(0, 3).join('\n')}
@@ -155,14 +149,12 @@ function DefaultErrorFallback({ error, onRetry, errorCount = 0 }: FallbackProps)
         {/* Retry Count Warning */}
         {errorCount > 2 && (
           <Text
-            style={[
-              typography.bodySM,
-              {
-                color: colors.yellow,
-                marginBottom: 24,
-                textAlign: 'center',
-              },
-            ]}
+            style={{
+              fontSize: 13,
+              color: colors.yellow,
+              marginBottom: 24,
+              textAlign: 'center',
+            }}
           >
             {errorCount} Fehler - Bitte versuchen Sie später erneut
           </Text>
@@ -180,13 +172,12 @@ function DefaultErrorFallback({ error, onRetry, errorCount = 0 }: FallbackProps)
           }}
         >
           <Text
-            style={[
-              typography.labelMD,
-              {
-                color: colors.text,
-                textAlign: 'center',
-              },
-            ]}
+            style={{
+              fontSize: 14,
+              fontWeight: '600',
+              color: '#FFF',
+              textAlign: 'center',
+            }}
           >
             Erneut versuchen
           </Text>
@@ -194,15 +185,12 @@ function DefaultErrorFallback({ error, onRetry, errorCount = 0 }: FallbackProps)
 
         {/* Help Text */}
         <Text
-          style={[
-            typography.bodySM,
-            {
-              color: colors.textMuted,
-              marginTop: 24,
-              textAlign: 'center',
-              fontSize: 12,
-            },
-          ]}
+          style={{
+            fontSize: 12,
+            color: colors.textMuted,
+            marginTop: 24,
+            textAlign: 'center',
+          }}
         >
           Wenn das Problem weiterhin besteht, versuchen Sie, die App neu zu starten.
         </Text>
