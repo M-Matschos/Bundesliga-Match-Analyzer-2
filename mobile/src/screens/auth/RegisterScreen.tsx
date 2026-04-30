@@ -157,6 +157,106 @@ export default function RegisterScreen({ navigation }: RegisterScreenProps) {
     !confirmPasswordError &&
     password === confirmPassword
 
+  /**
+   * Create dynamic styles based on current theme
+   */
+  const styles = useMemo(
+    () =>
+      StyleSheet.create({
+        container: {
+          flex: 1,
+          backgroundColor: colors.background,
+        },
+        scrollContent: {
+          flexGrow: 1,
+          paddingHorizontal: SPACING.lg,
+          paddingVertical: SPACING.xl,
+          justifyContent: 'center',
+        },
+        headerSection: {
+          marginBottom: SPACING.xl,
+          marginTop: SPACING.lg,
+        },
+        title: {
+          fontSize: 32,
+          fontWeight: '700',
+          color: colors.text,
+          marginBottom: SPACING.xs,
+          fontFamily: FONTS.heading,
+        },
+        subtitle: {
+          fontSize: 16,
+          color: colors.textSecond,
+          fontFamily: FONTS.body,
+          lineHeight: 24,
+        },
+        formSection: {
+          marginBottom: SPACING.xl,
+        },
+        passwordStrengthHint: {
+          backgroundColor: colors.green + '20',
+          borderLeftWidth: 3,
+          borderLeftColor: colors.green,
+          paddingVertical: SPACING.sm,
+          paddingHorizontal: SPACING.md,
+          marginTop: SPACING.sm,
+          borderRadius: 6,
+        },
+        strengthText: {
+          fontSize: 12,
+          color: colors.green,
+          fontFamily: FONTS.label,
+          fontWeight: '500',
+        },
+        registerButton: {
+          backgroundColor: colors.blue,
+          borderRadius: 12,
+          paddingVertical: SPACING.md,
+          paddingHorizontal: SPACING.lg,
+          alignItems: 'center',
+          justifyContent: 'center',
+          minHeight: 48,
+          marginBottom: SPACING.lg,
+          elevation: 4,
+          shadowColor: colors.blue,
+          shadowOffset: { width: 0, height: 2 },
+          shadowOpacity: 0.25,
+          shadowRadius: 4,
+        },
+        registerButtonDisabled: {
+          backgroundColor: colors.border,
+          opacity: 0.6,
+          elevation: 0,
+          shadowOpacity: 0,
+        },
+        registerButtonText: {
+          fontSize: 16,
+          fontWeight: '600',
+          color: colors.text,
+          fontFamily: FONTS.label,
+        },
+        loginSection: {
+          flexDirection: 'row',
+          justifyContent: 'center',
+          alignItems: 'center',
+          marginTop: SPACING.md,
+        },
+        loginText: {
+          fontSize: 14,
+          color: colors.textSecond,
+          fontFamily: FONTS.body,
+        },
+        loginLink: {
+          fontSize: 14,
+          color: colors.blue,
+          fontWeight: '600',
+          marginLeft: SPACING.xs,
+          fontFamily: FONTS.label,
+        },
+      }),
+    [colors]
+  )
+
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -254,7 +354,7 @@ export default function RegisterScreen({ navigation }: RegisterScreenProps) {
           accessibilityState={{ disabled: !isFormValid || loading }}
         >
           {loading ? (
-            <ActivityIndicator color={colors.white} size="small" />
+            <ActivityIndicator color={colors.text} size="small" />
           ) : (
             <Text style={styles.registerButtonText}>Konto erstellen</Text>
           )}
@@ -277,96 +377,3 @@ export default function RegisterScreen({ navigation }: RegisterScreenProps) {
     </KeyboardAvoidingView>
   )
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
-  scrollContent: {
-    flexGrow: 1,
-    paddingHorizontal: SPACING.lg,
-    paddingVertical: SPACING.xl,
-    justifyContent: 'center',
-  },
-  headerSection: {
-    marginBottom: SPACING.xl,
-    marginTop: SPACING.lg,
-  },
-  title: {
-    fontSize: 32,
-    fontWeight: '700',
-    color: colors.text,
-    marginBottom: SPACING.xs,
-    fontFamily: FONTS.heading,
-  },
-  subtitle: {
-    fontSize: 16,
-    color: colors.textSecond,
-    fontFamily: FONTS.body,
-    lineHeight: 24,
-  },
-  formSection: {
-    marginBottom: SPACING.xl,
-  },
-  passwordStrengthHint: {
-    backgroundColor: colors.green + '20',
-    borderLeftWidth: 3,
-    borderLeftColor: colors.green,
-    paddingVertical: SPACING.sm,
-    paddingHorizontal: SPACING.md,
-    marginTop: SPACING.sm,
-    borderRadius: 6,
-  },
-  strengthText: {
-    fontSize: 12,
-    color: colors.green,
-    fontFamily: FONTS.label,
-    fontWeight: '500',
-  },
-  registerButton: {
-    backgroundColor: colors.blue,
-    borderRadius: 12,
-    paddingVertical: SPACING.md,
-    paddingHorizontal: SPACING.lg,
-    alignItems: 'center',
-    justifyContent: 'center',
-    minHeight: 48,
-    marginBottom: SPACING.lg,
-    elevation: 4,
-    shadowColor: colors.blue,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-  },
-  registerButtonDisabled: {
-    backgroundColor: colors.border,
-    opacity: 0.6,
-    elevation: 0,
-    shadowOpacity: 0,
-  },
-  registerButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: colors.white,
-    fontFamily: FONTS.label,
-  },
-  loginSection: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginTop: SPACING.md,
-  },
-  loginText: {
-    fontSize: 14,
-    color: colors.textSecond,
-    fontFamily: FONTS.body,
-  },
-  loginLink: {
-    fontSize: 14,
-    color: colors.blue,
-    fontWeight: '600',
-    marginLeft: SPACING.xs,
-    fontFamily: FONTS.label,
-  },
-})
