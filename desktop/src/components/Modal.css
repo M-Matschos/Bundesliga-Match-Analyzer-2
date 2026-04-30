@@ -1,0 +1,285 @@
+@import './tokens.css';
+
+/* ============================================================================
+   MODAL COMPONENT
+   Overlay dialog with focus trap, keyboard handling, size variants
+   ============================================================================ */
+
+.Modal__overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: Modal__fade-in var(--duration-fast) var(--easing-ease-out);
+}
+
+@keyframes Modal__fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* ============================================================================
+   MODAL BOX
+   ============================================================================ */
+
+.Modal {
+  background: var(--color-surface);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-border);
+  padding: var(--space-lg);
+  max-height: 80vh;
+  overflow-y: auto;
+  box-shadow: var(--shadow-lg);
+  animation: Modal__slide-up var(--duration-fast) var(--easing-ease-out);
+  position: relative;
+}
+
+@keyframes Modal__slide-up {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* Size variants */
+.Modal--sm {
+  width: 90%;
+  max-width: 320px;
+}
+
+.Modal--md {
+  width: 90%;
+  max-width: 500px;
+}
+
+.Modal--lg {
+  width: 90%;
+  max-width: 700px;
+}
+
+/* ============================================================================
+   MODAL HEADER
+   ============================================================================ */
+
+.Modal__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--space-md);
+  margin-bottom: var(--space-lg);
+  padding-bottom: var(--space-lg);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.Modal__header h2 {
+  margin: 0;
+  font-size: var(--heading-md-size);
+  font-weight: var(--heading-md-weight);
+  color: var(--color-text-primary);
+}
+
+.Modal__close-btn {
+  background: transparent;
+  border: none;
+  font-size: 24px;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  padding: 0;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-md);
+  transition: var(--transition);
+}
+
+.Modal__close-btn:hover:not(:disabled) {
+  background: rgba(59, 130, 246, 0.1);
+  color: var(--color-text-primary);
+}
+
+.Modal__close-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ============================================================================
+   MODAL CONTENT
+   ============================================================================ */
+
+.Modal__content {
+  margin-bottom: var(--space-lg);
+  color: var(--color-text-primary);
+  font-size: var(--body-md-size);
+  line-height: 1.6;
+}
+
+.Modal__content p {
+  margin: 0 0 var(--space-md) 0;
+}
+
+.Modal__content p:last-child {
+  margin-bottom: 0;
+}
+
+/* ============================================================================
+   ERROR STATE
+   ============================================================================ */
+
+.Modal__error {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-md);
+  padding: var(--space-md);
+  background: rgba(220, 38, 38, 0.1);
+  border: 1px solid var(--color-danger);
+  border-radius: var(--radius-md);
+  margin-bottom: var(--space-lg);
+}
+
+.Modal__error-icon {
+  font-size: 20px;
+  flex-shrink: 0;
+}
+
+.Modal__error-message {
+  color: var(--color-danger-light);
+  font-size: var(--body-sm-size);
+  flex: 1;
+}
+
+/* ============================================================================
+   MODAL FOOTER
+   ============================================================================ */
+
+.Modal__footer {
+  display: flex;
+  gap: var(--space-md);
+  padding-top: var(--space-lg);
+  border-top: 1px solid var(--color-border);
+  flex-wrap: wrap-reverse;
+}
+
+.Modal__button {
+  flex: 1;
+  min-width: 120px;
+  padding: var(--space-md) var(--space-lg);
+  border-radius: var(--radius-md);
+  border: none;
+  font-size: var(--body-md-size);
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-xs);
+}
+
+.Modal__button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.Modal__button--primary {
+  background: var(--color-primary);
+  color: white;
+}
+
+.Modal__button--primary:hover:not(:disabled) {
+  background: var(--color-primary-hover);
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
+}
+
+.Modal__button--secondary {
+  background: var(--color-surface);
+  color: var(--color-text-primary);
+  border: 1px solid var(--color-border);
+}
+
+.Modal__button--secondary:hover:not(:disabled) {
+  background: rgba(59, 130, 246, 0.05);
+  border-color: var(--color-primary);
+}
+
+.Modal__button--danger {
+  background: var(--color-danger);
+  color: white;
+}
+
+.Modal__button--danger:hover:not(:disabled) {
+  background: var(--color-danger-hover);
+}
+
+/* ============================================================================
+   LOADING STATE
+   ============================================================================ */
+
+.Modal__spinner {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: Modal__spin 0.8s linear infinite;
+}
+
+@keyframes Modal__spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ============================================================================
+   RESPONSIVE — Tablet (768px and down)
+   ============================================================================ */
+
+@media (max-width: 768px) {
+  .Modal__overlay {
+    padding: var(--space-md);
+  }
+
+  .Modal {
+    width: 100%;
+    max-width: none;
+    max-height: 90vh;
+    border-radius: var(--radius-md);
+  }
+
+  .Modal--sm {
+    max-width: 100%;
+  }
+
+  .Modal--md {
+    max-width: 100%;
+  }
+
+  .Modal--lg {
+    max-width: 100%;
+  }
+
+  .Modal__footer {
+    flex-direction: column-reverse;
+  }
+
+  .Modal__button {
+    width: 100%;
+  }
+}

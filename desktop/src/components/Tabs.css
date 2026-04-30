@@ -1,0 +1,320 @@
+@import './tokens.css';
+
+/* ============================================================================
+   TABS
+   Horizontal tab bar with content switching and keyboard navigation
+   ============================================================================ */
+
+.Tabs {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  border-bottom: 1px solid var(--color-border);
+}
+
+/* ============================================================================
+   TABS LIST
+   Tab button container with variant styles
+   ============================================================================ */
+
+.Tabs__list {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  background: var(--color-background);
+}
+
+/* Prevent scrollbar from showing unless needed */
+.Tabs__list::-webkit-scrollbar {
+  height: 4px;
+}
+
+.Tabs__list::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.Tabs__list::-webkit-scrollbar-thumb {
+  background: var(--color-text-secondary);
+  border-radius: 2px;
+}
+
+/* Variant: Default (with bottom border on active) */
+.Tabs__list--default {
+  border-bottom: 1px solid var(--color-border);
+}
+
+/* Variant: Pills (rounded background) */
+.Tabs__list--pills {
+  padding: var(--space-sm);
+  gap: var(--space-xs);
+  background: var(--color-surface-secondary);
+  border-radius: var(--radius-md);
+}
+
+/* Variant: Underline (minimal, just underline) */
+.Tabs__list--underline {
+  border-bottom: 2px solid var(--color-border);
+}
+
+/* Full width variant */
+.Tabs__list--full-width {
+  width: 100%;
+}
+
+.Tabs__list--full-width .Tabs__tab {
+  flex: 1;
+  text-align: center;
+}
+
+/* Size: Small */
+.Tabs__list--sm .Tabs__tab {
+  padding: var(--space-xs) var(--space-sm);
+  font-size: var(--body-xs-size, 12px);
+}
+
+/* Size: Medium (default) */
+.Tabs__list--md .Tabs__tab {
+  padding: var(--space-sm) var(--space-md);
+  font-size: var(--body-sm-size);
+}
+
+/* Size: Large */
+.Tabs__list--lg .Tabs__tab {
+  padding: var(--space-md) var(--space-lg);
+  font-size: var(--body-md-size);
+}
+
+/* ============================================================================
+   TABS TAB (Individual Tab Button)
+   ============================================================================ */
+
+.Tabs__tab {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  padding: var(--space-sm) var(--space-md);
+  background: transparent;
+  border: none;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  font-weight: 500;
+  font-size: var(--body-sm-size);
+  white-space: nowrap;
+  position: relative;
+  transition: var(--transition);
+  border-radius: 0;
+}
+
+.Tabs__tab:hover:not(:disabled) {
+  color: var(--color-text-primary);
+  background: rgba(var(--color-primary-rgb), 0.05);
+}
+
+.Tabs__tab:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: -2px;
+}
+
+/* Active Tab */
+.Tabs__tab--active {
+  color: var(--color-primary);
+  font-weight: 600;
+}
+
+/* Disabled Tab */
+.Tabs__tab--disabled {
+  color: var(--color-text-disabled);
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.Tabs__tab--disabled:hover {
+  background: transparent;
+}
+
+/* ============================================================================
+   TABS VARIANT: DEFAULT
+   Underline indicator for active tab
+   ============================================================================ */
+
+.Tabs__list--default .Tabs__tab {
+  border-bottom: 3px solid transparent;
+}
+
+.Tabs__list--default .Tabs__tab--active {
+  border-bottom-color: var(--color-primary);
+}
+
+/* ============================================================================
+   TABS VARIANT: PILLS
+   Rounded pill background for tabs
+   ============================================================================ */
+
+.Tabs__list--pills .Tabs__tab {
+  border-radius: var(--radius-md);
+  background: var(--color-background);
+}
+
+.Tabs__list--pills .Tabs__tab:hover:not(:disabled) {
+  background: var(--color-surface-hover);
+}
+
+.Tabs__list--pills .Tabs__tab--active {
+  background: var(--color-primary);
+  color: white;
+}
+
+/* ============================================================================
+   TABS VARIANT: UNDERLINE
+   Minimal, just bottom underline
+   ============================================================================ */
+
+.Tabs__list--underline .Tabs__tab {
+  border-bottom: 3px solid transparent;
+  padding-bottom: var(--space-sm);
+}
+
+.Tabs__list--underline .Tabs__tab--active {
+  border-bottom-color: var(--color-primary);
+}
+
+/* ============================================================================
+   TAB ICON
+   Icon inside tab button
+   ============================================================================ */
+
+.Tabs__tab-icon {
+  display: inline-flex;
+  align-items: center;
+  font-size: 1.2em;
+}
+
+/* ============================================================================
+   TAB LABEL
+   Text label of tab
+   ============================================================================ */
+
+.Tabs__tab-label {
+  display: inline;
+}
+
+/* ============================================================================
+   TAB BADGE
+   Badge/count next to tab label
+   ============================================================================ */
+
+.Tabs__tab-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  margin-left: var(--space-xs);
+  background: var(--color-danger);
+  color: white;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.Tabs__tab--active .Tabs__tab-badge {
+  background: var(--color-primary);
+}
+
+/* ============================================================================
+   TABS CONTENT
+   Content area that contains tab panes
+   ============================================================================ */
+
+.Tabs__content {
+  flex: 1;
+  overflow: hidden;
+}
+
+/* ============================================================================
+   TAB PANE
+   Individual content pane (one per tab)
+   ============================================================================ */
+
+.Tabs__pane {
+  display: none;
+  padding: var(--space-md);
+  animation: Tabs__pane-fade-in var(--duration-normal) var(--easing-ease-in-out);
+}
+
+.Tabs__pane--active {
+  display: block;
+}
+
+@keyframes Tabs__pane-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* ============================================================================
+   RESPONSIVE
+   ============================================================================ */
+
+@media (max-width: 768px) {
+  .Tabs__list {
+    gap: 0;
+  }
+
+  .Tabs__list--pills {
+    gap: var(--space-xs);
+    padding: var(--space-sm);
+  }
+
+  .Tabs__tab {
+    padding: var(--space-xs) var(--space-sm);
+    font-size: var(--body-xs-size, 12px);
+  }
+
+  .Tabs__list--full-width {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .Tabs__tab-badge {
+    min-width: 18px;
+    height: 18px;
+    font-size: 10px;
+  }
+
+  .Tabs__pane {
+    padding: var(--space-sm);
+  }
+}
+
+/* ============================================================================
+   ACCESSIBILITY
+   ============================================================================ */
+
+/* High contrast mode */
+@media (prefers-contrast: more) {
+  .Tabs__tab--active {
+    text-decoration: underline;
+    text-decoration-thickness: 3px;
+  }
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .Tabs__pane {
+    animation: none;
+  }
+
+  .Tabs__tab {
+    transition: none;
+  }
+}

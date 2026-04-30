@@ -6,10 +6,14 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 import asyncio
 import json
+import logging
 
-from app.routers import matches, predictions, teams, players, betting, auth
+from app.routers import matches, predictions, teams, players, betting, auth, websocket
 from app.core.config import settings
-from ml.weekend_calculator import WeekendCalculator
+from app.core.redis_pubsub import pubsub_manager
+from app.models.db import Base, engine
+
+logger = logging.getLogger(__name__)
 
 app = FastAPI(
     title="Match Oracle API",
@@ -31,49 +35,47 @@ app.include_router(predictions.router, prefix="/api/v1/predictions",  tags=["Pre
 app.include_router(teams.router,       prefix="/api/v1/teams",        tags=["Teams"])
 app.include_router(players.router,     prefix="/api/v1/players",      tags=["Players"])
 app.include_router(betting.router,     prefix="/api/v1/virtual-bets", tags=["Virtual Betting"])
+app.include_router(websocket.router,   prefix="/api/v1/ws",           tags=["WebSocket"])
 
 
-@app.post("/api/v1/calculate/weekend")
-async def calculate_weekend_endpoint(
-    leagues: list[str] = ["BL1", "BL2"],
-    date_from: str = None,
-    date_to:   str = None,
-):
-    """
-    HAUPTENDPOINT: Berechnet alle Wochenend-Spiele.
-    Gibt Server-Sent Events für Live-Fortschritt zurück.
-    """
-    calculator = WeekendCalculator()
+@app.on_event("startup")
+async def startup():
+    """Initialize database tables and Redis connection on startup."""
+    try:
+        # 1. Initialize database tables
+        async with engine.begin() as conn:
+            await conn.run_sync(Base.metadata.create_all)
+        logger.info("[OK] Database tables initialized")
 
-    async def event_generator():
-        progress_messages = []
-
-        async def progress_callback(message: str, percent: int):
-            event = json.dumps({"status": "loading", "message": message, "progress": percent})
-            progress_messages.append(f"data: {event}\n\n")
-
-        results = await calculator.calculate_weekend(
-            leagues=leagues,
-            progress_callback=progress_callback,
-        )
-
-        for msg in progress_messages:
-            yield msg
-
-        done_event = json.dumps({"status": "done", **results})
-        yield f"data: {done_event}\n\n"
-
-    return StreamingResponse(event_generator(), media_type="text/event-stream")
+        # 2. Connect to Redis Pub/Sub
+        await pubsub_manager.connect()
+        is_connected = await pubsub_manager.is_connected()
+        if is_connected:
+            logger.info("[OK] Redis Pub/Sub connected successfully")
+        else:
+            logger.warning("[WARN] Redis Pub/Sub connection failed")
+    except Exception as e:
+        logger.error(f"[ERROR] Startup initialization failed: {str(e)}")
+        raise
 
 
-@app.post("/api/v1/calculate/match/{match_id}")
-async def calculate_single_match(match_id: str):
-    """Berechnet eine einzelne Begegnung (~500ms)."""
-    calculator = WeekendCalculator()
-    result = await calculator.calculate_single_by_id(match_id)
-    return {"status": "success", "data": result}
+@app.on_event("shutdown")
+async def shutdown():
+    """Cleanup connections on shutdown."""
+    try:
+        # Disconnect from Redis
+        await pubsub_manager.disconnect()
+        logger.info("[OK] Redis Pub/Sub disconnected")
+    except Exception as e:
+        logger.error(f"[ERROR] Shutdown failed: {str(e)}")
 
 
 @app.get("/health")
 async def health_check():
-    return {"status": "ok", "version": "1.0.0"}
+    """Health check endpoint with Redis status."""
+    redis_connected = await pubsub_manager.is_connected()
+    return {
+        "status": "ok",
+        "version": "1.0.0",
+        "redis": "connected" if redis_connected else "disconnected"
+    }

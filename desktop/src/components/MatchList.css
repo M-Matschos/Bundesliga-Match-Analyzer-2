@@ -1,0 +1,184 @@
+@import './tokens.css';
+
+/* ============================================================================
+   MATCH LIST & MATCH CARD COMPONENTS
+   Grid layout for match prediction cards with team info, predictions, confidence
+   ============================================================================ */
+
+.match-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: var(--space-md);
+  margin-top: var(--space-md);
+}
+
+/* ============================================================================
+   MATCH CARD — Container for a single match prediction
+   ============================================================================ */
+
+.match-card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-md);
+  transition: var(--transition);
+  cursor: pointer;
+}
+
+.match-card:hover {
+  border-color: var(--color-primary);
+  box-shadow: var(--shadow-md);
+}
+
+/* ============================================================================
+   MATCH HEADER — Team names with vs separator
+   ============================================================================ */
+
+.match-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-sm);
+  gap: var(--space-xs);
+}
+
+.team {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-xs);
+}
+
+.team-name {
+  font-size: var(--body-md-size);
+  font-weight: 600;
+  color: var(--color-text-primary);
+  text-align: center;
+  line-height: 1.2;
+}
+
+.team-short {
+  font-size: var(--label-sm-size);
+  color: var(--color-text-muted);
+  font-weight: 500;
+  text-transform: uppercase;
+}
+
+.vs {
+  font-size: var(--label-md-size);
+  color: var(--color-text-muted);
+  font-weight: 500;
+  padding: 0 var(--space-xs);
+}
+
+/* ============================================================================
+   MATCH INFO — Date & League badge
+   ============================================================================ */
+
+.match-info {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: var(--space-sm);
+  padding-bottom: var(--space-sm);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.date {
+  font-size: var(--label-md-size);
+  color: var(--color-text-muted);
+}
+
+.league {
+  font-size: var(--label-sm-size);
+  color: var(--color-text-muted);
+  background: rgba(59, 130, 246, 0.1);
+  padding: 2px var(--space-xs);
+  border-radius: var(--radius-sm);
+  text-transform: uppercase;
+  font-weight: 600;
+}
+
+/* ============================================================================
+   MATCH PREDICTIONS — Home/Draw/Away probability grid
+   ============================================================================ */
+
+.match-predictions {
+  display: flex;
+  gap: var(--space-xs);
+  margin-bottom: var(--space-sm);
+}
+
+.prediction {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-xs);
+  padding: var(--space-xs);
+  background: rgba(59, 130, 246, 0.05);
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(59, 130, 246, 0.1);
+}
+
+.prediction .label {
+  font-size: var(--label-sm-size);
+  color: var(--color-text-muted);
+  text-align: center;
+  line-height: 1.2;
+}
+
+.prediction .value {
+  font-size: var(--heading-sm-size);
+  font-weight: 700;
+  color: var(--color-primary);
+}
+
+/* ============================================================================
+   CONFIDENCE SCORE — Overall model confidence
+   ============================================================================ */
+
+.confidence {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: var(--space-xs);
+  border-top: 1px solid var(--color-border);
+}
+
+.confidence .label {
+  font-size: var(--label-md-size);
+  color: var(--color-text-muted);
+  font-weight: 500;
+}
+
+.confidence .value {
+  font-size: var(--body-md-size);
+  font-weight: 700;
+  color: var(--color-success);
+}
+
+/* ============================================================================
+   EMPTY STATE — No matches message
+   ============================================================================ */
+
+.empty-state {
+  text-align: center;
+  padding: var(--space-xxl) var(--space-lg);
+  color: var(--color-text-muted);
+}
+
+.empty-state p {
+  font-size: var(--body-lg-size);
+  color: var(--color-text-secondary);
+}
+
+/* ============================================================================
+   RESPONSIVE — Tablet (768px and down)
+   ============================================================================ */
+
+@media (max-width: 768px) {
+  .match-list {
+    grid-template-columns: 1fr;
+  }
+}

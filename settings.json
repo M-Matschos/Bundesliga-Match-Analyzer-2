@@ -1,0 +1,38 @@
+{
+  "formatter": "prettier",
+  "formatterArgs": [
+    "--write",
+    "--parser babel-flow"
+  ],
+  "linter": "eslint",
+  "linterArgs": [
+    "--fix",
+    "--ext .ts,.tsx,.js"
+  ],
+  "pythonTesting": {
+    "framework": "pytest",
+    "testDirectory": "backend/tests",
+    "args": [
+      "-v",
+      "--tb=short"
+    ]
+  },
+  "searchExclusions": [
+    "node_modules",
+    ".pytest_cache",
+    "__pycache__",
+    ".venv",
+    "build",
+    "dist"
+  ],
+  "typescript": {
+    "strict": true,
+    "skipLibCheck": false
+  },
+  "reactNative": {
+    "testMatch": "**/__tests__/**/*.{test,spec}.{ts,tsx}",
+    "setupFiles": [
+      "<rootDir>/jest.setup.js"
+    ]
+  }
+}

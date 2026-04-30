@@ -1,0 +1,241 @@
+@import './tokens.css';
+
+/* ============================================================================
+   TABLE COMPONENT
+   Sortable, striped, dense variants with BEM naming convention
+   ============================================================================ */
+
+.Table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+/* ============================================================================
+   TABLE HEADER
+   ============================================================================ */
+
+.Table__header {
+  background: var(--color-surface);
+  border-bottom: 2px solid var(--color-border);
+}
+
+.Table__header-cell {
+  padding: var(--space-md);
+  text-align: left;
+  font-weight: 600;
+  font-size: var(--label-md-size);
+  color: var(--color-text-secondary);
+  user-select: none;
+  transition: var(--transition);
+}
+
+.Table__header-cell[role='button'] {
+  cursor: pointer;
+}
+
+.Table__header-cell[role='button']:hover {
+  background: rgba(59, 130, 246, 0.05);
+  color: var(--color-text-primary);
+}
+
+.Table__header-cell--left {
+  text-align: left;
+}
+
+.Table__header-cell--center {
+  text-align: center;
+}
+
+.Table__header-cell--right {
+  text-align: right;
+}
+
+.Table__header-content {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+}
+
+.Table__sort-indicator {
+  font-size: 12px;
+  opacity: 0.6;
+}
+
+/* ============================================================================
+   TABLE ROWS & CELLS
+   ============================================================================ */
+
+.Table__row {
+  border-bottom: 1px solid var(--color-border);
+  transition: var(--transition);
+}
+
+.Table__row:last-child {
+  border-bottom: none;
+}
+
+.Table--hover .Table__row {
+  cursor: pointer;
+}
+
+.Table--hover .Table__row:hover {
+  background: rgba(59, 130, 246, 0.05);
+}
+
+.Table__row[role='button'] {
+  cursor: pointer;
+}
+
+.Table__row[role='button']:hover {
+  background: rgba(59, 130, 246, 0.05);
+}
+
+.Table__cell {
+  padding: var(--space-md);
+  color: var(--color-text-primary);
+  font-size: var(--body-md-size);
+  text-align: left;
+}
+
+.Table__cell--left {
+  text-align: left;
+}
+
+.Table__cell--center {
+  text-align: center;
+}
+
+.Table__cell--right {
+  text-align: right;
+}
+
+/* Striped variant */
+.Table--striped .Table__row:nth-child(even) {
+  background: rgba(30, 41, 59, 0.5);
+}
+
+/* Dense variant: reduced padding */
+.Table--dense .Table__header-cell {
+  padding: var(--space-sm);
+}
+
+.Table--dense .Table__cell {
+  padding: var(--space-sm);
+  font-size: var(--body-sm-size);
+}
+
+/* ============================================================================
+   LOADING STATE — Skeleton rows
+   ============================================================================ */
+
+.Table__row--loading {
+  background: var(--color-surface);
+}
+
+.Table__cell--skeleton {
+  padding: var(--space-md);
+}
+
+.skeleton-line {
+  height: 16px;
+  background: linear-gradient(
+    90deg,
+    var(--color-surface) 0%,
+    var(--color-border) 50%,
+    var(--color-surface) 100%
+  );
+  background-size: 1000px 100%;
+  animation: shimmer 2s infinite;
+  border-radius: var(--radius-sm);
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -1000px 0;
+  }
+  100% {
+    background-position: 1000px 0;
+  }
+}
+
+/* ============================================================================
+   EMPTY STATE
+   ============================================================================ */
+
+.Table__empty {
+  text-align: center;
+  padding: var(--space-xxl) var(--space-lg);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+}
+
+.Table__empty-icon {
+  font-size: 48px;
+  margin-bottom: var(--space-md);
+  opacity: 0.5;
+}
+
+.Table__empty > p {
+  font-size: var(--body-lg-size);
+  color: var(--color-text-secondary);
+  margin: 0;
+}
+
+/* ============================================================================
+   ERROR STATE
+   ============================================================================ */
+
+.Table__error {
+  padding: var(--space-lg);
+  background: rgba(220, 38, 38, 0.1);
+  border: 1px solid var(--color-danger);
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+}
+
+.Table__error-icon {
+  font-size: 24px;
+  flex-shrink: 0;
+}
+
+.Table__error-message {
+  color: var(--color-danger-light);
+  font-size: var(--body-md-size);
+  margin: 0;
+}
+
+/* ============================================================================
+   RESPONSIVE — Tablet (768px and down)
+   ============================================================================ */
+
+@media (max-width: 768px) {
+  .Table {
+    font-size: var(--body-sm-size);
+  }
+
+  .Table__header-cell {
+    padding: var(--space-sm);
+    font-size: var(--label-sm-size);
+  }
+
+  .Table__cell {
+    padding: var(--space-sm);
+    font-size: var(--body-sm-size);
+  }
+
+  .Table--dense .Table__header-cell {
+    padding: var(--space-xs);
+  }
+
+  .Table--dense .Table__cell {
+    padding: var(--space-xs);
+    font-size: var(--body-xs-size);
+  }
+}

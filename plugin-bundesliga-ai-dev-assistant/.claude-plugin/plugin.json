@@ -1,0 +1,22 @@
+{
+  "name": "bundesliga-ai-dev-assistant",
+  "version": "0.1.0",
+  "description": "Umfassender Entwicklungsassistent für das Match Oracle Decision Intelligence System. Bietet 15 spezialisierte Skills für UI/UX-Design, Code-Qualität, Testing, Performance, Sicherheit, Dokumentation und Match-Vorhersage-Analytik.",
+  "author": {
+    "name": "Bundesliga Match Analyzer Development Team"
+  },
+  "homepage": "https://github.com/bundesliga-match-analyzer/match-oracle",
+  "license": "MIT",
+  "keywords": [
+    "match-oracle",
+    "decision-intelligence",
+    "sports-analytics",
+    "prediction-models",
+    "betting-strategy",
+    "entwicklung",
+    "code-qualität",
+    "testing",
+    "performance",
+    "sicherheit"
+  ]
+}

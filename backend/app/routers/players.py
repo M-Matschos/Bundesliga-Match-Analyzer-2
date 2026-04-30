@@ -3,7 +3,7 @@
 from typing import Optional
 from fastapi import APIRouter, HTTPException, Query, Header
 
-router = APIRouter(prefix="/api/v1/players", tags=["players"])
+router = APIRouter(tags=["players"])
 
 
 @router.get("")

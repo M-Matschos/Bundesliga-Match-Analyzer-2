@@ -1,7 +1,8 @@
 """Authentication router with JWT token management."""
 
 import logging
-from datetime import timedelta, datetime
+from datetime import datetime
+from uuid import UUID
 from fastapi import APIRouter, HTTPException, Depends, status, Header
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
@@ -23,7 +24,7 @@ from app.core.security import (
 )
 from app.core.config import get_settings
 
-router = APIRouter(prefix="/api/v1/auth", tags=["auth"])
+router = APIRouter(tags=["auth"])
 logger = logging.getLogger(__name__)
 settings = get_settings()
 
@@ -51,8 +52,8 @@ async def get_current_user(
 
     try:
         payload = verify_token(token)
-        user_id = payload.sub
-    except HTTPException:
+        user_id = UUID(payload.sub)
+    except (HTTPException, ValueError):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid or expired token",
@@ -163,13 +164,11 @@ async def login(
     access_token = create_token(
         data={"sub": str(user.id), "email": user.email},
         token_type="access",
-        expires_delta=timedelta(days=settings.jwt_access_token_expire_days),
     )
 
     refresh_token = create_token(
         data={"sub": str(user.id), "email": user.email},
         token_type="refresh",
-        expires_delta=timedelta(days=settings.jwt_refresh_token_expire_days),
     )
 
     # Update last login
@@ -182,7 +181,7 @@ async def login(
         access_token=access_token,
         refresh_token=refresh_token,
         token_type="bearer",
-        expires_in=int(settings.jwt_access_token_expire_days * 86400),
+        expires_in=settings.jwt_expire_minutes * 60,
     )
 
 
@@ -205,8 +204,8 @@ async def refresh_token(
     """
     try:
         payload = verify_token(request.refresh_token, token_type="refresh")
-        user_id = payload.sub
-    except HTTPException:
+        user_id = UUID(payload.sub)
+    except (HTTPException, ValueError):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid refresh token",
@@ -227,7 +226,6 @@ async def refresh_token(
     new_access_token = create_token(
         data={"sub": str(user.id), "email": user.email},
         token_type="access",
-        expires_delta=timedelta(days=settings.jwt_access_token_expire_days),
     )
 
     logger.info(f"Token refreshed for user: {user.email}")
@@ -236,7 +234,7 @@ async def refresh_token(
         access_token=new_access_token,
         refresh_token=request.refresh_token,
         token_type="bearer",
-        expires_in=int(settings.jwt_access_token_expire_days * 86400),
+        expires_in=settings.jwt_expire_minutes * 60,
     )
 
 

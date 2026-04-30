@@ -18,7 +18,7 @@ aiohttp==3.9.3
 
 # Machine Learning
 xgboost==2.0.3
-scikit-learn==1.4.1
+scikit-learn==1.4.2
 numpy==1.26.4
 scipy==1.12.0
 shap==0.44.1
@@ -30,8 +30,11 @@ torch==2.2.1
 
 # Auth & Security
 python-jose[cryptography]==3.3.0
-passlib[bcrypt]==1.7.4
+argon2-cffi==25.1.0
 python-dotenv==1.0.1
+PyJWT==2.12.1
+email-validator==2.3.0
+aiosqlite==0.22.1
 
 # Scraping
 beautifulsoup4==4.12.3

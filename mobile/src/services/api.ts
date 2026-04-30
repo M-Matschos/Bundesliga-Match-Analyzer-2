@@ -155,7 +155,7 @@ export const weekendService = {
 // ─── Matches ─────────────────────────────────────────────────
 
 export const matchService = {
-  async getMatches(params?: { league?: string; matchday?: number; status?: string }) {
+  async getMatches(params?: { league?: string; matchday?: number; status?: string; days?: number; limit?: number }): Promise<Match[]> {
     const { data } = await api.get('/matches', { params })
     return data
   },
@@ -163,7 +163,7 @@ export const matchService = {
     const { data } = await api.get(`/matches/${id}`)
     return data
   },
-  async getLiveMatches() {
+  async getLiveMatches(): Promise<Match[]> {
     const { data } = await api.get('/matches/live')
     return data
   }
@@ -172,48 +172,163 @@ export const matchService = {
 
 // ─── Teams ───────────────────────────────────────────────────
 
+export interface Team {
+  id: string
+  name: string
+  logo_url?: string
+  league: string
+  position?: number
+  wins?: number
+  draws?: number
+  losses?: number
+  goals_for?: number
+  goals_against?: number
+  goal_difference?: number
+  points?: number
+}
+
 export const teamService = {
-  async getTeams(league?: string) {
+  async getTeams(league?: string): Promise<Team[]> {
     const { data } = await api.get('/teams', { params: { league } })
     return data
   },
-  async getTeam(id: string) {
+  async getTeam(id: string): Promise<Team> {
     const { data } = await api.get(`/teams/${id}`)
     return data
   },
-  async getTeamForm(id: string, games = 10) {
+  async getTeamForm(id: string, games = 10): Promise<Match[]> {
     const { data } = await api.get(`/teams/${id}/form?games=${games}`)
     return data
   },
-  async getH2H(homeId: string, awayId: string) {
+  async getH2H(homeId: string, awayId: string): Promise<{ home_wins: number; draws: number; away_wins: number }> {
     const { data } = await api.get(`/teams/${homeId}/h2h/${awayId}`)
+    return data
+  },
+  async getTeamExtended(id: string): Promise<TeamExtendedData> {
+    const { data } = await api.get(`/teams/${id}/extended`)
+    return data
+  },
+  async getTeamInjuries(id: string): Promise<Injury[]> {
+    const { data } = await api.get(`/teams/${id}/injuries`)
+    return data
+  },
+  async getTeamH2H(id: string): Promise<H2HRecord[]> {
+    const { data } = await api.get(`/teams/${id}/h2h-record`)
+    return data
+  },
+  async getTeamPosition(id: string): Promise<any> {
+    const { data } = await api.get(`/teams/${id}/position`)
     return data
   }
 }
 
 
+// ─── Players ──────────────────────────────────────────────────
+
+export interface PlayerStats {
+  appearances: number
+  starts: number
+  substitutions: number
+  minutes_played: number
+  goals: number
+  assists: number
+  yellow_cards: number
+  red_cards: number
+  avg_rating: number
+  passes_completed: number
+  pass_accuracy: number
+  tackles: number
+  interceptions: number
+  clearances: number
+  saves?: number
+  clean_sheets?: number
+}
+
+export interface Player {
+  player_id: string
+  name: string
+  position: string
+  team: string
+  team_id: string
+  jersey_number: number
+  nationality: string
+  date_of_birth: string
+  height: number
+  weight: number
+  market_value?: number
+  stats: PlayerStats
+}
+
+export const playerService = {
+  async getPlayer(id: string): Promise<Player> {
+    const { data } = await api.get(`/players/${id}`)
+    return data
+  },
+  async getPlayerStats(id: string): Promise<PlayerStats> {
+    const { data } = await api.get(`/players/${id}/stats`)
+    return data
+  },
+  async searchPlayers(query: string): Promise<Player[]> {
+    const { data } = await api.get('/players/search', { params: { q: query } })
+    return data
+  },
+  async getTeamSquad(teamId: string): Promise<Player[]> {
+    const { data } = await api.get(`/teams/${teamId}/squad`)
+    return data
+  },
+  async getPlayerForm(id: string, games = 10): Promise<any[]> {
+    const { data } = await api.get(`/players/${id}/form?games=${games}`)
+    return data
+  },
+}
+
+
 // ─── Virtual Betting ─────────────────────────────────────────
 
+export interface VirtualBet {
+  id: string
+  match_id: string
+  bet_type: 'home_win' | 'draw' | 'away_win' | 'over_2_5' | 'btts'
+  odds: number
+  amount: number
+  status: 'open' | 'won' | 'lost' | 'void' | 'cancelled'
+  created_at: string
+  settled_at?: string
+  profit_loss?: number
+}
+
+export interface PortfolioStats {
+  total_balance: number
+  total_staked: number
+  total_returns: number
+  roi_percent: number
+  total_bets: number
+  wins: number
+  losses: number
+  voids: number
+  win_rate_percent: number
+}
+
 export const bettingService = {
-  async getMyBets(status?: string) {
+  async getMyBets(status?: string): Promise<VirtualBet[]> {
     const { data } = await api.get('/virtual-bets', { params: { status } })
     return data
   },
-  async placeBet(matchId: string, betType: string, odds: number, amount: number) {
+  async placeBet(matchId: string, betType: string, odds: number, amount: number): Promise<VirtualBet> {
     const { data } = await api.post('/virtual-bets', null, {
       params: { match_id: matchId, bet_type: betType, odds, amount },
     })
     return data
   },
-  async getBetDetail(betId: string) {
+  async getBetDetail(betId: string): Promise<VirtualBet> {
     const { data } = await api.get(`/virtual-bets/${betId}`)
     return data
   },
-  async getPortfolioStats() {
+  async getPortfolioStats(): Promise<PortfolioStats> {
     const { data } = await api.get('/virtual-bets/statistics/portfolio')
     return data
   },
-  async cancelBet(betId: string) {
+  async cancelBet(betId: string): Promise<{ success: boolean }> {
     const { data } = await api.post(`/virtual-bets/${betId}/cancel`)
     return data
   },
@@ -222,16 +337,35 @@ export const bettingService = {
 
 // ─── Predictions ─────────────────────────────────────────────
 
+export interface TeamStrength {
+  team_id: string
+  team_name: string
+  elo_rating: number
+  form_rating: number
+  attack_strength: number
+  defense_strength: number
+}
+
+export interface ModelComparison {
+  match_id: string
+  models: {
+    xgboost: Prediction
+    poisson: Prediction
+    dixon_coles: Prediction
+    ensemble: Prediction
+  }
+}
+
 export const predictionService = {
-  async getPrediction(matchId: string) {
+  async getPrediction(matchId: string): Promise<Prediction> {
     const { data } = await api.get(`/predictions/${matchId}`)
     return data
   },
-  async getValueBets(minEdge = 5) {
+  async getValueBets(minEdge = 5): Promise<Match[]> {
     const { data } = await api.get('/predictions/value-bets', { params: { min_edge: minEdge } })
     return data
   },
-  async simulatePrediction(homeTeam: string, awayTeam: string, params?: any) {
+  async simulatePrediction(homeTeam: string, awayTeam: string, params?: any): Promise<Prediction> {
     const { data } = await api.post('/predictions/simulate', {
       home_team: homeTeam,
       away_team: awayTeam,
@@ -239,11 +373,11 @@ export const predictionService = {
     })
     return data
   },
-  async getTeamStrength(teamId: string) {
+  async getTeamStrength(teamId: string): Promise<TeamStrength> {
     const { data } = await api.get(`/predictions/team-strength/${teamId}`)
     return data
   },
-  async getModelComparison(matchId: string) {
+  async getModelComparison(matchId: string): Promise<ModelComparison> {
     const { data } = await api.get(`/predictions/match-comparison/${matchId}`)
     return data
   },
@@ -323,6 +457,68 @@ export const authService = {
 
   async getToken(): Promise<string | null> {
     return AsyncStorage.getItem('auth_token')
+  },
+}
+
+
+// ─── Metrics (Open Transparency) ────────────────────────────
+
+export interface AccuracyMetrics {
+  confidence_level: 'HIGH' | 'MEDIUM' | 'LOW' | 'ALL'
+  accuracy_percent: number
+  win_rate_percent: number
+  sample_size: number
+  period_days: number
+}
+
+export interface CalibrationPoint {
+  predicted_probability: number
+  actual_win_rate: number
+  num_predictions: number
+}
+
+export interface ROITrendPoint {
+  date: string
+  roi_percent: number
+  sample_size: number
+}
+
+export interface MetricsDashboard {
+  overall_accuracy: AccuracyMetrics
+  accuracy_by_confidence: AccuracyMetrics[]
+  accuracy_by_league: Record<string, number>
+  calibration_curve: CalibrationPoint[]
+  roi_trend: ROITrendPoint[]
+  total_predictions_analyzed: number
+  last_updated: string
+}
+
+export const metricsService = {
+  async getDashboard(days = 30): Promise<MetricsDashboard> {
+    const { data } = await api.get('/metrics/dashboard', { params: { days } })
+    return data
+  },
+
+  async getAccuracy(period: '7d' | '30d' | '90d' | '1y' | 'all' = '30d'): Promise<{ accuracy_percent: number; sample_size: number; period: string }> {
+    const { data } = await api.get('/metrics/accuracy', { params: { period } })
+    return data
+  },
+
+  async getCalibration(days = 30): Promise<{ calibration_points: CalibrationPoint[]; interpretation: string }> {
+    const { data } = await api.get('/metrics/calibration', { params: { days } })
+    return data
+  },
+
+  async getPerformanceHistory(limit = 100, confidence_filter?: 'HIGH' | 'MEDIUM' | 'LOW'): Promise<any> {
+    const { data } = await api.get('/metrics/performance-history', {
+      params: { limit, confidence_filter },
+    })
+    return data
+  },
+
+  async getHealthCheck(): Promise<{ status: string; predictions_last_24h: number; data_freshness_minutes: number; model_version: string }> {
+    const { data } = await api.get('/metrics/health-check')
+    return data
   },
 }
 

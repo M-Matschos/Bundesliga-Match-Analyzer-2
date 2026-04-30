@@ -7,7 +7,7 @@ All values are validated at startup.
 from typing import Optional, List
 from functools import lru_cache
 from pydantic_settings import BaseSettings
-from pydantic import Field, validator
+from pydantic import Field, field_validator
 
 
 class Settings(BaseSettings):
@@ -44,8 +44,8 @@ class Settings(BaseSettings):
     bcrypt_rounds: int = Field(default=12, env="BCRYPT_ROUNDS")
 
     # --- CORS ---
-    cors_origins: List[str] = Field(
-        default=["http://localhost:3000", "http://localhost:8081"],
+    cors_origins: str = Field(
+        default="http://localhost:3000,http://localhost:8081",
         env="CORS_ORIGINS",
     )
     cors_allow_credentials: bool = Field(default=True, env="CORS_ALLOW_CREDENTIALS")
@@ -126,7 +126,7 @@ class Settings(BaseSettings):
         case_sensitive = False
         extra = "ignore"
 
-    @validator("jwt_secret")
+    @field_validator("jwt_secret")
     @classmethod
     def validate_jwt_secret(cls, v: str) -> str:
         """Ensure JWT secret is strong enough."""
@@ -134,17 +134,10 @@ class Settings(BaseSettings):
             raise ValueError("JWT_SECRET must be at least 32 characters")
         return v
 
-    @validator("cors_origins", pre=True)
-    @classmethod
-    def parse_cors_origins(cls, v: str) -> list[str]:
-        """Parse CORS origins from comma-separated string."""
-        if isinstance(v, str):
-            return [origin.strip() for origin in v.split(",")]
-        return v
 
-    @validator("cors_allow_methods", pre=True)
+    @field_validator("cors_allow_methods", mode="before")
     @classmethod
-    def parse_cors_methods(cls, v: str) -> list[str]:
+    def parse_cors_methods(cls, v):
         """Parse CORS methods from comma-separated string."""
         if isinstance(v, str) and v != "*":
             return [method.strip() for method in v.split(",")]
@@ -156,6 +149,9 @@ class Settings(BaseSettings):
         # Convert postgresql:// to postgresql+asyncpg://
         if "postgresql://" in self.database_url:
             return self.database_url.replace("postgresql://", "postgresql+asyncpg://")
+        # Convert sqlite:// to sqlite+aiosqlite://
+        if "sqlite://" in self.database_url:
+            return self.database_url.replace("sqlite://", "sqlite+aiosqlite://")
         return self.database_url
 
     @property

@@ -9,8 +9,7 @@ from sqlalchemy import select, and_, or_, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
-from app.core.db import get_db
-from app.models.db import Match, User
+from app.models.db import get_db, Match, User
 from app.models.schemas import (
     MatchResponse,
     MatchListResponse,
@@ -18,7 +17,7 @@ from app.models.schemas import (
 )
 from app.core.security import get_current_user
 
-router = APIRouter(prefix="/api/v1/matches", tags=["matches"])
+router = APIRouter(tags=["matches"])
 
 
 @router.get("", response_model=MatchListResponse)
@@ -73,18 +72,18 @@ async def list_matches(
     matches = result.scalars().all()
 
     # Count total for pagination
-    count_result = await db.execute(
-        select(func.count(Match.id)).where(
-            and_(*filters) if filters else True
-        )
-    )
+    if filters:
+        count_query = select(func.count(Match.id)).where(and_(*filters))
+    else:
+        count_query = select(func.count(Match.id))
+    count_result = await db.execute(count_query)
     total = count_result.scalar() or 0
 
     return MatchListResponse(
         total=total,
         limit=limit,
         offset=offset,
-        matches=[MatchResponse.from_orm(m) for m in matches],
+        matches=matches,
     )
 
 

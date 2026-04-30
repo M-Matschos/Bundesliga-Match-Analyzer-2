@@ -1,0 +1,28 @@
+{
+  "hooks": [
+    {
+      "id": "pre-commit-quality-check",
+      "event": "PreToolUse",
+      "description": "Pre-Commit Qualitätsprüfung für TypeScript, ESLint, Jest, Sicherheit",
+      "type": "prompt",
+      "prompt": "Überprüfe den bevorstehenden Code auf Qualität. Führe folgende Validierung durch:\n1. TypeScript Compilation prüfen (keine Fehler)\n2. ESLint-Regeln prüfen (strict config)\n3. Jest-Tests alle bestanden (minimum 80% coverage)\n4. Security-Audit ohne kritische Lücken\nBei Fehlern: Stop commit mit detaillierter Fehlerbeschreibung.",
+      "severity": "high"
+    },
+    {
+      "id": "post-analysis-logging",
+      "event": "PostToolUse",
+      "description": "Post-Analysis Logging für Entscheidungsaudit",
+      "type": "prompt",
+      "prompt": "Nach jeder Match-Analyse Entscheidung: Speichere vollständigen Audit-Trail:\n1. Alle Sub-Modell Vorhersagen\n2. Ensemble-Konfidenz-Score\n3. Kelly-Kriterium Berechnung\n4. Kapitalallokations-Entscheidung\n5. Kill-Switch Status\n6. Begründung für Wett-/Nicht-Wett-Empfehlung\nMit Timestamp, User-Info, Trace-ID für Forensik.",
+      "severity": "high"
+    },
+    {
+      "id": "safety-gate-deployment",
+      "event": "PreToolUse",
+      "description": "Deployment Safety-Gate: Modell-Accuracy, Kill-Switch, Kapital-Grenzen prüfen",
+      "type": "prompt",
+      "prompt": "Vor jedem Deployment prüfe Safety-Gates:\n1. Modell-Accuracy mindestens 55% (Validation + Test-Set)\n2. Kill-Switch-Mechanismus funktioniert (manuell testbar)\n3. Kapital-Grenzen durchgesetzt:\n   - Min €10, Max €500 pro Wette\n   - Tages-Limit €500\n   - Bankroll-Maximum €10.000\n   - Bankroll-Minimum €1.000\nBei Fehlern: Deployment blockieren mit detailliertem Bericht.",
+      "severity": "critical"
+    }
+  ]
+}

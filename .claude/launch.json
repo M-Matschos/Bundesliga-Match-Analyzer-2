@@ -1,0 +1,35 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "Backend (FastAPI)",
+      "runtimeExecutable": "python",
+      "runtimeArgs": ["-m", "uvicorn", "app.main:app", "--reload", "--host", "0.0.0.0", "--port", "8000"],
+      "port": 8000
+    },
+    {
+      "name": "Mobile (Expo)",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["start"],
+      "port": 19000
+    },
+    {
+      "name": "PostgreSQL (Docker)",
+      "runtimeExecutable": "docker",
+      "runtimeArgs": ["compose", "up", "postgres"],
+      "port": 5432
+    },
+    {
+      "name": "Redis (Docker)",
+      "runtimeExecutable": "docker",
+      "runtimeArgs": ["compose", "up", "redis"],
+      "port": 6379
+    },
+    {
+      "name": "All Services (Docker)",
+      "runtimeExecutable": "docker",
+      "runtimeArgs": ["compose", "up"],
+      "port": 5432
+    }
+  ]
+}

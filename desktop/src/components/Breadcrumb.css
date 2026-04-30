@@ -1,0 +1,152 @@
+@import './tokens.css';
+
+/* ============================================================================
+   BREADCRUMB
+   Navigation hierarchy (e.g., Home > Matches > Match Details)
+   Shows current location in app structure with clickable parent items
+   ============================================================================ */
+
+.Breadcrumb {
+  display: flex;
+  align-items: center;
+  padding: var(--space-md) 0;
+  border-bottom: 1px solid var(--color-border);
+}
+
+/* ============================================================================
+   BREADCRUMB LIST
+   Ordered list of navigation items
+   ============================================================================ */
+
+.Breadcrumb__list {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+/* ============================================================================
+   BREADCRUMB ITEM
+   Individual breadcrumb item (button or text)
+   ============================================================================ */
+
+.Breadcrumb__item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+/* ============================================================================
+   BREADCRUMB LINK (Clickable Button)
+   Navigable ancestor items styled to look like text links
+   ============================================================================ */
+
+.Breadcrumb__link {
+  padding: var(--space-xs) var(--space-sm);
+  background: transparent;
+  border: none;
+  color: var(--color-primary);
+  cursor: pointer;
+  font-size: var(--body-sm-size);
+  font-weight: 500;
+  text-decoration: none;
+  border-radius: var(--radius-sm);
+  transition: var(--transition);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  max-width: 200px;
+}
+
+.Breadcrumb__link:hover {
+  color: var(--color-primary-hover);
+  background: rgba(var(--color-primary-rgb), 0.1);
+  text-decoration: underline;
+}
+
+.Breadcrumb__link:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+.Breadcrumb__link:active {
+  background: rgba(var(--color-primary-rgb), 0.2);
+}
+
+/* ============================================================================
+   BREADCRUMB TEXT (Non-clickable Current Item)
+   Final breadcrumb item representing current page
+   ============================================================================ */
+
+.Breadcrumb__text {
+  padding: var(--space-xs) var(--space-sm);
+  color: var(--color-text-secondary);
+  font-size: var(--body-sm-size);
+  font-weight: 500;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  max-width: 200px;
+}
+
+.Breadcrumb__text--active {
+  color: var(--color-text-primary);
+  font-weight: 600;
+}
+
+/* ============================================================================
+   BREADCRUMB SEPARATOR
+   Divider between items (/, >, etc.)
+   ============================================================================ */
+
+.Breadcrumb__separator {
+  color: var(--color-text-secondary);
+  font-size: var(--body-sm-size);
+  margin: 0 var(--space-xs);
+  user-select: none;
+}
+
+/* ============================================================================
+   RESPONSIVE
+   ============================================================================ */
+
+@media (max-width: 768px) {
+  .Breadcrumb {
+    padding: var(--space-sm) 0;
+  }
+
+  .Breadcrumb__list {
+    gap: var(--space-xs);
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .Breadcrumb__link,
+  .Breadcrumb__text {
+    max-width: 120px;
+    font-size: var(--body-xs-size, 12px);
+    padding: var(--space-xs) 0;
+  }
+
+  .Breadcrumb__separator {
+    margin: 0 4px;
+    font-size: var(--body-xs-size, 12px);
+  }
+}
+
+/* ============================================================================
+   ACCESSIBILITY
+   ============================================================================ */
+
+.Breadcrumb__link:disabled {
+  color: var(--color-text-disabled);
+  cursor: not-allowed;
+  background: transparent;
+}
+
+.Breadcrumb__link:disabled:hover {
+  text-decoration: none;
+  background: transparent;
+}

@@ -1,0 +1,225 @@
+/**
+ * CSS Variables generated from design-tokens.ts
+ * Single source of truth for all visual design
+ *
+ * Usage: var(--color-primary), var(--space-md), etc.
+ */
+
+:root {
+  /* ============================================================================
+     COLOR TOKENS
+     ============================================================================ */
+
+  /* Primary Colors */
+  --color-primary: #3b82f6;
+  --color-primary-hover: #2563eb;
+  --color-primary-active: #1d4ed8;
+  --color-primary-disabled: #93c5fd;
+  --color-primary-light: #eff6ff;
+
+  /* Danger Colors */
+  --color-danger: #dc2626;
+  --color-danger-hover: #b91c1c;
+  --color-danger-active: #991b1b;
+  --color-danger-disabled: #fca5a5;
+  --color-danger-light: #fee2e2;
+
+  /* Success Colors */
+  --color-success: #10b981;
+  --color-success-hover: #059669;
+  --color-success-active: #047857;
+  --color-success-disabled: #a7f3d0;
+  --color-success-light: #ecfdf5;
+
+  /* Warning Colors */
+  --color-warning: #f59e0b;
+  --color-warning-hover: #d97706;
+  --color-warning-active: #b45309;
+  --color-warning-disabled: #fcd34d;
+  --color-warning-light: #fffbeb;
+
+  /* Info Colors */
+  --color-info: #06b6d4;
+  --color-info-hover: #0891b2;
+  --color-info-active: #0e7490;
+  --color-info-disabled: #a5f3fc;
+  --color-info-light: #ecf8ff;
+
+  /* Neutral Colors */
+  --color-background: #0f172a;
+  --color-surface: #1e293b;
+  --color-border: #334155;
+  --color-text-primary: #e2e8f0;
+  --color-text-secondary: #cbd5e1;
+  --color-text-muted: #94a3b8;
+  --color-text-inverse: #0f172a;
+
+  /* Confidence Colors */
+  --color-confidence-high: #10b981;
+  --color-confidence-medium: #f59e0b;
+  --color-confidence-low: #ef4444;
+
+  /* League Colors */
+  --color-league-bundesliga: #dd0000;
+  --color-league-bundesliga2: #009900;
+  --color-league-dfb-pokal: #ffd700;
+
+  /* Outcome Colors */
+  --color-outcome-home: #3b82f6;
+  --color-outcome-draw: #f59e0b;
+  --color-outcome-away: #ef4444;
+
+  /* Gradient */
+  --color-gradient-start: #0f172a;
+  --color-gradient-end: #1e293b;
+
+  /* ============================================================================
+     TYPOGRAPHY TOKENS
+     ============================================================================ */
+
+  --font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+    'Helvetica Neue', sans-serif;
+  --font-family-mono: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono',
+    Consolas, 'Courier New', monospace;
+
+  /* Heading Scale */
+  --heading-xl-size: 32px;
+  --heading-xl-weight: 700;
+  --heading-xl-line-height: 1.2;
+
+  --heading-lg-size: 24px;
+  --heading-lg-weight: 700;
+  --heading-lg-line-height: 1.2;
+
+  --heading-md-size: 20px;
+  --heading-md-weight: 600;
+  --heading-md-line-height: 1.3;
+
+  --heading-sm-size: 18px;
+  --heading-sm-weight: 600;
+  --heading-sm-line-height: 1.4;
+
+  /* Body Text Scale */
+  --body-lg-size: 16px;
+  --body-lg-weight: 400;
+  --body-lg-line-height: 1.5;
+
+  --body-md-size: 14px;
+  --body-md-weight: 400;
+  --body-md-line-height: 1.5;
+
+  --body-sm-size: 13px;
+  --body-sm-weight: 400;
+  --body-sm-line-height: 1.4;
+
+  /* Label Scale */
+  --label-lg-size: 14px;
+  --label-lg-weight: 600;
+  --label-lg-line-height: 1.4;
+
+  --label-md-size: 12px;
+  --label-md-weight: 600;
+  --label-md-line-height: 1.4;
+
+  --label-sm-size: 11px;
+  --label-sm-weight: 600;
+  --label-sm-line-height: 1.3;
+
+  /* Code */
+  --code-size: 13px;
+  --code-weight: 500;
+  --code-family: var(--font-family-mono);
+  --code-line-height: 1.5;
+
+  /* ============================================================================
+     SPACING TOKENS (8px base unit)
+     ============================================================================ */
+
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 16px;
+  --space-lg: 24px;
+  --space-xl: 32px;
+  --space-xxl: 48px;
+
+  /* ============================================================================
+     BORDER RADIUS TOKENS
+     ============================================================================ */
+
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 12px;
+  --radius-full: 9999px;
+
+  /* ============================================================================
+     ELEVATION / SHADOW TOKENS
+     ============================================================================ */
+
+  --shadow-none: none;
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+
+  /* ============================================================================
+     ANIMATION TOKENS
+     ============================================================================ */
+
+  --duration-fast: 150ms;
+  --duration-normal: 300ms;
+  --duration-slow: 500ms;
+
+  --easing-linear: linear;
+  --easing-ease-in: ease-in;
+  --easing-ease-out: ease-out;
+  --easing-ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+  --easing-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  /* ============================================================================
+     COMPOSITE TOKENS (for convenience)
+     ============================================================================ */
+
+  /* Transition standard */
+  --transition: all var(--duration-normal) var(--easing-ease-in-out);
+
+  /* Focus ring */
+  --focus-ring: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  --focus-ring-color: var(--color-primary);
+}
+
+/* ============================================================================
+   MEDIA QUERIES FOR BREAKPOINTS
+   ============================================================================ */
+
+/* Tablet (640px and up) */
+@media (min-width: 640px) {
+  :root {
+    /* Increase body text sizes slightly */
+    --body-lg-size: 16px;
+  }
+}
+
+/* Tablet Landscape (768px and up) */
+@media (min-width: 768px) {
+  :root {
+    /* Increase heading sizes */
+    --heading-xl-size: 36px;
+    --heading-lg-size: 28px;
+  }
+}
+
+/* Desktop (1024px and up) */
+@media (min-width: 1024px) {
+  :root {
+    /* Normal desktop sizes */
+  }
+}
+
+/* Large Desktop (1280px and up) */
+@media (min-width: 1280px) {
+  :root {
+    /* Spacing might increase */
+    --space-lg: 28px;
+    --space-xl: 36px;
+  }
+}

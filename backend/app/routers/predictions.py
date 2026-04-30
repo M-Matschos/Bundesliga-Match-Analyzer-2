@@ -7,12 +7,12 @@ from fastapi import APIRouter, HTTPException, Query, Depends, Header
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.db import get_db
+from app.models.db import get_db
 from app.models.db import Match, Prediction, User
 from app.models.schemas import PredictionResponse, MatchDetailResponse
 from app.ml.predictor import EnsemblePredictor
 
-router = APIRouter(prefix="/api/v1/predictions", tags=["predictions"])
+router = APIRouter(tags=["predictions"])
 
 # Initialize ensemble predictor (loaded on first request)
 _predictor = None
@@ -252,7 +252,7 @@ async def compare_models(
 
 @router.get("/team-strength/{team_id}")
 async def get_team_strength(
-    team_id: str = Query(..., description="Team ID"),
+    team_id: str,
     db: AsyncSession = Depends(get_db),
     authorization: Optional[str] = Header(None),
 ) -> dict:

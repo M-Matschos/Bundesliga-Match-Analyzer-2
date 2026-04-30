@@ -2,7 +2,8 @@
 
 from datetime import datetime
 from typing import Optional, List
-from pydantic import BaseModel, EmailStr, Field, validator
+from uuid import UUID
+from pydantic import BaseModel, EmailStr, Field, field_validator
 
 
 # --- AUTH SCHEMAS ---
@@ -87,7 +88,7 @@ class TokenResponse(BaseModel):
 class UserResponse(BaseModel):
     """User response schema."""
 
-    id: str = Field(..., description="User ID")
+    id: UUID = Field(..., description="User ID")
     email: EmailStr = Field(..., description="User email")
     username: Optional[str] = Field(None, description="Username")
     created_at: datetime = Field(..., description="Account creation date")
@@ -99,13 +100,99 @@ class UserResponse(BaseModel):
         from_attributes = True  # ORM mode for SQLAlchemy
         json_schema_extra = {
             "example": {
-                "id": "uuid-123",
+                "id": "550e8400-e29b-41d4-a716-446655440000",
                 "email": "user@example.com",
                 "username": "johndoe",
                 "created_at": "2026-04-24T12:00:00Z",
                 "is_active": True,
             }
         }
+
+
+# --- TEAM SCHEMAS ---
+
+
+class TeamBase(BaseModel):
+    """Base team schema."""
+
+    name: str = Field(..., max_length=100, description="Team name")
+    logo_url: Optional[str] = Field(None, max_length=500, description="Team logo URL")
+    league: str = Field(..., max_length=50, description="League ID (e.g., bundesliga)")
+    position: Optional[int] = Field(None, ge=1, description="Current table position")
+    wins: int = Field(default=0, ge=0, description="Season wins")
+    draws: int = Field(default=0, ge=0, description="Season draws")
+    losses: int = Field(default=0, ge=0, description="Season losses")
+    goals_for: int = Field(default=0, ge=0, description="Goals scored")
+    goals_against: int = Field(default=0, ge=0, description="Goals conceded")
+    points: int = Field(default=0, ge=0, description="Table points")
+
+
+class TeamCreate(TeamBase):
+    """Create team request."""
+
+    pass
+
+
+class TeamUpdate(BaseModel):
+    """Update team request — all fields optional."""
+
+    name: Optional[str] = Field(None, max_length=100)
+    logo_url: Optional[str] = Field(None, max_length=500)
+    league: Optional[str] = Field(None, max_length=50)
+    position: Optional[int] = Field(None, ge=1)
+    wins: Optional[int] = Field(None, ge=0)
+    draws: Optional[int] = Field(None, ge=0)
+    losses: Optional[int] = Field(None, ge=0)
+    goals_for: Optional[int] = Field(None, ge=0)
+    goals_against: Optional[int] = Field(None, ge=0)
+    points: Optional[int] = Field(None, ge=0)
+
+
+class TeamResponse(TeamBase):
+    """Team response schema."""
+
+    id: UUID = Field(..., description="Team UUID")
+    created_at: datetime = Field(..., description="Creation timestamp")
+    updated_at: datetime = Field(..., description="Last update timestamp")
+
+    class Config:
+        from_attributes = True
+        json_schema_extra = {
+            "example": {
+                "id": "550e8400-e29b-41d4-a716-446655440000",
+                "name": "Bayern Munich",
+                "logo_url": "https://media.api-sports.io/football/teams/40.png",
+                "league": "bundesliga",
+                "position": 1,
+                "wins": 22,
+                "draws": 4,
+                "losses": 2,
+                "goals_for": 78,
+                "goals_against": 28,
+                "points": 70,
+                "created_at": "2026-04-24T12:00:00Z",
+                "updated_at": "2026-04-24T12:00:00Z",
+            }
+        }
+
+
+class TeamDetailResponse(TeamResponse):
+    """Extended team response with computed stats."""
+
+    goal_difference: int = Field(0, description="goals_for - goals_against")
+    matches_played: int = Field(0, description="Total matches played")
+    win_percentage: float = Field(0.0, description="Win rate 0-100")
+
+    class Config:
+        from_attributes = True
+
+
+class TeamListResponse(BaseModel):
+    """Paginated team list response."""
+
+    league: str = Field(..., description="League ID")
+    total: int = Field(..., description="Total teams in league")
+    teams: List[TeamResponse] = Field(..., description="Team list")
 
 
 # --- MATCH SCHEMAS ---
@@ -142,7 +229,7 @@ class MatchUpdate(BaseModel):
 class MatchResponse(MatchBase):
     """Match response schema."""
 
-    id: str = Field(..., description="Match ID")
+    id: UUID = Field(..., description="Match ID")
     home_score: Optional[int] = Field(None, description="Home team goals")
     away_score: Optional[int] = Field(None, description="Away team goals")
     created_at: datetime = Field(..., description="Creation timestamp")
@@ -213,7 +300,7 @@ class MatchListResponse(BaseModel):
 class PredictionBase(BaseModel):
     """Base prediction schema."""
 
-    match_id: str = Field(..., description="Match ID")
+    match_id: UUID = Field(..., description="Match ID")
     home_win_prob: float = Field(..., ge=0, le=1, description="P(Home Win)")
     draw_prob: float = Field(..., ge=0, le=1, description="P(Draw)")
     away_win_prob: float = Field(..., ge=0, le=1, description="P(Away Win)")
@@ -223,7 +310,7 @@ class PredictionBase(BaseModel):
 class PredictionResponse(PredictionBase):
     """Prediction response schema."""
 
-    id: str = Field(..., description="Prediction ID")
+    id: UUID = Field(..., description="Prediction ID")
     expected_goals_home: float = Field(..., description="Expected goals (home)")
     expected_goals_away: float = Field(..., description="Expected goals (away)")
     most_likely_score: str = Field(..., description="Most likely score (e.g., 2:1)")
@@ -268,7 +355,7 @@ class WeekendCalculateRequest(BaseModel):
         default=100000, ge=10000, le=1000000, description="Monte Carlo simulations"
     )
 
-    @validator("date_from", "date_to", pre=True)
+    @field_validator("date_from", "date_to", mode="before")
     @classmethod
     def validate_date_format(cls, v: str) -> str:
         """Validate date format."""

@@ -4,16 +4,17 @@ import logging
 from datetime import datetime, timedelta, timezone
 from typing import Optional, Any, Dict
 import jwt
-from passlib.context import CryptContext
-from fastapi import HTTPException, status
+from argon2 import PasswordHasher
+from argon2.exceptions import VerifyMismatchError
+from fastapi import HTTPException, status, Header, Depends
 from pydantic import BaseModel
 
 from app.core.config import settings
 
 logger = logging.getLogger(__name__)
 
-# Password hashing context (using bcrypt)
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+# Password hashing using argon2
+ph = PasswordHasher()
 
 
 class TokenPayload(BaseModel):
@@ -28,7 +29,7 @@ class TokenPayload(BaseModel):
 
 
 def hash_password(password: str) -> str:
-    """Hash password using bcrypt.
+    """Hash password using argon2.
 
     Args:
         password: Plain text password
@@ -36,7 +37,7 @@ def hash_password(password: str) -> str:
     Returns:
         Hashed password
     """
-    return pwd_context.hash(password)
+    return ph.hash(password)
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
@@ -49,7 +50,11 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
     Returns:
         True if password matches, False otherwise
     """
-    return pwd_context.verify(plain_password, hashed_password)
+    try:
+        ph.verify(hashed_password, plain_password)
+        return True
+    except VerifyMismatchError:
+        return False
 
 
 def create_token(
@@ -195,8 +200,10 @@ def get_user_id_from_token(token: str) -> str:
     return payload.sub
 
 
-async def get_current_user(token: str) -> TokenPayload:
+async def get_current_user(authorization: str = Header(...)) -> TokenPayload:
     """Dependency for getting current user from JWT token.
+
+    Extracts token from Authorization header (Bearer scheme).
 
     Use in FastAPI route dependencies:
         @router.get("/protected")
@@ -204,7 +211,7 @@ async def get_current_user(token: str) -> TokenPayload:
             return {"user_id": current_user.sub}
 
     Args:
-        token: JWT token from Authorization header
+        authorization: Authorization header value (e.g., "Bearer <token>")
 
     Returns:
         Decoded token payload
@@ -212,10 +219,21 @@ async def get_current_user(token: str) -> TokenPayload:
     Raises:
         HTTPException: If token is invalid or missing
     """
-    if not token:
+    if not authorization:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Missing authorization token",
+            detail="Missing authorization header",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    try:
+        scheme, token = authorization.split()
+        if scheme.lower() != "bearer":
+            raise ValueError("Invalid scheme")
+    except (ValueError, AttributeError):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid authorization header",
             headers={"WWW-Authenticate": "Bearer"},
         )
 

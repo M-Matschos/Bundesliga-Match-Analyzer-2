@@ -1,10 +1,16 @@
 /**
+import { useTheme } from '../context/ThemeContext'
  * Summary Bar — Aggregate Statistics
+import { useTheme } from '../context/ThemeContext'
  */
+import { useTheme } from '../context/ThemeContext'
 
+import { useTheme } from '../context/ThemeContext'
 import React from 'react'
+import { useTheme } from '../context/ThemeContext'
 import { View, Text, StyleSheet } from 'react-native'
-import { COLORS, SPACING, RADIUS } from '../theme/colors'
+import { useTheme } from '../context/ThemeContext'
+import { getColors, SPACING, RADIUS } from '../theme/colors'
 
 interface SummaryBarProps {
   totalMatches: number
@@ -30,7 +36,7 @@ export default function SummaryBar({
 
       <View style={styles.stat}>
         <Text style={styles.label}>Hohes Vertrauen</Text>
-        <Text style={[styles.value, { color: COLORS.greenLight }]}>
+        <Text style={[styles.value, { color: colors.greenLight }]}>
           {highConfidence}
         </Text>
       </View>
@@ -39,7 +45,7 @@ export default function SummaryBar({
 
       <View style={styles.stat}>
         <Text style={styles.label}>Value Bets</Text>
-        <Text style={[styles.value, { color: COLORS.valueBet }]}>
+        <Text style={[styles.value, { color: colors.valueBet }]}>
           {valueBets}
         </Text>
       </View>
@@ -60,7 +66,7 @@ export default function SummaryBar({
 const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
-    backgroundColor: COLORS.surface,
+    backgroundColor: colors.surface,
     borderRadius: RADIUS.lg,
     paddingHorizontal: SPACING.md,
     paddingVertical: SPACING.md,
@@ -74,19 +80,19 @@ const styles = StyleSheet.create({
   },
   label: {
     fontSize: 11,
-    color: COLORS.textMuted,
+    color: colors.textMuted,
     marginBottom: 4,
     fontWeight: '500',
   },
   value: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: COLORS.blueLight,
+    color: colors.blueLight,
   },
   divider: {
     width: 1,
     height: 40,
-    backgroundColor: COLORS.border,
+    backgroundColor: colors.border,
     marginHorizontal: SPACING.sm,
   },
 })

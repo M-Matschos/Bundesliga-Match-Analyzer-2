@@ -12,7 +12,7 @@ import {
   StyleSheet,
   RefreshControl,
 } from 'react-native'
-import { COLORS, SPACING, RADIUS, formatProb } from '../theme/colors'
+import { getColors, SPACING, RADIUS, formatProb } from '../theme/colors'
 import { bettingService, predictionService } from '../services/api'
 
 interface Bet {
@@ -43,10 +43,20 @@ interface Portfolio {
 
 export default function VirtualBettingScreen({ navigation }: any) {
   const [bets, setBets] = useState<Bet[]>([])
+  const { mode } = useTheme()
+  const colors = getColors(mode)
   const [portfolio, setPortfolio] = useState<Portfolio | null>(null)
+  const { mode } = useTheme()
+  const colors = getColors(mode)
   const [loading, setLoading] = useState(false)
+  const { mode } = useTheme()
+  const colors = getColors(mode)
   const [refreshing, setRefreshing] = useState(false)
+  const { mode } = useTheme()
+  const colors = getColors(mode)
   const [selectedTab, setSelectedTab] = useState<'all' | 'pending' | 'settled'>('all')
+  const { mode } = useTheme()
+  const colors = getColors(mode)
 
   useEffect(() => {
     fetchData()
@@ -82,10 +92,10 @@ export default function VirtualBettingScreen({ navigation }: any) {
   })
 
   const getStatusColor = (status: string) => {
-    if (status === 'won') return COLORS.greenLight
-    if (status === 'lost') return COLORS.red
-    if (status === 'pending') return COLORS.yellow
-    return COLORS.textMuted
+    if (status === 'won') return colors.greenLight
+    if (status === 'lost') return colors.red
+    if (status === 'pending') return colors.yellow
+    return colors.textMuted
   }
 
   const getStatusLabel = (status: string) => {
@@ -98,7 +108,7 @@ export default function VirtualBettingScreen({ navigation }: any) {
   if (loading && bets.length === 0) {
     return (
       <View style={[styles.container, styles.centerContent]}>
-        <ActivityIndicator size="large" color={COLORS.blueLight} />
+        <ActivityIndicator size="large" color={colors.blueLight} />
       </View>
     )
   }
@@ -130,8 +140,8 @@ export default function VirtualBettingScreen({ navigation }: any) {
                 {
                   color:
                     portfolio.stats.net_profit >= 0
-                      ? COLORS.greenLight
-                      : COLORS.red,
+                      ? colors.greenLight
+                      : colors.red,
                 },
               ]}
             >
@@ -146,7 +156,7 @@ export default function VirtualBettingScreen({ navigation }: any) {
                 styles.statValue,
                 {
                   color:
-                    portfolio.stats.roi >= 0 ? COLORS.greenLight : COLORS.red,
+                    portfolio.stats.roi >= 0 ? colors.greenLight : colors.red,
                 },
               ]}
             >
@@ -262,7 +272,7 @@ export default function VirtualBettingScreen({ navigation }: any) {
                 {bet.win_amount && bet.status === 'won' && (
                   <View style={styles.detailItem}>
                     <Text style={styles.detailLabel}>Gewonnen</Text>
-                    <Text style={[styles.detailValue, { color: COLORS.greenLight }]}>
+                    <Text style={[styles.detailValue, { color: colors.greenLight }]}>
                       €{bet.win_amount.toFixed(2)}
                     </Text>
                   </View>
@@ -293,7 +303,7 @@ export default function VirtualBettingScreen({ navigation }: any) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.background,
+    backgroundColor: colors.background,
   },
   centerContent: {
     justifyContent: 'center',
@@ -302,19 +312,19 @@ const styles = StyleSheet.create({
   header: {
     paddingHorizontal: SPACING.lg,
     paddingVertical: SPACING.lg,
-    backgroundColor: COLORS.primary,
+    backgroundColor: colors.primary,
     borderBottomWidth: 1,
-    borderBottomColor: COLORS.border,
+    borderBottomColor: colors.border,
   },
   title: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: COLORS.text,
+    color: colors.text,
     marginBottom: SPACING.sm,
   },
   subtitle: {
     fontSize: 14,
-    color: COLORS.textSecond,
+    color: colors.textSecond,
   },
   statsSection: {
     paddingHorizontal: SPACING.lg,
@@ -326,25 +336,25 @@ const styles = StyleSheet.create({
   statCard: {
     flex: 1,
     minWidth: '45%',
-    backgroundColor: COLORS.surface,
+    backgroundColor: colors.surface,
     borderRadius: RADIUS.md,
     padding: SPACING.md,
     alignItems: 'center',
   },
   statLabel: {
     fontSize: 11,
-    color: COLORS.textMuted,
+    color: colors.textMuted,
     marginBottom: 4,
   },
   statValue: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: COLORS.blueLight,
+    color: colors.blueLight,
   },
   tabs: {
     flexDirection: 'row',
     borderBottomWidth: 1,
-    borderBottomColor: COLORS.border,
+    borderBottomColor: colors.border,
     paddingHorizontal: SPACING.lg,
   },
   tab: {
@@ -355,15 +365,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   tabActive: {
-    borderBottomColor: COLORS.blueLight,
+    borderBottomColor: colors.blueLight,
   },
   tabText: {
     fontSize: 12,
-    color: COLORS.textMuted,
+    color: colors.textMuted,
     fontWeight: '500',
   },
   tabTextActive: {
-    color: COLORS.blueLight,
+    color: colors.blueLight,
   },
   section: {
     paddingHorizontal: SPACING.lg,
@@ -371,17 +381,17 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontSize: 14,
-    color: COLORS.textMuted,
+    color: colors.textMuted,
     textAlign: 'center',
     paddingVertical: SPACING.lg,
   },
   betCard: {
-    backgroundColor: COLORS.surface,
+    backgroundColor: colors.surface,
     borderRadius: RADIUS.lg,
     padding: SPACING.md,
     marginBottom: SPACING.md,
     borderLeftWidth: 4,
-    borderLeftColor: COLORS.blueLight,
+    borderLeftColor: colors.blueLight,
   },
   betHeader: {
     flexDirection: 'row',
@@ -391,11 +401,11 @@ const styles = StyleSheet.create({
   betType: {
     fontSize: 14,
     fontWeight: '600',
-    color: COLORS.text,
+    color: colors.text,
   },
   betDate: {
     fontSize: 11,
-    color: COLORS.textMuted,
+    color: colors.textMuted,
     marginTop: 2,
   },
   betStatus: {
@@ -407,7 +417,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingVertical: SPACING.sm,
     borderTopWidth: 1,
-    borderTopColor: COLORS.border,
+    borderTopColor: colors.border,
     marginBottom: SPACING.md,
   },
   detailItem: {
@@ -416,22 +426,22 @@ const styles = StyleSheet.create({
   },
   detailLabel: {
     fontSize: 10,
-    color: COLORS.textMuted,
+    color: colors.textMuted,
     marginBottom: 2,
   },
   detailValue: {
     fontSize: 13,
     fontWeight: 'bold',
-    color: COLORS.blueLight,
+    color: colors.blueLight,
   },
   cancelButton: {
-    backgroundColor: COLORS.red,
+    backgroundColor: colors.red,
     paddingVertical: SPACING.sm,
     borderRadius: RADIUS.md,
     alignItems: 'center',
   },
   cancelButtonText: {
-    color: COLORS.text,
+    color: colors.text,
     fontWeight: '600',
     fontSize: 13,
   },

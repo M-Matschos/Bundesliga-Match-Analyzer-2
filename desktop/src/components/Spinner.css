@@ -1,0 +1,148 @@
+@import './tokens.css';
+
+/* ============================================================================
+   SPINNER COMPONENT
+   Loading indicator with rotation animation
+   ============================================================================ */
+
+.Spinner__container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-md);
+}
+
+.Spinner__container--inline {
+  height: auto;
+}
+
+.Spinner__container--overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.3);
+  z-index: 1000;
+}
+
+/* ============================================================================
+   SPINNER — Base
+   ============================================================================ */
+
+.Spinner {
+  border: 3px solid rgba(59, 130, 246, 0.1);
+  border-top-color: currentColor;
+  border-radius: 50%;
+  animation: Spinner__spin 1s linear infinite;
+}
+
+@keyframes Spinner__spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ============================================================================
+   SPINNER SIZES
+   ============================================================================ */
+
+.Spinner--sm {
+  width: 16px;
+  height: 16px;
+  border-width: 2px;
+}
+
+.Spinner--md {
+  width: 40px;
+  height: 40px;
+  border-width: 3px;
+}
+
+.Spinner--lg {
+  width: 60px;
+  height: 60px;
+  border-width: 4px;
+}
+
+/* ============================================================================
+   SPINNER COLORS
+   ============================================================================ */
+
+.Spinner--primary {
+  color: var(--color-primary);
+}
+
+.Spinner--success {
+  color: var(--color-success);
+}
+
+.Spinner--danger {
+  color: var(--color-danger);
+}
+
+.Spinner--warning {
+  color: var(--color-warning);
+}
+
+.Spinner--white {
+  color: white;
+}
+
+/* ============================================================================
+   SPINNER LABEL
+   ============================================================================ */
+
+.Spinner__label {
+  margin: 0;
+  color: var(--color-text-secondary);
+  font-size: var(--body-md-size);
+  font-weight: 500;
+}
+
+/* ============================================================================
+   OVERLAY SPINNER
+   ============================================================================ */
+
+.OverlaySpinner {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+/* ============================================================================
+   SCREEN READER ONLY TEXT
+   ============================================================================ */
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+/* ============================================================================
+   RESPONSIVE
+   ============================================================================ */
+
+@media (max-width: 768px) {
+  .Spinner__container {
+    gap: var(--space-sm);
+  }
+
+  .Spinner__label {
+    font-size: var(--body-sm-size);
+  }
+}

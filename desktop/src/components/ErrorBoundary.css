@@ -1,0 +1,149 @@
+@import './tokens.css';
+
+/* ============================================================================
+   ERROR BOUNDARY
+   Full-screen error display when component crashes
+   ============================================================================ */
+
+.ErrorBoundary {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: var(--color-surface);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  padding: var(--space-lg);
+}
+
+.ErrorBoundary__content {
+  text-align: center;
+  max-width: 500px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-lg);
+}
+
+/* ============================================================================
+   ERROR ICON
+   ============================================================================ */
+
+.ErrorBoundary__icon {
+  font-size: 64px;
+  opacity: 0.8;
+}
+
+/* ============================================================================
+   ERROR TITLE & MESSAGE
+   ============================================================================ */
+
+.ErrorBoundary__title {
+  margin: 0;
+  font-size: var(--heading-lg-size);
+  font-weight: var(--heading-lg-weight);
+  color: var(--color-text-primary);
+}
+
+.ErrorBoundary__message {
+  margin: 0;
+  color: var(--color-text-secondary);
+  font-size: var(--body-md-size);
+  line-height: 1.6;
+}
+
+/* ============================================================================
+   ERROR DETAILS (Development Only)
+   ============================================================================ */
+
+.ErrorBoundary__details {
+  width: 100%;
+  padding: var(--space-md);
+  background: rgba(220, 38, 38, 0.1);
+  border: 1px solid var(--color-danger);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+}
+
+.ErrorBoundary__details summary {
+  color: var(--color-danger-light);
+  font-weight: 600;
+  user-select: none;
+}
+
+.ErrorBoundary__details summary:hover {
+  text-decoration: underline;
+}
+
+.ErrorBoundary__error-text {
+  margin: var(--space-md) 0 0 0;
+  padding: var(--space-md);
+  background: rgba(0, 0, 0, 0.5);
+  color: #00ff00;
+  font-family: 'Courier New', monospace;
+  font-size: 12px;
+  overflow-x: auto;
+  border-radius: var(--radius-sm);
+  text-align: left;
+  line-height: 1.4;
+}
+
+/* ============================================================================
+   RETRY BUTTON
+   ============================================================================ */
+
+.ErrorBoundary__button {
+  padding: var(--space-md) var(--space-lg);
+  background: var(--color-primary);
+  color: white;
+  border: none;
+  border-radius: var(--radius-md);
+  font-size: var(--body-md-size);
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition);
+  min-width: 140px;
+}
+
+.ErrorBoundary__button:hover {
+  background: var(--color-primary-hover);
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
+}
+
+.ErrorBoundary__button:active {
+  transform: translateY(0);
+}
+
+/* ============================================================================
+   RESPONSIVE
+   ============================================================================ */
+
+@media (max-width: 768px) {
+  .ErrorBoundary {
+    padding: var(--space-md);
+  }
+
+  .ErrorBoundary__content {
+    gap: var(--space-md);
+  }
+
+  .ErrorBoundary__icon {
+    font-size: 48px;
+  }
+
+  .ErrorBoundary__title {
+    font-size: var(--heading-md-size);
+  }
+
+  .ErrorBoundary__message {
+    font-size: var(--body-sm-size);
+  }
+
+  .ErrorBoundary__details {
+    font-size: 12px;
+  }
+}

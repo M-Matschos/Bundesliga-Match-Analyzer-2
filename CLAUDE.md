@@ -1,603 +1,316 @@
-# ⚽ Bundesliga Match Analyzer — CLAUDE.md
+# Bundesliga Match Analyzer
 
-> **Match Oracle:** KI-gestützte Fußball-Prognose-App für Bundesliga 1+2, Premier League, DFB-Pokal
+**Status:** Phase C 🔄 (Dark Mode & Testing)  
+**Team:** 1 FTE  
+**Timeline:** Phase C started 2026-04-26, ongoing dark mode validation and Jest test fixes
 
----
+## Architecture
 
-## 🎯 PROJEKTÜBERSICHT
+### Mobile (`mobile/`)
+- **src/screens/** — 10+ screens (Auth, Dashboard, Match Details, Notifications, Settings, etc.)
+- **src/components/** — 50+ reusable UI components (Tables, Modals, Toasts, Loading states)
+- **src/hooks/** — Custom hooks (useAuth, useNotifications, useMatches, useTheme)
+- **src/context/** — AuthContext, ToastContext, ThemeContext
+- **src/navigation/** — RootNavigator, Screen types, Deep linking config
+- **src/styles/** — Design tokens (colors, typography, spacing, shadows)
+- **__tests__/** — Jest unit tests with @testing-library/react-native
 
-**Status:** MVP Development (Sprint 1-4, 8 Wochen)  
-**Reifegrad:** 60% implementiert (Weekend Calculator + Core ML + Mobile UI Skeletons)  
-**Ziel:** Production-ready Release mit Auth, Predictions, Virtual Betting
+### Backend (`backend/`)
+- **app/models/** — Database models (Match, Team, Player, Notification, User)
+- **app/services/** — Business logic (MatchService, NotificationService, CircuitBreaker)
+- **app/routers/** — API endpoints (/matches, /notifications, /teams, /players)
+- **app/middleware/** — Authentication, error handling, request logging
+- **migrations/** — SQL migrations for schema setup
+- **tests/unit/** — Unit tests with pytest
 
----
+## Code Conventions
 
-## 📐 TECH STACK
+### TypeScript/React Native
+- Functional components with hooks
+- PascalCase for components, camelCase for functions/variables
+- Props interfaces prefixed with `I` (e.g., `INotificationProps`)
+- Screens in `screens/`, components in `components/`, hooks in `hooks/`
 
-### Backend
-- **Framework:** FastAPI 0.104 (Python 3.11+)
-- **ORM:** SQLAlchemy 2.0 + Alembic
-- **Database:** PostgreSQL 16 + TimescaleDB (Time-Series)
-- **Cache:** Redis 7 (Session + Predictions)
-- **Async:** Celery + Redis Broker (Background Tasks)
-- **ML:** XGBoost, Scikit-Learn, SHAP, NumPy, SciPy
-- **Validation:** Pydantic V2
+### Python/FastAPI
+- snake_case for functions/variables, PascalCase for classes
+- Type hints on all functions
+- Docstrings on all classes and public functions
+- Services handle business logic, routers handle HTTP
 
-### Frontend (Mobile)
-- **Framework:** React Native (Expo)
-- **Language:** TypeScript
-- **State:** React Context API (kein Redux – KISS)
-- **HTTP:** Axios
-- **UI:** React Native Paper (Material Design)
-- **Build:** Expo EAS (iOS/Android)
+### Testing
+- Jest for React Native, pytest for Python backend
+- Test files in `__tests__/` with `.test.tsx` / `.test.py` suffixes
+- Mock patterns defined in jest.setup.js and conftest.py
+- Aim for 80%+ coverage on critical paths
 
-### DevOps
-- **Container:** Docker + Docker Compose
-- **Orchestration:** Docker Compose (MVP), Kubernetes (Scale)
-- **CI/CD:** GitHub Actions (Lint, Test, Deploy)
-- **Monitoring:** Sentry (Error Tracking), DataDog (Metrics)
-- **Logging:** Structured JSON Logs (ELK Stack optional)
+### Commit Format
+- Prefix: `feat:`, `fix:`, `test:`, `docs:`, `refactor:`, `chore:`
+- Example: `feat: add dark mode support to NotificationHistoryScreen`
+- Keep commits atomic and focused
 
-### External APIs
-- **Fixtures/Stats:** API-Football (7500 req/day Pro)
-- **Football Data:** football-data.org (10 req/min)
-- **Odds:** OddsAPI (500 req/month Free)
-- **Weather:** OpenWeatherMap (1000 req/day Free)
-- **Affiliate:** Tipico deeplinks (native betting)
+## Dark Mode Implementation
 
----
-
-## 🏗️ ARCHITEKTUR
-
-### Datenfluss: Weekend-Berechnung (Kernfeature)
-
-```
-Nutzer klickt "Alle Spiele berechnen"
-        │
-        ▼
-POST /api/v1/weekend/calculate {leagues: ["bundesliga", "bundesliga2"]}
-        │
-        ├─→ Sofortige Response: {job_id, status: "calculating"}
-        │
-        └─→ Background Task (Celery):
-            │
-            ├─ Hole Wochenend-Spiele (API-Football + Cache)
-            │
-            ├─ Für jedes Spiel:
-            │  ├─ Feature Engineering (39 Faktoren)
-            │  ├─ XGBoost Prediction
-            │  ├─ Monte Carlo Simulation (100k)
-            │  ├─ Elo-Kalibrierung
-            │  ├─ SHAP Explanation (Top 3 Faktoren)
-            │  └─ Value Bet Detection (vs. Tipico Odds)
-            │
-            ├─ Speichere alle Prognosen in DB + Redis Cache (24h)
-            │
-            └─ Response ready: GET /weekend/results/{job_id}
-                    │
-                    ▼
-            Mobile App pollt alle 800ms, zeigt Progress-Bar
-                    │
-                    ▼
-            Fertig: 12 Spiele mit Confidence, Home/Draw/Away Probs
-```
-
-### Datenbank-Schichten
-
-| Schicht | Tech | Zweck |
-|---------|------|-------|
-| **Transactional** | PostgreSQL | User, Bets, Predictions (ACID) |
-| **Time-Series** | TimescaleDB | xG-Verläufe, Form-Kurven, Historical Stats |
-| **Cache** | Redis | Prognosen, Sessions, Rate Limiting |
-| **Storage** | S3/R2 | Logos, Match Videos (Optional) |
-
-### API-Schichten
-
-```
-Frontend (Mobile) 
-    ↓ REST + JWT
-API Gateway (FastAPI)
-    │   ├─ Auth Router (Login, Register, Profile)
-    │   ├─ Weekend Router (Predictions, Calculations)
-    │   ├─ Matches Router (Fixtures, Live, Stats)
-    │   ├─ Teams Router (Standings, Form, H2H)
-    │   ├─ Players Router (Stats, Injuries)
-    │   ├─ Predictions Router (Full Model, Simulate)
-    │   └─ Betting Router (Virtual Bets, Portfolio)
-    ↓
-ML Pipeline
-    │   ├─ Feature Engineering (39 Faktoren)
-    │   ├─ Ensemble Models (XGBoost, Poisson, Dixon-Coles, Elo)
-    │   └─ Monte Carlo Simulation (100k samples)
-    ↓
-Data Layer
-    │   ├─ PostgreSQL (Match Data, User Data)
-    │   ├─ TimescaleDB (Historical xG, Form Trends)
-    │   └─ Redis (Cache, Queue)
-    ↓
-External APIs
-    ├─ API-Football (Fixtures, Stats)
-    ├─ OddsAPI (Bookmaker Odds)
-    ├─ OpenWeatherMap (Stadium Weather)
-    └─ Tipico Affiliate (Deeplinks)
-```
-
----
-
-## 💻 CODING CONVENTIONS
-
-### Python (Backend)
-
-**Style Guide:** Black (88-char line length) + Flake8
-
-```bash
-# Auto-format
-black backend/
-
-# Lint
-flake8 backend/ --max-line-length=88 --ignore=E203,W503
-```
-
-**Imports:** Organized (stdlib → third-party → local)
-```python
-# 1. Standard library
-from datetime import datetime, timedelta
-from typing import Optional, List
-
-# 2. Third-party
-from fastapi import APIRouter, HTTPException, Depends
-from sqlalchemy import select
-import numpy as np
-
-# 3. Local
-from app.core.config import settings
-from app.models.schemas import MatchResponse
-```
-
-**Type Hints:** Always required (except simple loops)
-```python
-async def calculate_prediction(
-    match_id: str,
-    features: MatchFeatures,
-    cache: Redis,
-) -> PredictionResponse:
-    """Calculate match prediction using ensemble models."""
-```
-
-**Error Handling:** Never swallow exceptions
-```python
-# ❌ BAD
-try:
-    data = api_football.get_match(match_id)
-except Exception:
-    data = None  # Swallowed!
-
-# ✅ GOOD
-try:
-    data = api_football.get_match(match_id)
-except APIFootballError as e:
-    logger.error(f"API-Football unavailable: {e}")
-    # Return cached data or raise HTTPException
-    raise HTTPException(status_code=503, detail="Data source unavailable")
-except ValueError as e:
-    logger.warning(f"Invalid match_id: {match_id}, {e}")
-    raise HTTPException(status_code=400, detail="Invalid match ID")
-```
-
-**Logging:** Structured, with context
-```python
-logger.info(
-    "prediction_calculated",
-    extra={
-        "match_id": match_id,
-        "confidence": 0.78,
-        "duration_ms": 456,
-        "model_version": "v2.1",
-    }
-)
-```
-
-### TypeScript (Mobile)
-
-**Style Guide:** Prettier (ESLint airbnb)
-
-```bash
-# Format
-prettier --write mobile/src/
-
-# Lint
-eslint mobile/src/ --fix
-```
-
-**File Organization:**
-```
-mobile/src/
-├── screens/        # Full-page components
-├── components/     # Reusable UI components
-├── services/       # API, Auth, Storage
-├── hooks/          # Custom React hooks
-├── theme/          # Colors, Typography, Spacing
-└── utils/          # Helpers (formatters, validators)
-```
-
-**Component Style:**
+**Design System** — Centralized token definitions in `styles/tokens.ts`
 ```typescript
-import React, { useState, useCallback } from 'react'
-import { View, Text, TouchableOpacity } from 'react-native'
-import { useQuery } from '@react-query/react-native'
-
-interface WeekendCalculatorProps {
-  onCalculate?: (jobId: string) => void
-}
-
-export default function WeekendCalculatorScreen({
-  onCalculate,
-}: WeekendCalculatorProps) {
-  const [loading, setLoading] = useState(false)
-
-  // Styles inline (no external .css files)
-  const styles = {
-    container: {
-      flex: 1,
-      backgroundColor: colors.background,
-    },
-  }
-
-  return <View style={styles.container}>{/* ... */}</View>
-}
+const lightTheme = { background: '#FFFFFF', text: '#000000', ... }
+const darkTheme = { background: '#1A1A1A', text: '#FFFFFF', ... }
 ```
 
-**No Redux:** Context API is sufficient for this MVP
-```typescript
-// ✅ Good: Context
-const { predictions, loading } = useWeekendContext()
+**Component-Level** — useColorScheme() hook determines active theme
+- Light mode: white backgrounds, dark text, subtle shadows
+- Dark mode: dark backgrounds, light text, reduced brightness
 
-// ❌ Bad: Redux would be over-engineering
-// const predictions = useSelector(state => state.predictions)
+**Testing** — Dark mode unit tests validate theme switching
+- `NotificationHistoryScreen.test.tsx` — 5 tests for light/dark mode rendering
+- `NotificationToast.test.tsx` — 5 tests for toast component theming
+- All tests use jest mocks for useColorScheme and useTheme hooks
+
+## Phase Status
+
+### Phase A ✅ COMPLETE
+Mobile foundation with 10+ screens, authentication, navigation, and provider setup. 70+ tests passing.
+
+### Phase B ✅ COMPLETE
+5 design patterns implemented: Table, Modal, Toast, Loading/Error, Navigation. 300+ tests, 65+ KB docs.
+
+### Phase C 🔄 IN PROGRESS
+Dark mode implementation and comprehensive test validation. Current tasks:
+- Resolve Jest configuration for React Native component mocks (10 failing dark mode tests)
+- Validate all screens support theme switching
+- Complete API integration tests
+
+### Phase D 📋 PLANNED
+Production readiness: CI/CD pipeline, security audit, performance optimization, deployment guide.
+
+## Testing Standards
+
+**Jest Setup** — jest.setup.js mocks React Native and navigation libraries
+**Test Pattern** — Arrange-Act-Assert with async/await for async operations
+**Naming** — `test('renders <component> with <condition>', async () => {})`
+**Mocking** — useAuth, useNotifications, useColorScheme, useTheme all mocked globally
+**Dark Mode Tests** — Validate light/dark rendering, color switching, component behavior
+
+## Security
+
+- JWT tokens stored in AsyncStorage (secure storage recommended for production)
+- Notification permissions requested at runtime
+- Backend API validates all incoming data
+- No sensitive data logged to console
+
+## Performance Targets
+
+- Bundle size: < 15 MB
+- First load: < 3s
+- Frame rate: 60 FPS
+- Memory usage: < 100 MB
+- Network: Request timeout 10s, max retry 3x with exponential backoff
+
+## .claude/ Directory Structure
+
+```
+.claude/
+├── skills/                        # Integrierte Entwicklungs-Skills (2026-04-29)
+│   ├── sports-analytics/          🏆 Match-Prediction Engine (Kelly, Ensemble, Kill-Switch)
+│   ├── generate-tests/            🧪 Automatische Test-Generierung (Dark Mode Phase C!)
+│   ├── run-benchmarks/            ⚡ Performance & Regression Baseline Detection
+│   ├── security-audit/            🔐 Vulnerability Scanning (OWASP Top 10, Secrets)
+│   └── deployment-check/          🚀 Pre-Release Validation Checklist
+├── design-system/                 # UI-UX Pro Max Design Intelligence
+│   ├── src/ui-ux-pro-max/         📐 161 Industry Rules + 67 Styles + 161 Palettes
+│   ├── data/                      Color, typography, React Native, Dark Mode
+│   └── scripts/search.py          Domain-specific design recommendations
+├── agents/                        # Bundesliga-AI Autonome Agenten
+│   ├── orchestrator-agent/        (koordiniert alle Skills, parallele Läufe)
+│   ├── ensemble-validator-agent/  (validiert Match-Vorhersagen)
+│   └── learning-feedback-agent/   (kontinuierliches Lernen & Model-Update)
+├── hooks/
+│   ├── PostTooUse.sh      (auto-commit with NM-XXX format)
+│   ├── SessionStart.sh    (session initialization)
+│   └── PreCompact.sh      (state backup before compression)
+├── commands/
+│   └── ship.md            (Build → Lint → Deploy master command)
+├── plugins/
+│   └── vercel/            (Vercel integration plugin)
+├── rules/
+│   └── api.md             (API-specific rules)
+└── SKILLS_INTEGRATED.md   📖 Vollständige Dokumentation (Skills, Agents, Einsatz)
 ```
 
----
+## Integrierte Skills & Agents (2026-04-29)
 
-## 🧪 TESTING REQUIREMENTS
+### 🚀 PRIORITY 1: Sofort Einsatzbereit (Phase C/D)
 
-### Backend
+#### 1. **sports-analytics** — Match-Prediction Engine
+- 🏆 Ensemble-Models (3+ verschiedene Modelle kombiniert)
+- 💰 Kelly-Kriterium für Risk/Reward-Optimierung
+- 🛑 Kill-Switch-Logik (Pausiert bei < 40% Konfidenz)
+- 📊 Model-Drift-Erkennung & Auto-Retraining
+- 💹 ROI-Maximierung: €10–€500 Wettkasse, €500/Tag Limit
 
-**Target:** 80% Unit Coverage, 100% Critical Paths Integration
+**Einsatz:**
+```bash
+/sports-analytics                    # Match vorhersagen
+/sports-analytics --model ensemble   # Mehrere Modelle
+/sports-analytics --safety-check     # Kill-Switch prüfen
+```
+
+#### 2. **ui-ux-pro-max** — Design Intelligence (NEW!)
+- 📐 161 Industry-Specific Rules (Sports Analytics Category!)
+- 🎨 67 UI Styles (Glassmorphism, Modern, Sports Dashboard)
+- 🌈 161 Color Palettes (Bundesliga Brand Colors Available)
+- ✅ React Native Explicit Support
+- 🌙 Dark Mode First-Class Support (Phase C!)
+- 📱 Responsive Design Patterns (375px–1440px)
+
+**Einsatz für Phase C Dark Mode:**
+```bash
+/ui-ux-pro-max --dark-mode --theme sports-dashboard
+/ui-ux-pro-max --design-system      # Design System generieren
+/ui-ux-pro-max --component card     # Card Layout (Match Results)
+```
+
+#### 3. **generate-tests** — Test-Automatisierung
+- 🧪 Dark Mode Tests generieren (PHASE C PRIORITY!)
+- 📊 Component Coverage Reports
+- 🔄 Regression-Test Automation
+- ✅ Jest + React Native optimiert
 
 ```bash
-# Run all tests
-pytest backend/tests/ -v --cov=backend --cov-report=html
-
-# Only Unit
-pytest backend/tests/unit/ -v
-
-# Only Integration
-pytest backend/tests/integration/ -v
-
-# Single file
-pytest backend/tests/unit/routers/test_auth.py -v
+/generate-tests --dark-mode --full-coverage  # Alle Dark Mode Tests
+/generate-tests --component NotificationToast
+/generate-tests --api                        # Backend Tests
 ```
 
-**Test Structure:**
-```python
-# backend/tests/unit/routers/test_auth.py
-
-import pytest
-from fastapi.testclient import TestClient
-from app.main import app
-
-@pytest.fixture
-def client():
-    return TestClient(app)
-
-def test_register_success(client):
-    """Test successful user registration."""
-    response = client.post(
-        "/api/v1/auth/register",
-        json={"email": "test@example.com", "password": "secure123"}
-    )
-    assert response.status_code == 201
-    assert response.json()["email"] == "test@example.com"
-
-def test_register_duplicate_email(client, db_user):
-    """Test registration with duplicate email raises 400."""
-    response = client.post(
-        "/api/v1/auth/register",
-        json={"email": db_user.email, "password": "secure123"}
-    )
-    assert response.status_code == 400
-    assert "already exists" in response.json()["detail"]
-```
-
-**Integration Tests:** Hit real DB + Redis (Docker)
-```python
-# backend/tests/integration/test_weekend_calculator.py
-
-@pytest.mark.asyncio
-async def test_weekend_calculator_end_to_end(
-    client: TestClient,
-    auth_token: str,
-    postgres_db,
-    redis_cache,
-):
-    """Full E2E: Calculate weekend, fetch results, verify DB."""
-    # 1. Start calculation
-    response = client.post(
-        "/api/v1/weekend/calculate",
-        headers={"Authorization": f"Bearer {auth_token}"},
-        json={"leagues": ["bundesliga"], "simulations": 1000}
-    )
-    assert response.status_code == 202
-    job_id = response.json()["job_id"]
-
-    # 2. Wait for completion
-    await wait_for_job(job_id, redis_cache, timeout=30)
-
-    # 3. Fetch results
-    response = client.get(
-        f"/api/v1/weekend/results/{job_id}",
-        headers={"Authorization": f"Bearer {auth_token}"}
-    )
-    assert response.status_code == 200
-    data = response.json()
-    assert data["status"] == "completed"
-    assert len(data["matches"]) > 0
-
-    # 4. Verify DB
-    matches = postgres_db.query(Match).filter(...).all()
-    assert len(matches) == len(data["matches"])
-```
-
-### Mobile
-
-**Target:** Component Tests für kritische Screens
+#### 4. **run-benchmarks** — Performance Baseline
+- ⚡ Bundle Size Measurement (Target: < 15MB)
+- ⏱️ Load Time Validation (Target: < 3s)
+- 🎬 FPS Stability (Target: 60 FPS smooth)
+- 📈 Regression Detection (Before/After comparison)
 
 ```bash
-# Run React Native tests
-npm test --watchAll=false
-
-# Coverage
-npm test -- --coverage
+/run-benchmarks --baseline              # Setze Baseline
+/run-benchmarks --dark-mode --compare   # Nach Changes
 ```
 
-**Component Test:**
-```typescript
-// mobile/__tests__/screens/WeekendCalculatorScreen.test.tsx
-
-import { render, screen, fireEvent, waitFor } from '@testing-library/react-native'
-import WeekendCalculatorScreen from '../../src/screens/WeekendCalculatorScreen'
-
-describe('WeekendCalculatorScreen', () => {
-  it('renders league buttons', () => {
-    render(<WeekendCalculatorScreen />)
-    expect(screen.getByText('⚡ BL1 + BL2 berechnen')).toBeTruthy()
-  })
-
-  it('calculates weekend on button press', async () => {
-    const { getByText } = render(<WeekendCalculatorScreen />)
-    fireEvent.press(getByText('⚡ BL1 + BL2 berechnen'))
-
-    await waitFor(() => {
-      expect(screen.getByText(/Berechne Prognosen/i)).toBeTruthy()
-    })
-  })
-})
-```
-
----
-
-## 📋 GIT WORKFLOW
-
-### Branch Strategy: Trunk-Based with Feature Branches
-
-```
-main (production)
-  ↓ (PR + Review)
-feature/weekend-calculator
-feature/auth-router
-feature/ml-models
-feature/mobile-ui
-
-hotfix/fix-jwt-expiry
-  ↓ (PR + Hotfix)
-main
-```
-
-### Commit Message Format
-
-```
-<type>(<scope>): <subject>
-
-<body>
-
-Fixes #123
-Closes #456
-```
-
-**Types:** `feat`, `fix`, `refactor`, `test`, `docs`, `chore`
-
-**Example:**
-```
-feat(weekend-calculator): add Monte Carlo simulation with 100k samples
-
-- Vectorized NumPy implementation (50ms per match)
-- Confidence score based on probability concentration
-- Caches results in Redis for 24h
-
-Fixes #42
-```
-
-### Code Review Checklist
-
-- [ ] Type hints on all functions
-- [ ] Tests pass locally + CI
-- [ ] 80% test coverage (if backend)
-- [ ] No API keys in code (check .env.example)
-- [ ] Database migrations included (if schema changes)
-- [ ] Documentation updated (docstrings + API docs)
-- [ ] Performance impact considered
-
----
-
-## 🔐 SECURITY
-
-### API Authentication
-
-**JWT Token Flow:**
-```
-1. Register/Login → POST /auth/login
-2. Receive: {access_token, refresh_token, expires_in}
-3. Store refresh_token in Secure HttpOnly Cookie
-4. Store access_token in Memory (not localStorage!)
-5. Every API call: Authorization: Bearer <access_token>
-6. Token expires → POST /auth/refresh (uses HttpOnly cookie)
-```
-
-**Token Spec:**
-```python
-{
-  "sub": "user_id",
-  "email": "user@example.com",
-  "exp": 1704067200,  # 7 days
-  "iat": 1703462400,
-  "scopes": ["read:predictions", "write:bets"]
-}
-```
-
-### Environment Variables
-
-**Never commit secrets:**
-```bash
-# ✅ .env.example (committed)
-API_FOOTBALL_KEY=your_key_here
-JWT_SECRET=your_secret_here
-
-# ❌ .env (gitignored, NOT committed)
-API_FOOTBALL_KEY=abc123xyz789...
-JWT_SECRET=super_secret_key_12345...
-```
-
-**Check before commit:**
-```bash
-# Scan for secrets
-detect-secrets scan --baseline .baseline.json
-
-# Or manually
-git diff --cached | grep -E "password|secret|key|token" && echo "FOUND SECRETS!" || echo "OK"
-```
-
-### DSGVO/Data Protection
-
-- ✅ No IP logging (anonymized if required)
-- ✅ User can request data export (implement `/api/v1/users/export`)
-- ✅ User can request deletion (implement `/api/v1/users/delete`)
-- ✅ No third-party tracking (except Sentry errors)
-- ✅ HTTPS only (TLS 1.3)
-- ✅ Passwords hashed with Bcrypt (cost=12)
-
----
-
-## ⚡ PERFORMANCE TARGETS
-
-| Endpoint | Target | Notes |
-|----------|--------|-------|
-| POST /weekend/calculate | < 500ms response | Job ID immediately, async calculation |
-| GET /predictions/{match_id} | < 200ms | Cache in Redis if < 6h old |
-| POST /auth/login | < 100ms | JWT generation + DB lookup |
-| Mobile App Load | < 2s cold | Expo Go, 4G network |
-| Weekend Calc (12 matches) | < 10s total | 100k MC simulations, 4 CPU cores |
-
-### Optimization Strategy
-
-**Backend:**
-- Redis cache for predictions (24h TTL)
-- Database indexes on frequent queries (match.kickoff, user.id)
-- Connection pooling (SQLAlchemy pool_size=20)
-- Async/await for I/O (API calls, DB queries)
-
-**Mobile:**
-- LazyLoad components (only render visible)
-- Memoize expensive calculations (useMemo)
-- Image caching (react-native-fast-image)
-- Polyfill only needed libraries
-
----
-
-## 📡 KNOWN ISSUES & ROADMAP
-
-### Known Limitations (MVP)
-
-- ❌ No real-time live ticker (only poll every 30s)
-- ❌ No offline mode (requires internet)
-- ❌ No push notifications (implement after MVP)
-- ❌ No player injury scraping (manual updates or premium API)
-- ⚠️ Limited to German/English UI
-- ⚠️ API-Football Free tier (100 req/day) — will need upgrade for production
-
-### Phase 2 (After MVP)
-
-- 📋 Real-time WebSocket updates
-- 📋 Offline mode with sync
-- 📋 Push notifications for value bets
-- 📋 More leagues (Premier League, La Liga, Serie A)
-- 📋 User portfolio analytics (Sharpe ratio, ROI)
-- 📋 Tipico API integration (direct betting)
-
----
-
-## 🚀 QUICK START (Developer)
+#### 5. **security-audit** — Vulnerability Scanning (Phase D)
+- 🔐 OWASP Top 10 Scanning
+- 🔑 Secrets Detection (API Keys, Tokens)
+- 📝 Dependency Vulnerability Check
+- 🛡️ Compliance Validation
 
 ```bash
-# 1. Clone & setup
-git clone https://github.com/your-repo/match-oracle.git
-cd match-oracle
-
-# 2. Backend
-cd backend
-python -m venv venv
-source venv/bin/activate
-pip install -r requirements.txt
-cp .env.example .env
-# Edit .env with API keys
-uvicorn app.main:app --reload
-
-# 3. Database
-createdb matchoracle
-psql matchoracle < ../database/schema.sql
-python ../scripts/seed_database.py --leagues bundesliga,bundesliga2
-
-# 4. Mobile
-cd ../mobile
-npm install
-npx expo start
-
-# 5. Test
-pytest ../backend/tests/ -v
-npm test
+/security-audit --strict  # Release-Level Checks
+/security-audit --secrets # Nur Secrets scannen
 ```
 
----
+#### 6. **deployment-check** — Pre-Release Validation (Phase D)
+- ✅ Build & Lint & Tests Validation
+- 📋 Deployment Checklist
+- 🚀 Release Notes Auto-Generation
+- 🔄 Rollback Plans
 
-## 📝 CRITICAL SUCCESS FACTORS
+```bash
+/deployment-check --release  # Finale Release-Checks
+```
 
-1. **JWT Auth is Gatekeeper** — Everything depends on working Auth Router
-2. **Test as you code** — No late-stage integration nightmares
-3. **Cache aggressively** — API-Football rate limits are real
-4. **Database migrations** — Schema changes require Alembic
-5. **Documentation** — Every API endpoint must have Swagger docs
-6. **Performance** — Weekend calc must stay < 10s
+### 🤖 PRIORITY 1: Autonome Agenten (Bundesliga-AI Dev Assistant)
 
----
+#### orchestrator-agent
+- Koordiniert alle Skills
+- Parallele Match-Vorhersagen
+- Automatische Workflow-Orchestration
 
-## 👤 Team Context
+#### ensemble-validator-agent
+- Validiert Vorhersagen gegen Ensemble-Modelle
+- Confidence-Scoring
+- Kill-Switch Trigger-Evaluation
 
-- **Developer:** Michael Matschos (Safety-first, structured, expects precision)
-- **Architecture Style:** Microservices, ML-Pipeline, Security-focused
-- **CI/CD:** GitHub Actions (Lint, Test, Build, Deploy)
-- **Deployment:** Docker + Railway/Render initially, Kubernetes later
+#### learning-feedback-agent
+- Sammelt Feedback aus Vorhersagen
+- Model-Update Automation
+- Drift-Erkennung & Retraining
 
----
+### 📋 Phase C → Phase D Roadmap
 
-**Last Updated:** 2026-04-24  
-**Version:** 2.0-MVP  
-**Status:** Development (Sprint 1-4)
+| Phase | Fokus | Skills |
+|-------|-------|--------|
+| **C** 🔄 | Dark Mode + Testing | `ui-ux-pro-max`, `generate-tests`, `run-benchmarks` |
+| **D** 📋 | Production Ready | Alle + `security-audit`, `deployment-check` |
+
+### 📖 Weitere Dokumentation
+
+Siehe `.claude/SKILLS_INTEGRATED.md` für:
+- Detaillierte Feature-Übersicht
+- Skill-spezifische Syntax
+- Agent-Orchestration Workflows
+- Automatische Tägliche/Wöchentliche Prozesse
+
+## Skills Evaluation & Aktivierung
+
+### 🎯 Neue Skills für Phase C/D (2026-04-29)
+
+Entdeckte **34 verfügbare Skills** aus `~/.claude/plugins/everything-claude-code/`:
+
+**Priority 1 — MÜSSEN für Phase C integriert werden:**
+- **e2e-testing** — Dark Mode + Component Tests
+- **tdd-workflow** — 80%+ Test Coverage erzwingen
+- **frontend-patterns** — UI Pattern Dokumentation
+- **verification-loop** — Auto-Test-Verifikation
+
+**Priority 1 — Für Phase D vorbereiten:**
+- **security-review** — OWASP Top 10 Audit
+- **api-design** — REST API Dokumentation
+- **backend-patterns** — FastAPI Best Practices
+- **frontend-design** — Design Token Generation
+
+**Priority 2 — Optional (später):**
+- documentation-lookup, coding-standards, deep-research, market-research, eval-harness
+
+### 📊 Bewertungsmatrix & Aktivierungsguide
+
+- Siehe `.claude/SKILLS_EVALUATION.md` für:
+  - Detaillierte Bewertung aller 34 Skills
+  - Relevanz für Bundesliga Match Analyzer
+  - Phase C vs. Phase D Prioritäten
+  - Token-Kosten Analyse
+
+- Siehe `.claude/SKILLS_ACTIVATION_GUIDE.md` für:
+  - Quick-Start Aktivierungsbefehle
+  - Phase C & D Workflows
+  - Skill Features im Detail
+  - Troubleshooting & Token-Optimierung
+
+### ⚡ Phase C Sofort-Aktivierung
+
+```bash
+# Aktiviere diese 4 Skills jetzt:
+/e2e-testing --dark-mode --phase C
+/tdd-workflow --coverage-target 80
+/frontend-patterns --dark-mode
+/verification-loop --auto-fix
+```
+
+## Getting Started
+
+**Install dependencies:**
+```bash
+cd mobile && npm install
+cd ../backend && pip install -r requirements.txt
+```
+
+**Run tests:**
+```bash
+npm test                    # Mobile unit tests
+pytest backend/tests/       # Backend unit tests
+```
+
+**Development:**
+```bash
+npm run dev                 # Start mobile dev server
+python -m uvicorn app.main:app --reload  # Start backend API
+```
+
+**Documentation:**
+- See `docs/PATTERN_*.md` for component patterns
+- See `docs/PHASE_*.md` for phase completion summaries
+- See `README.md` for project overview

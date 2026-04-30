@@ -2,7 +2,9 @@
  * Team Details Screen — Team info, form, and statistics
  */
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
+import { RouteProp } from '@react-navigation/native'
+import { NativeStackNavigationProp } from '@react-navigation/native-stack'
 import {
   View,
   Text,
@@ -11,8 +13,10 @@ import {
   StyleSheet,
   RefreshControl,
 } from 'react-native'
-import { COLORS, SPACING, RADIUS } from '../theme/colors'
+import { getColors, SPACING, RADIUS, TYPOGRAPHY } from '../theme/colors'
+import { useTheme } from '../context/ThemeContext'
 import { teamService } from '../services/api'
+import type { AppStackParamList } from '../navigation/types'
 
 interface TeamData {
   team_id: string
@@ -40,12 +44,80 @@ interface FormData {
   }
 }
 
-export default function TeamDetailsScreen({ route, navigation }: any) {
+interface MatchResult {
+  kickoff: string
+  home_team: string
+  away_team: string
+  home_score?: number
+  away_score?: number
+  result: 'W' | 'D' | 'L'
+}
+
+interface H2HRecord {
+  opponent_team_name: string
+  wins: number
+  draws: number
+  losses: number
+  goals_for: number
+  goals_against: number
+}
+
+interface Injury {
+  player_name: string
+  position: string
+  expected_return: string
+  severity: 'light' | 'moderate' | 'severe'
+}
+
+interface UpcomingFixture {
+  opponent: string
+  kickoff: string
+  competition: string
+  location: 'home' | 'away'
+}
+
+interface TeamExtendedData {
+  last_10_matches: MatchResult[]
+  win_percentage: number
+  trend: 'up' | 'down' | 'stable'
+  h2h_record: H2HRecord[]
+  injuries: Injury[]
+  upcoming_fixtures: UpcomingFixture[]
+  table_position: number
+  table_points: number
+  table_change: number
+  avg_goals_for: number
+  avg_goals_against: number
+  home_win_percentage: number
+  away_win_percentage: number
+}
+
+type TeamDetailsScreenNavigationProp = NativeStackNavigationProp<
+  AppStackParamList,
+  'TeamDetails'
+>
+type TeamDetailsScreenRouteProp = RouteProp<AppStackParamList, 'TeamDetails'>
+
+interface TeamDetailsScreenProps {
+  route: TeamDetailsScreenRouteProp
+  navigation: TeamDetailsScreenNavigationProp
+}
+
+export default function TeamDetailsScreen({
+  route,
+  navigation,
+}: TeamDetailsScreenProps) {
   const { teamId } = route.params
   const [team, setTeam] = useState<TeamData | null>(null)
   const [form, setForm] = useState<FormData | null>(null)
   const [loading, setLoading] = useState(false)
   const [refreshing, setRefreshing] = useState(false)
+  const [extendedData, setExtendedData] = useState<TeamExtendedData | null>(null)
+  const [extendedLoading, setExtendedLoading] = useState(false)
+  const [extendedError, setExtendedError] = useState<string | null>(null)
+
+  const { mode } = useTheme()
+  const colors = getColors(mode)
 
   useEffect(() => {
     fetchData()
@@ -75,99 +147,94 @@ export default function TeamDetailsScreen({ route, navigation }: any) {
 
   if (loading && !team) {
     return (
-      <View style={[styles.container, styles.centerContent]}>
-        <ActivityIndicator size="large" color={COLORS.blueLight} />
+      <View style={[styles.container, { backgroundColor: colors.background }]}>
+        <ActivityIndicator size="large" color={colors.blueLight} />
       </View>
     )
   }
 
   const resultColor = (result: string) => {
-    if (result === 'W') return COLORS.greenLight
-    if (result === 'D') return COLORS.yellow
-    return COLORS.red
+    if (result === 'W') return colors.greenLight
+    if (result === 'D') return colors.yellow
+    return colors.red
   }
 
   return (
     <ScrollView
-      style={styles.container}
-      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+      style={{ flex: 1, backgroundColor: colors.background }}
+      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.blue} />}
     >
       {/* Header */}
       {team && (
-        <View style={styles.header}>
-          <Text style={styles.title}>{team.name}</Text>
-          <Text style={styles.teamId}>{teamId}</Text>
+        <View style={{ paddingHorizontal: SPACING.lg, paddingVertical: SPACING.lg, backgroundColor: colors.primary, borderBottomWidth: 1, borderBottomColor: colors.border }}>
+          <Text style={{ fontSize: TYPOGRAPHY.display.xs, fontWeight: 'bold', color: colors.text }}>{team.name}</Text>
+          <Text style={{ fontSize: TYPOGRAPHY.body.lg, color: colors.textSecond, marginTop: SPACING.xs }}>{teamId}</Text>
         </View>
       )}
 
       {/* Form Stats */}
       {form && (
         <>
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Letzte 10 Spiele</Text>
+          <View style={{ paddingHorizontal: SPACING.lg, paddingVertical: SPACING.lg }}>
+            <Text style={{ fontSize: TYPOGRAPHY.heading.md, fontWeight: '600', color: colors.text, marginBottom: SPACING.md }}>Letzte 10 Spiele</Text>
 
-            <View style={styles.statsGrid}>
-              <View style={styles.statBox}>
-                <Text style={[styles.statNumber, { color: COLORS.greenLight }]}>
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: SPACING.md }}>
+              <View style={{ flex: 1, minWidth: '45%', backgroundColor: colors.surface, borderRadius: RADIUS.md, padding: SPACING.md, alignItems: 'center' }}>
+                <Text style={{ fontSize: TYPOGRAPHY.display.xxs, fontWeight: 'bold', color: colors.greenLight, marginBottom: SPACING.xs }}>
                   {form.metrics.wins}
                 </Text>
-                <Text style={styles.statLabel}>Siege</Text>
+                <Text style={{ fontSize: TYPOGRAPHY.body.sm, color: colors.textMuted }}>Siege</Text>
               </View>
 
-              <View style={styles.statBox}>
-                <Text style={[styles.statNumber, { color: COLORS.yellow }]}>
+              <View style={{ flex: 1, minWidth: '45%', backgroundColor: colors.surface, borderRadius: RADIUS.md, padding: SPACING.md, alignItems: 'center' }}>
+                <Text style={{ fontSize: TYPOGRAPHY.display.xxs, fontWeight: 'bold', color: colors.yellow, marginBottom: SPACING.xs }}>
                   {form.metrics.draws}
                 </Text>
-                <Text style={styles.statLabel}>Remis</Text>
+                <Text style={{ fontSize: TYPOGRAPHY.body.sm, color: colors.textMuted }}>Remis</Text>
               </View>
 
-              <View style={styles.statBox}>
-                <Text style={[styles.statNumber, { color: COLORS.red }]}>
+              <View style={{ flex: 1, minWidth: '45%', backgroundColor: colors.surface, borderRadius: RADIUS.md, padding: SPACING.md, alignItems: 'center' }}>
+                <Text style={{ fontSize: TYPOGRAPHY.display.xxs, fontWeight: 'bold', color: colors.red, marginBottom: SPACING.xs }}>
                   {form.metrics.losses}
                 </Text>
-                <Text style={styles.statLabel}>Niederlagen</Text>
+                <Text style={{ fontSize: TYPOGRAPHY.body.sm, color: colors.textMuted }}>Niederlagen</Text>
               </View>
 
-              <View style={styles.statBox}>
-                <Text style={styles.statNumber}>
+              <View style={{ flex: 1, minWidth: '45%', backgroundColor: colors.surface, borderRadius: RADIUS.md, padding: SPACING.md, alignItems: 'center' }}>
+                <Text style={{ fontSize: TYPOGRAPHY.display.xxs, fontWeight: 'bold', color: colors.blueLight, marginBottom: SPACING.xs }}>
                   {form.metrics.goals_for}:{form.metrics.goals_against}
                 </Text>
-                <Text style={styles.statLabel}>Tore</Text>
+                <Text style={{ fontSize: TYPOGRAPHY.body.sm, color: colors.textMuted }}>Tore</Text>
               </View>
             </View>
           </View>
 
           {/* Match History */}
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Spielhistorie</Text>
+          <View style={{ paddingHorizontal: SPACING.lg, paddingVertical: SPACING.lg }}>
+            <Text style={{ fontSize: TYPOGRAPHY.heading.md, fontWeight: '600', color: colors.text, marginBottom: SPACING.md }}>Spielhistorie</Text>
 
             {form.recent_matches.map((match, idx) => (
-              <View key={idx} style={styles.matchRow}>
-                <View style={styles.matchLeft}>
-                  <View style={styles.resultBadge}>
-                    <Text
-                      style={[
-                        styles.resultText,
-                        { color: resultColor(match.result) },
-                      ]}
-                    >
+              <View key={idx} style={{ flexDirection: 'row', backgroundColor: colors.surface, borderRadius: RADIUS.md, padding: SPACING.md, marginBottom: SPACING.md, alignItems: 'center' }}>
+                <View style={{ marginRight: SPACING.md }}>
+                  <View style={{ width: 40, height: 40, borderRadius: RADIUS.full, backgroundColor: colors.surfaceHigh, justifyContent: 'center', alignItems: 'center' }}>
+                    <Text style={{ fontSize: TYPOGRAPHY.body.xl, fontWeight: 'bold', color: resultColor(match.result) }}>
                       {match.result}
                     </Text>
                   </View>
                 </View>
 
-                <View style={styles.matchCenter}>
-                  <Text style={styles.matchTeams}>
+                <View style={{ flex: 1 }}>
+                  <Text style={{ fontSize: TYPOGRAPHY.body.md, fontWeight: '600', color: colors.text, marginBottom: SPACING.xs }}>
                     {match.home_team} vs {match.away_team}
                   </Text>
-                  <Text style={styles.matchDate}>
+                  <Text style={{ fontSize: TYPOGRAPHY.body.xs, color: colors.textMuted }}>
                     {new Date(match.kickoff).toLocaleDateString('de-DE')}
                   </Text>
                 </View>
 
                 {match.home_score !== undefined && match.away_score !== undefined && (
-                  <View style={styles.matchRight}>
-                    <Text style={styles.score}>
+                  <View style={{ marginLeft: SPACING.md }}>
+                    <Text style={{ fontSize: TYPOGRAPHY.body.xl, fontWeight: 'bold', color: colors.blueLight }}>
                       {match.home_score}:{match.away_score}
                     </Text>
                   </View>
@@ -186,105 +253,7 @@ export default function TeamDetailsScreen({ route, navigation }: any) {
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
-    backgroundColor: COLORS.background,
-  },
-  centerContent: {
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  header: {
-    paddingHorizontal: SPACING.lg,
-    paddingVertical: SPACING.lg,
-    backgroundColor: COLORS.primary,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.border,
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: COLORS.text,
-  },
-  teamId: {
-    fontSize: 14,
-    color: COLORS.textSecond,
-    marginTop: SPACING.xs,
-  },
-  section: {
-    paddingHorizontal: SPACING.lg,
-    paddingVertical: SPACING.lg,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: COLORS.text,
-    marginBottom: SPACING.md,
-  },
-  statsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: SPACING.md,
-  },
-  statBox: {
-    flex: 1,
-    minWidth: '45%',
-    backgroundColor: COLORS.surface,
-    borderRadius: RADIUS.md,
-    padding: SPACING.md,
-    alignItems: 'center',
-  },
-  statNumber: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: COLORS.blueLight,
-    marginBottom: SPACING.xs,
-  },
-  statLabel: {
-    fontSize: 12,
-    color: COLORS.textMuted,
-  },
-  matchRow: {
-    flexDirection: 'row',
-    backgroundColor: COLORS.surface,
-    borderRadius: RADIUS.md,
-    padding: SPACING.md,
-    marginBottom: SPACING.md,
-    alignItems: 'center',
-  },
-  matchLeft: {
-    marginRight: SPACING.md,
-  },
-  resultBadge: {
-    width: 40,
-    height: 40,
-    borderRadius: RADIUS.full,
-    backgroundColor: COLORS.surfaceHigh,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  resultText: {
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  matchCenter: {
-    flex: 1,
-  },
-  matchTeams: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: COLORS.text,
-    marginBottom: SPACING.xs,
-  },
-  matchDate: {
-    fontSize: 11,
-    color: COLORS.textMuted,
-  },
-  matchRight: {
-    marginLeft: SPACING.md,
-  },
-  score: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: COLORS.blueLight,
   },
 })

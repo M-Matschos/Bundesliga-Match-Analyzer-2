@@ -1,7 +1,3 @@
-/**
- * Dashboard Screen — Hauptseite mit neuesten Predictions
- */
-
 import React, { useState, useEffect } from 'react'
 import {
   View,
@@ -10,396 +6,355 @@ import {
   TouchableOpacity,
   RefreshControl,
   ActivityIndicator,
+  FlatList,
   StyleSheet,
+  Dimensions,
 } from 'react-native'
-import { COLORS, SPACING, RADIUS, formatProb } from '../theme/colors'
-import { api } from '../services/api'
+import { useAuth } from '../context/AuthContext'
+import { useTheme } from '../context/ThemeContext'
+import { useToast } from '../context/ToastContext'
+import { useNotification } from '../context/NotificationContext'
+import { ErrorBoundary } from '../components/ErrorBoundary'
+import { MatchCardSkeleton } from '../components/skeletons/MatchCardSkeleton'
+import MatchPredictionCard from '../components/MatchPredictionCard'
+import AccuracyCard from '../components/AccuracyCard'
+import { getColors, SPACING, RADIUS, TYPOGRAPHY } from '../theme/colors'
+import { matchService, predictionService } from '../services/api'
+import type { DashboardScreenProps } from '../navigation/types'
 
 interface Match {
-  id: string
-  home_team: string
-  away_team: string
+  match_id: string
   kickoff: string
-  league: string
   status: string
+  league: string
+  home_team: { name: string; logo_url?: string }
+  away_team: { name: string; logo_url?: string }
 }
 
-interface Prediction {
-  home_win_prob: number
-  draw_prob: number
-  away_win_prob: number
-  confidence: number
-  expected_goals_home: number
-  expected_goals_away: number
-}
+type TabType = 'weekend' | 'week' | 'statistics'
 
-export default function DashboardScreen({ navigation }: any) {
+export default function DashboardScreen({ navigation }: DashboardScreenProps) {
   const [matches, setMatches] = useState<Match[]>([])
-  const [predictions, setPredictions] = useState<Record<string, Prediction>>({})
-  const [loading, setLoading] = useState(false)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const [refreshing, setRefreshing] = useState(false)
+  const [activeTab, setActiveTab] = useState<TabType>('weekend')
+
+  const { isLoggedIn } = useAuth()
+  const { mode } = useTheme()
+  const colors = getColors(mode)
+  const toast = useToast()
+  const { unreadCount } = useNotification()
 
   useEffect(() => {
-    fetchMatches()
-  }, [])
+    if (isLoggedIn) {
+      fetchMatches()
+    }
+  }, [isLoggedIn])
 
   const fetchMatches = async () => {
-    setLoading(true)
     try {
-      // Fetch upcoming matches
-      const response = await api.get('/matches/upcoming?days=7&limit=10')
-      const data = response.data
-
-      setMatches(data.matches || [])
-
-      // Fetch predictions for each match
-      const preds: Record<string, Prediction> = {}
-      for (const match of data.matches || []) {
-        try {
-          const predResponse = await api.get(`/predictions/${match.id}`)
-          preds[match.id] = predResponse.data
-        } catch (err) {
-          console.warn(`Failed to fetch prediction for ${match.id}`)
-        }
-      }
-      setPredictions(preds)
-    } catch (error) {
-      console.error('Error fetching matches:', error)
+      setError(null)
+      const response = await matchService.getMatches({
+        days: 7,
+        league: 'all',
+        limit: 20,
+      })
+      setMatches(response || [])
+    } catch (err: any) {
+      const errorMsg = err?.response?.data?.detail || err?.message || 'Fehler beim Laden'
+      setError(errorMsg)
+      toast.error(errorMsg)
     } finally {
       setLoading(false)
+      setRefreshing(false)
     }
   }
 
-  const onRefresh = async () => {
+  const handleRefresh = () => {
     setRefreshing(true)
-    await fetchMatches()
-    setRefreshing(false)
+    fetchMatches()
   }
 
-  const getOutcomeColor = (home: number, draw: number, away: number) => {
-    const max = Math.max(home, draw, away)
-    if (max === home) return COLORS.greenLight
-    if (max === draw) return COLORS.yellow
-    return COLORS.red
+  const handleRetry = () => {
+    setLoading(true)
+    fetchMatches()
   }
 
-  const getOutcomeLabel = (home: number, draw: number, away: number) => {
-    const max = Math.max(home, draw, away)
-    if (max === home) return 'Sieg'
-    if (max === draw) return 'Remis'
-    return 'Niederlage'
-  }
-
-  const formatDate = (date: string) => {
-    return new Date(date).toLocaleDateString('de-DE', {
-      weekday: 'short',
-      day: '2-digit',
-      month: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit',
+  const handleMatchPress = (item: Match) => {
+    // Navigiere zum Team-Details Screen (Home-Team)
+    navigation.navigate('TeamDetails', {
+      teamId: item.home_team.name,
     })
   }
 
-  if (loading && matches.length === 0) {
+  if (!isLoggedIn) {
     return (
-      <View style={[styles.container, styles.centerContent]}>
-        <ActivityIndicator size="large" color={COLORS.blueLight} />
+      <View style={{ flex: 1, backgroundColor: colors.background }}>
+        <Text style={{ fontSize: TYPOGRAPHY.body.sm, color: colors.textMuted, textAlign: 'center', marginTop: 32 }}>
+          Bitte melden Sie sich an
+        </Text>
       </View>
     )
   }
 
+  if (error && matches.length === 0) {
+    return (
+      <View style={{ flex: 1, backgroundColor: colors.background, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 24 }}>
+        <Text style={{ fontSize: TYPOGRAPHY.heading.md, color: colors.red, marginBottom: 12, textAlign: 'center' }}>
+          Fehler beim Laden
+        </Text>
+        <Text style={{ fontSize: TYPOGRAPHY.body.sm, color: colors.textSecond, marginBottom: 24, textAlign: 'center' }}>
+          {error}
+        </Text>
+        <TouchableOpacity
+          onPress={handleRetry}
+          style={{ backgroundColor: colors.blue, paddingVertical: 10, paddingHorizontal: 24, borderRadius: 8 }}
+        >
+          <Text style={{ fontSize: TYPOGRAPHY.body.md, color: colors.text }}>Erneut versuchen</Text>
+        </TouchableOpacity>
+      </View>
+    )
+  }
+
+  const renderTabContent = () => {
+    switch (activeTab) {
+      case 'weekend':
+        return (
+          <>
+            <View style={{ paddingHorizontal: SPACING.md, marginBottom: SPACING.lg }}>
+              <Text style={{ fontSize: TYPOGRAPHY.heading.md, fontWeight: '600', color: colors.text, marginBottom: SPACING.sm }}>
+                Kommende Spiele
+              </Text>
+              <Text style={{ fontSize: TYPOGRAPHY.body.sm, color: colors.textSecond }}>
+                Nächste 7 Tage
+              </Text>
+            </View>
+            {loading ? (
+              <View style={{ paddingHorizontal: SPACING.sm }}>
+                {Array(4).fill(0).map((_, i) => (
+                  <MatchCardSkeleton key={i} />
+                ))}
+              </View>
+            ) : matches.length > 0 ? (
+              matches.map(item => (
+                <TouchableOpacity
+                  key={item.match_id}
+                  style={{ paddingHorizontal: SPACING.sm, paddingVertical: SPACING.xs }}
+                  onPress={() => handleMatchPress(item)}
+                >
+                  <MatchPredictionCard match={item} />
+                </TouchableOpacity>
+              ))
+            ) : (
+              <View style={{ paddingVertical: SPACING.xl, alignItems: 'center' }}>
+                <Text style={{ fontSize: TYPOGRAPHY.body.sm, color: colors.textSecond }}>
+                  Keine Spiele verfügbar
+                </Text>
+              </View>
+            )}
+          </>
+        )
+      case 'week':
+        return (
+          <>
+            <View style={{ paddingHorizontal: SPACING.md, marginBottom: SPACING.lg }}>
+              <Text style={{ fontSize: TYPOGRAPHY.heading.md, fontWeight: '600', color: colors.text, marginBottom: SPACING.sm }}>
+                Diese Woche
+              </Text>
+              <Text style={{ fontSize: TYPOGRAPHY.body.sm, color: colors.textSecond }}>
+                Alle Spiele der Woche
+              </Text>
+            </View>
+            {loading ? (
+              <View style={{ paddingHorizontal: SPACING.sm }}>
+                {Array(3).fill(0).map((_, i) => (
+                  <MatchCardSkeleton key={i} />
+                ))}
+              </View>
+            ) : (
+              <View style={{ paddingHorizontal: SPACING.sm }}>
+                <Text style={{ color: colors.textMuted, textAlign: 'center', paddingVertical: SPACING.lg }}>
+                  Keine weiteren Spiele diese Woche
+                </Text>
+              </View>
+            )}
+          </>
+        )
+      case 'statistics':
+        return (
+          <>
+            <View style={{ paddingHorizontal: SPACING.md, marginBottom: SPACING.lg }}>
+              <Text style={{ fontSize: TYPOGRAPHY.heading.md, fontWeight: '600', color: colors.text, marginBottom: SPACING.sm }}>
+                Performance Statistiken
+              </Text>
+              <Text style={{ fontSize: TYPOGRAPHY.body.sm, color: colors.textSecond }}>
+                Ihre Vorhersage-Genauigkeit
+              </Text>
+            </View>
+            <View style={{ paddingHorizontal: SPACING.sm, gap: SPACING.md }}>
+              <AccuracyCard
+                label="Heute"
+                accuracy={72.5}
+                sampleSize={8}
+                period="heute"
+                detailed={true}
+              />
+              <AccuracyCard
+                label="Diese Woche"
+                accuracy={68.3}
+                sampleSize={28}
+                period="7 Tage"
+                detailed={true}
+              />
+              <AccuracyCard
+                label="Dieser Monat"
+                accuracy={65.8}
+                sampleSize={96}
+                period="30 Tage"
+                detailed={true}
+              />
+              <AccuracyCard
+                label="Gesamtzeit"
+                accuracy={63.2}
+                sampleSize={512}
+                period="alle Zeiten"
+                detailed={true}
+              />
+            </View>
+            <View style={{ paddingHorizontal: SPACING.md, marginTop: SPACING.lg, marginBottom: SPACING.md }}>
+              <Text style={{ fontSize: TYPOGRAPHY.heading.md, fontWeight: '600', color: colors.text, marginBottom: SPACING.md }}>
+                ROI-Metriken
+              </Text>
+              <View style={{ flexDirection: 'row', gap: SPACING.md }}>
+                <View style={{ flex: 1, backgroundColor: colors.surfaceHigh, borderRadius: RADIUS.md, padding: SPACING.md, borderLeftWidth: 4, borderLeftColor: colors.greenLight }}>
+                  <Text style={{ fontSize: TYPOGRAPHY.body.sm, color: colors.textSecond, marginBottom: SPACING.xs }}>ROI Heute</Text>
+                  <Text style={{ fontSize: TYPOGRAPHY.heading.lg, fontWeight: 'bold', color: colors.greenLight }}>+12.5%</Text>
+                </View>
+                <View style={{ flex: 1, backgroundColor: colors.surfaceHigh, borderRadius: RADIUS.md, padding: SPACING.md, borderLeftWidth: 4, borderLeftColor: colors.yellow }}>
+                  <Text style={{ fontSize: TYPOGRAPHY.body.sm, color: colors.textSecond, marginBottom: SPACING.xs }}>ROI Woche</Text>
+                  <Text style={{ fontSize: TYPOGRAPHY.heading.lg, fontWeight: 'bold', color: colors.yellow }}>+8.3%</Text>
+                </View>
+              </View>
+            </View>
+          </>
+        )
+    }
+  }
+
   return (
-    <ScrollView
-      style={styles.container}
-      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
-    >
-      {/* Header */}
-      <View style={styles.header}>
-        <Text style={styles.title}>⚽ Match Oracle</Text>
-        <Text style={styles.subtitle}>Bundesliga Prognosen für diese Woche</Text>
-      </View>
-
-      {/* Upcoming Matches */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Kommende Spiele</Text>
-
-        {matches.length === 0 ? (
-          <Text style={styles.emptyText}>Keine Spiele für die nächsten 7 Tage</Text>
-        ) : (
-          matches.map((match) => {
-            const pred = predictions[match.id]
-            if (!pred) return null
-
-            const outcome = getOutcomeLabel(
-              pred.home_win_prob,
-              pred.draw_prob,
-              pred.away_win_prob
-            )
-            const outcomeColor = getOutcomeColor(
-              pred.home_win_prob,
-              pred.draw_prob,
-              pred.away_win_prob
-            )
-
-            return (
-              <TouchableOpacity
-                key={match.id}
-                style={styles.matchCard}
-                onPress={() =>
-                  navigation.navigate('MatchDetail', { matchId: match.id })
-                }
+    <ErrorBoundary>
+      <ScrollView
+        style={{ flex: 1, backgroundColor: colors.background }}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={handleRefresh}
+            tintColor={colors.blue}
+          />
+        }
+      >
+        {/* Header mit Benachrichtigungen */}
+        <View style={{ paddingHorizontal: SPACING.md, paddingVertical: SPACING.md, paddingTop: SPACING.lg, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+          <View>
+            <Text style={{ fontSize: TYPOGRAPHY.heading.lg, fontWeight: 'bold', color: colors.text }}>
+              Match Oracle
+            </Text>
+            <Text style={{ fontSize: TYPOGRAPHY.body.sm, color: colors.textSecond }}>
+              Fußball-Vorhersagen
+            </Text>
+          </View>
+          <TouchableOpacity
+            onPress={() => navigation.navigate('NotificationHistory')}
+            style={{
+              position: 'relative',
+              padding: SPACING.sm,
+            }}
+          >
+            <Text style={{ fontSize: 24 }}>🔔</Text>
+            {unreadCount > 0 && (
+              <View
+                style={{
+                  position: 'absolute',
+                  top: 0,
+                  right: 0,
+                  backgroundColor: colors.red,
+                  borderRadius: 10,
+                  minWidth: 20,
+                  height: 20,
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                }}
               >
-                {/* Date & League */}
-                <View style={styles.matchHeader}>
-                  <Text style={styles.matchDate}>{formatDate(match.kickoff)}</Text>
-                  <Text style={styles.leagueTag}>{match.league.toUpperCase()}</Text>
-                </View>
+                <Text
+                  style={{
+                    color: '#ffffff',
+                    fontSize: 11,
+                    fontWeight: '700',
+                  }}
+                >
+                  {unreadCount > 99 ? '99+' : unreadCount}
+                </Text>
+              </View>
+            )}
+          </TouchableOpacity>
+        </View>
 
-                {/* Teams */}
-                <View style={styles.teamsContainer}>
-                  <View style={styles.teamSection}>
-                    <Text style={styles.teamName}>{match.home_team}</Text>
-                    <Text style={styles.probability}>
-                      {formatProb(pred.home_win_prob)}
-                    </Text>
-                  </View>
+        {/* Tab Navigation */}
+        <View style={{ flexDirection: 'row', paddingHorizontal: SPACING.md, gap: SPACING.sm, marginVertical: SPACING.md, borderBottomWidth: 1, borderBottomColor: colors.border }}>
+          {(['weekend', 'week', 'statistics'] as const).map(tab => (
+            <TouchableOpacity
+              key={tab}
+              onPress={() => setActiveTab(tab)}
+              style={{
+                paddingVertical: SPACING.md,
+                paddingHorizontal: SPACING.sm,
+                borderBottomWidth: activeTab === tab ? 2 : 0,
+                borderBottomColor: colors.blue,
+              }}
+            >
+              <Text style={{
+                fontSize: TYPOGRAPHY.body.sm,
+                fontWeight: activeTab === tab ? '600' : '400',
+                color: activeTab === tab ? colors.blue : colors.textSecond,
+              }}>
+                {tab === 'weekend' ? '🏆 Wochenende' : tab === 'week' ? '📅 Woche' : '📊 Statistiken'}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
 
-                  <View style={styles.centerSection}>
-                    <Text style={[styles.vs, { color: outcomeColor }]}>VS</Text>
-                    <Text style={styles.outcome}>{outcome}</Text>
-                  </View>
+        {/* Tab Content */}
+        <View style={{ paddingBottom: SPACING.xl }}>
+          {renderTabContent()}
+        </View>
 
-                  <View style={styles.teamSection}>
-                    <Text style={styles.teamName}>{match.away_team}</Text>
-                    <Text style={styles.probability}>
-                      {formatProb(pred.away_win_prob)}
-                    </Text>
-                  </View>
-                </View>
-
-                {/* Expected Goals */}
-                <View style={styles.statsContainer}>
-                  <View style={styles.stat}>
-                    <Text style={styles.statLabel}>xG Home</Text>
-                    <Text style={styles.statValue}>
-                      {pred.expected_goals_home.toFixed(1)}
-                    </Text>
-                  </View>
-                  <View style={styles.divider} />
-                  <View style={styles.stat}>
-                    <Text style={styles.statLabel}>xG Away</Text>
-                    <Text style={styles.statValue}>
-                      {pred.expected_goals_away.toFixed(1)}
-                    </Text>
-                  </View>
-                  <View style={styles.divider} />
-                  <View style={styles.stat}>
-                    <Text style={styles.statLabel}>Konfidenz</Text>
-                    <Text style={styles.statValue}>
-                      {formatProb(pred.confidence)}
-                    </Text>
-                  </View>
-                </View>
-
-                {/* Draw Probability */}
-                <View style={styles.drawSection}>
-                  <Text style={styles.drawLabel}>Remis:</Text>
-                  <Text style={styles.drawProb}>{formatProb(pred.draw_prob)}</Text>
-                </View>
-              </TouchableOpacity>
-            )
-          })
-        )}
-      </View>
-
-      {/* Quick Actions */}
-      <View style={styles.quickActions}>
-        <TouchableOpacity
-          style={styles.actionButton}
-          onPress={() => navigation.navigate('WeekendCalculator')}
-        >
-          <Text style={styles.actionButtonText}>📊 Wochenende berechnen</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={styles.actionButton}
-          onPress={() => navigation.navigate('VirtualBetting')}
-        >
-          <Text style={styles.actionButtonText}>💰 Virtuelle Wetten</Text>
-        </TouchableOpacity>
-      </View>
-
-      {/* Footer Spacing */}
-      <View style={{ height: SPACING.xl }} />
-    </ScrollView>
+        {/* Action Button */}
+        <View style={{ paddingHorizontal: SPACING.md, paddingBottom: SPACING.xl }}>
+          <TouchableOpacity
+            style={{
+              backgroundColor: colors.blue,
+              paddingVertical: SPACING.md,
+              paddingHorizontal: SPACING.lg,
+              borderRadius: RADIUS.lg,
+              flexDirection: 'row',
+              justifyContent: 'center',
+              alignItems: 'center',
+            }}
+            onPress={() => navigation.navigate('WeekendCalculator')}
+          >
+            <Text style={{ fontSize: TYPOGRAPHY.body.md, fontWeight: '600', color: colors.text }}>
+              🎲 Kelly-Kalkulator
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </ScrollView>
+    </ErrorBoundary>
   )
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.background,
-  },
-  centerContent: {
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  header: {
-    paddingHorizontal: SPACING.lg,
-    paddingVertical: SPACING.lg,
-    backgroundColor: COLORS.primary,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.border,
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: COLORS.text,
-    marginBottom: SPACING.sm,
-  },
-  subtitle: {
-    fontSize: 14,
-    color: COLORS.textSecond,
-  },
-  section: {
-    paddingHorizontal: SPACING.lg,
-    paddingVertical: SPACING.lg,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: COLORS.text,
-    marginBottom: SPACING.md,
-  },
-  emptyText: {
-    fontSize: 14,
-    color: COLORS.textMuted,
-    textAlign: 'center',
-    paddingVertical: SPACING.lg,
-  },
-  matchCard: {
-    backgroundColor: COLORS.surface,
-    borderRadius: RADIUS.lg,
-    padding: SPACING.md,
-    marginBottom: SPACING.md,
-    borderLeftWidth: 4,
-    borderLeftColor: COLORS.blueLight,
-  },
-  matchHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: SPACING.sm,
-  },
-  matchDate: {
-    fontSize: 12,
-    color: COLORS.textMuted,
-  },
-  leagueTag: {
-    fontSize: 10,
-    fontWeight: 'bold',
-    color: COLORS.blueLight,
-    backgroundColor: COLORS.surfaceHigh,
-    paddingHorizontal: SPACING.sm,
-    paddingVertical: 2,
-    borderRadius: RADIUS.sm,
-  },
-  teamsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: SPACING.md,
-    paddingVertical: SPACING.sm,
-  },
-  teamSection: {
-    alignItems: 'center',
-    flex: 1,
-  },
-  teamName: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: COLORS.text,
-    marginBottom: SPACING.xs,
-  },
-  probability: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: COLORS.blueLight,
-  },
-  centerSection: {
-    alignItems: 'center',
-    marginHorizontal: SPACING.sm,
-  },
-  vs: {
-    fontSize: 12,
-    fontWeight: 'bold',
-    marginBottom: SPACING.xs,
-  },
-  outcome: {
-    fontSize: 12,
-    color: COLORS.textSecond,
-  },
-  statsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    alignItems: 'center',
-    paddingVertical: SPACING.sm,
-    borderTopWidth: 1,
-    borderTopColor: COLORS.border,
-    marginBottom: SPACING.sm,
-  },
-  stat: {
-    alignItems: 'center',
-    flex: 1,
-  },
-  statLabel: {
-    fontSize: 10,
-    color: COLORS.textMuted,
-    marginBottom: 2,
-  },
-  statValue: {
-    fontSize: 14,
-    fontWeight: 'bold',
-    color: COLORS.blueLight,
-  },
-  divider: {
-    width: 1,
-    height: 30,
-    backgroundColor: COLORS.border,
-  },
-  drawSection: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingVertical: SPACING.sm,
-    backgroundColor: COLORS.valueBetBg,
-    borderRadius: RADIUS.md,
-  },
-  drawLabel: {
-    fontSize: 12,
-    color: COLORS.textSecond,
-    marginRight: SPACING.sm,
-  },
-  drawProb: {
-    fontSize: 14,
-    fontWeight: 'bold',
-    color: COLORS.valueBet,
-  },
-  quickActions: {
-    flexDirection: 'row',
-    paddingHorizontal: SPACING.lg,
-    gap: SPACING.md,
-  },
-  actionButton: {
-    flex: 1,
-    backgroundColor: COLORS.blueLight,
-    paddingVertical: SPACING.md,
-    borderRadius: RADIUS.lg,
-    alignItems: 'center',
-  },
-  actionButtonText: {
-    color: COLORS.text,
-    fontWeight: '600',
-    fontSize: 14,
   },
 })

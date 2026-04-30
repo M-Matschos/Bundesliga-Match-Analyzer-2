@@ -1,0 +1,382 @@
+@import './tokens.css';
+
+/* ============================================================================
+   STEPPER
+   Multi-step progress indicator for forms and workflows
+   ============================================================================ */
+
+.Stepper {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+/* ============================================================================
+   STEPPER CONTAINER
+   Wrapper for step items
+   ============================================================================ */
+
+.Stepper__container {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-md);
+}
+
+/* Horizontal layout */
+.Stepper--horizontal .Stepper__container {
+  flex-direction: row;
+  justify-content: space-between;
+}
+
+/* Vertical layout */
+.Stepper--vertical .Stepper__container {
+  flex-direction: column;
+  gap: 0;
+}
+
+/* ============================================================================
+   STEPPER STEP
+   Individual step with indicator and label
+   ============================================================================ */
+
+.Stepper__step {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  flex: 1;
+  position: relative;
+}
+
+.Stepper--vertical .Stepper__step {
+  flex-direction: row;
+  padding: var(--space-md) 0;
+  padding-left: 0;
+}
+
+/* Status colors */
+.Stepper__step--pending {
+  opacity: 0.6;
+}
+
+.Stepper__step--active {
+  opacity: 1;
+}
+
+.Stepper__step--completed {
+  opacity: 1;
+}
+
+.Stepper__step--error {
+  opacity: 1;
+}
+
+.Stepper__step--disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* ============================================================================
+   STEPPER STEP BUTTON
+   Clickable step indicator
+   ============================================================================ */
+
+.Stepper__step-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  background: transparent;
+  border: none;
+  cursor: default;
+  flex-shrink: 0;
+}
+
+.Stepper__step-button--clickable {
+  cursor: pointer;
+}
+
+.Stepper__step-button--clickable:hover .Stepper__step-indicator {
+  transform: scale(1.1);
+}
+
+.Stepper__step-button:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 4px;
+  border-radius: 50%;
+}
+
+/* ============================================================================
+   STEPPER STEP INDICATOR
+   Numbered circle showing step number, checkmark, or error icon
+   ============================================================================ */
+
+.Stepper__step-indicator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--color-surface-secondary);
+  border: 2px solid var(--color-border);
+  color: var(--color-text-primary);
+  font-weight: 600;
+  font-size: var(--body-sm-size);
+  transition: var(--transition);
+}
+
+/* Pending step */
+.Stepper__step--pending .Stepper__step-indicator {
+  background: var(--color-surface-secondary);
+  border-color: var(--color-border);
+  color: var(--color-text-secondary);
+}
+
+/* Active step */
+.Stepper__step--active .Stepper__step-indicator {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  color: white;
+  box-shadow: 0 0 0 4px rgba(var(--color-primary-rgb), 0.1);
+}
+
+/* Completed step */
+.Stepper__step--completed .Stepper__step-indicator {
+  background: var(--color-success);
+  border-color: var(--color-success);
+  color: white;
+}
+
+/* Error step */
+.Stepper__step--error .Stepper__step-indicator {
+  background: var(--color-danger);
+  border-color: var(--color-danger);
+  color: white;
+}
+
+/* Disabled step */
+.Stepper__step--disabled .Stepper__step-indicator {
+  background: var(--color-surface-secondary);
+  border-color: var(--color-border);
+  opacity: 0.5;
+}
+
+/* ============================================================================
+   STEPPER STEP NUMBER/ICON
+   ============================================================================ */
+
+.Stepper__step-number {
+  display: inline-flex;
+}
+
+.Stepper__step-checkmark {
+  display: inline-flex;
+  font-size: 1.2em;
+}
+
+.Stepper__step-error {
+  display: inline-flex;
+  font-size: 1.2em;
+}
+
+/* ============================================================================
+   STEPPER STEP LABEL CONTAINER
+   Wrapper for label and description
+   ============================================================================ */
+
+.Stepper__step-label-container {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+  min-width: 0;
+}
+
+.Stepper--horizontal .Stepper__step-label-container {
+  text-align: center;
+  flex: 1;
+}
+
+.Stepper--vertical .Stepper__step-label-container {
+  text-align: left;
+  flex: 1;
+}
+
+/* ============================================================================
+   STEPPER STEP LABEL
+   Step title/label text
+   ============================================================================ */
+
+.Stepper__step-label {
+  margin: 0;
+  font-size: var(--body-md-size);
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.Stepper__step--pending .Stepper__step-label {
+  color: var(--color-text-secondary);
+  font-weight: 500;
+}
+
+/* ============================================================================
+   STEPPER STEP DESCRIPTION
+   Optional sub-text for step
+   ============================================================================ */
+
+.Stepper__step-description {
+  margin: 0;
+  font-size: var(--body-sm-size);
+  color: var(--color-text-secondary);
+  line-height: 1.4;
+}
+
+/* ============================================================================
+   STEPPER CONNECTOR
+   Line connecting steps
+   ============================================================================ */
+
+.Stepper__connector {
+  flex: 1;
+  height: 2px;
+  background: var(--color-border);
+  margin: 0 var(--space-sm);
+  transition: var(--transition);
+}
+
+/* Horizontal connector */
+.Stepper--horizontal .Stepper__connector {
+  height: 2px;
+  width: auto;
+}
+
+/* Vertical connector */
+.Stepper--vertical .Stepper__connector {
+  display: none;
+}
+
+.Stepper--vertical .Stepper__step {
+  border-left: 2px solid var(--color-border);
+  margin-left: 19px;
+  padding-left: var(--space-md);
+}
+
+.Stepper--vertical .Stepper__step--completed::before {
+  content: '';
+  position: absolute;
+  left: -2px;
+  top: 0;
+  width: 2px;
+  height: 40px;
+  background: var(--color-success);
+}
+
+/* Completed connector */
+.Stepper__connector--completed {
+  background: var(--color-success);
+}
+
+/* ============================================================================
+   STEPPER CONTENT
+   Content area for current step (optional)
+   ============================================================================ */
+
+.Stepper__content {
+  padding: var(--space-lg) 0;
+  margin-top: var(--space-md);
+  border-top: 1px solid var(--color-border);
+}
+
+/* ============================================================================
+   VARIANT: MINIMAL
+   Simplified version without connector lines
+   ============================================================================ */
+
+.Stepper--minimal .Stepper__connector {
+  display: none;
+}
+
+/* ============================================================================
+   RESPONSIVE
+   ============================================================================ */
+
+@media (max-width: 768px) {
+  .Stepper--horizontal .Stepper__container {
+    flex-direction: column;
+    gap: var(--space-md);
+  }
+
+  .Stepper--horizontal .Stepper__step {
+    flex-direction: row;
+  }
+
+  .Stepper--horizontal .Stepper__connector {
+    display: none;
+  }
+
+  .Stepper__step-indicator {
+    width: 36px;
+    height: 36px;
+    font-size: 14px;
+  }
+
+  .Stepper__step-label {
+    font-size: var(--body-sm-size);
+  }
+
+  .Stepper__step-label-container {
+    text-align: left;
+  }
+}
+
+@media (max-width: 480px) {
+  .Stepper__step-indicator {
+    width: 32px;
+    height: 32px;
+    font-size: 12px;
+  }
+
+  .Stepper__step-label {
+    font-size: var(--body-xs-size, 12px);
+  }
+
+  .Stepper__step-description {
+    font-size: 11px;
+  }
+
+  .Stepper__step {
+    gap: var(--space-xs);
+  }
+
+  .Stepper--vertical .Stepper__step {
+    margin-left: 14px;
+    padding-left: var(--space-sm);
+  }
+}
+
+/* ============================================================================
+   ACCESSIBILITY
+   ============================================================================ */
+
+/* High contrast mode */
+@media (prefers-contrast: more) {
+  .Stepper__step-indicator {
+    border-width: 3px;
+  }
+
+  .Stepper__connector {
+    height: 3px;
+  }
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .Stepper__step-indicator,
+  .Stepper__connector,
+  .Stepper__step-button--clickable .Stepper__step-indicator {
+    transition: none;
+  }
+
+  .Stepper__step-button--clickable:hover .Stepper__step-indicator {
+    transform: none;
+  }
+}

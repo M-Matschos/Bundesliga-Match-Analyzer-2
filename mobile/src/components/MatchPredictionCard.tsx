@@ -2,10 +2,11 @@
  * MatchPredictionCard
  * Zeigt ein Spiel mit Prognose, Logos, Wahrscheinlichkeiten und Value-Bet-Badge
  */
-import React from 'react'
+import React, { useMemo } from 'react'
 import { View, Text, StyleSheet, TouchableOpacity, Image, Linking } from 'react-native'
 import { Match } from '../services/api'
-import { COLORS, SPACING, RADIUS, confidenceColor, formatProb } from '../theme/colors'
+import { getColors, SPACING, RADIUS, confidenceColor, formatProb } from '../theme/colors'
+import { useTheme } from '../context/ThemeContext'
 
 interface Props {
   match: Match
@@ -13,6 +14,10 @@ interface Props {
 }
 
 export default function MatchPredictionCard({ match, onPress }: Props) {
+  const { mode } = useTheme()
+  const colors = getColors(mode)
+  const styles = useMemo(() => createStyles(colors), [colors])
+
   const pred = match.prediction
   if (!pred) return null
 
@@ -131,27 +136,27 @@ function MarketBadge({ label, prob, value }: { label: string; prob?: number; val
 
 // ─── Styles ───────────────────────────────────────────────────
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ReturnType<typeof getColors>) => StyleSheet.create({
   card: {
-    backgroundColor: COLORS.surface,
+    backgroundColor: colors.surface,
     borderRadius: RADIUS.lg,
     padding: SPACING.md,
     marginBottom: SPACING.sm,
     borderWidth: 1,
-    borderColor: COLORS.border,
+    borderColor: colors.border,
   },
   cardValueBet: {
-    borderColor: COLORS.valueBet,
+    borderColor: colors.valueBet,
     borderWidth: 2,
   },
   valueBetBanner: {
-    backgroundColor: COLORS.valueBetBg,
+    backgroundColor: colors.valueBetBg,
     borderRadius: RADIUS.sm,
     padding: 6,
     marginBottom: SPACING.sm,
   },
   valueBetText: {
-    color: COLORS.valueBet,
+    color: colors.valueBet,
     fontSize: 11,
     fontWeight: '700',
     textAlign: 'center',
@@ -175,7 +180,7 @@ const styles = StyleSheet.create({
     resizeMode: 'contain',
   },
   teamName: {
-    color: COLORS.text,
+    color: colors.text,
     fontSize: 12,
     fontWeight: '600',
     textAlign: 'center',
@@ -186,12 +191,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
   },
   timeText: {
-    color: COLORS.text,
+    color: colors.text,
     fontSize: 16,
     fontWeight: '700',
   },
   dateText: {
-    color: COLORS.textMuted,
+    color: colors.textMuted,
     fontSize: 11,
   },
   confBadge: {
@@ -211,16 +216,16 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     marginBottom: 6,
   },
-  probSegHome: { backgroundColor: COLORS.blue },
-  probSegDraw: { backgroundColor: COLORS.textMuted },
-  probSegAway: { backgroundColor: COLORS.orange },
+  probSegHome: { backgroundColor: colors.blue },
+  probSegDraw: { backgroundColor: colors.textMuted },
+  probSegAway: { backgroundColor: colors.orange },
   probLabels: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     marginBottom: SPACING.sm,
   },
   probLabel: {
-    color: COLORS.textSecond,
+    color: colors.textSecond,
     fontSize: 13,
     fontWeight: '600',
   },
@@ -230,11 +235,11 @@ const styles = StyleSheet.create({
     marginBottom: SPACING.sm,
   },
   scoreLabel: {
-    color: COLORS.textMuted,
+    color: colors.textMuted,
     fontSize: 12,
   },
   scoreValue: {
-    color: COLORS.text,
+    color: colors.text,
     fontSize: 12,
     fontWeight: '700',
   },
@@ -245,18 +250,18 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
   },
   marketBadge: {
-    backgroundColor: COLORS.surfaceHigh,
+    backgroundColor: colors.surfaceHigh,
     borderRadius: RADIUS.sm,
     paddingHorizontal: 8,
     paddingVertical: 5,
     alignItems: 'center',
   },
   marketLabel: {
-    color: COLORS.textMuted,
+    color: colors.textMuted,
     fontSize: 9,
   },
   marketValue: {
-    color: COLORS.text,
+    color: colors.text,
     fontSize: 12,
     fontWeight: '700',
   },

@@ -1,29 +1,49 @@
-/**
- * Progress Bar — Visual Progress Indicator
- */
-
 import React from 'react'
 import { View, Text, StyleSheet } from 'react-native'
-import { COLORS, SPACING, RADIUS } from '../theme/colors'
+import { colors } from '../theme/colors'
+import { typography } from '../theme/typography'
 
 interface ProgressBarProps {
-  current: number
-  total: number
+  // Support both direct progress (0-100) and calculated (current/total)
+  progress?: number
+  current?: number
+  total?: number
   label?: string
   showPercentage?: boolean
+  accessibilityLabel?: string  // For VoiceOver announcement
 }
 
 export default function ProgressBar({
+  progress,
   current,
   total,
   label,
   showPercentage = true,
+  accessibilityLabel,
 }: ProgressBarProps) {
-  const percentage = total > 0 ? (current / total) * 100 : 0
+  // Calculate percentage from either progress or current/total
+  const percentage = progress !== undefined
+    ? Math.min(100, Math.max(0, progress))
+    : total && total > 0
+    ? (current || 0 / total) * 100
+    : 0
+
   const progressWidth = `${Math.min(percentage, 100)}%`
 
+  const getProgressColor = () => {
+    if (percentage < 33) return colors.red
+    if (percentage < 66) return colors.yellow
+    return colors.green
+  }
+
   return (
-    <View style={styles.container}>
+    <View
+      style={styles.container}
+      accessible={true}
+      accessibilityRole="progressbar"
+      accessibilityLabel={accessibilityLabel || 'Progress'}
+      accessibilityValue={{ min: 0, max: 100, now: Math.round(percentage) }}
+    >
       {(label || showPercentage) && (
         <View style={styles.header}>
           {label && <Text style={styles.label}>{label}</Text>}
@@ -35,17 +55,15 @@ export default function ProgressBar({
 
       <View style={styles.barContainer}>
         <View
+          testID="progress-bar-fill"
           style={[
             styles.bar,
-            { width: progressWidth },
-            percentage < 33 && { backgroundColor: COLORS.red },
-            percentage >= 33 && percentage < 66 && { backgroundColor: COLORS.yellow },
-            percentage >= 66 && { backgroundColor: COLORS.greenLight },
+            { width: progressWidth, backgroundColor: getProgressColor() },
           ]}
         />
       </View>
 
-      {total > 0 && (
+      {current !== undefined && total && total > 0 && (
         <Text style={styles.counter}>
           {current} / {total}
         </Text>
@@ -56,40 +74,36 @@ export default function ProgressBar({
 
 const styles = StyleSheet.create({
   container: {
-    marginHorizontal: SPACING.lg,
-    marginVertical: SPACING.md,
+    marginVertical: 12,
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: SPACING.sm,
+    marginBottom: 8,
   },
   label: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: COLORS.text,
+    ...typography.labelMD,
+    color: colors.text,
   },
   percentage: {
-    fontSize: 13,
-    fontWeight: 'bold',
-    color: COLORS.blueLight,
+    ...typography.labelMD,
+    color: colors.blue,
   },
   barContainer: {
     height: 8,
-    backgroundColor: COLORS.surfaceHigh,
-    borderRadius: RADIUS.full,
+    backgroundColor: colors.surfaceHigh,
+    borderRadius: 100,
     overflow: 'hidden',
-    marginBottom: SPACING.xs,
+    marginBottom: 8,
   },
   bar: {
     height: '100%',
-    backgroundColor: COLORS.blueLight,
-    borderRadius: RADIUS.full,
+    borderRadius: 100,
   },
   counter: {
-    fontSize: 11,
-    color: COLORS.textMuted,
+    ...typography.labelSM,
+    color: colors.textMuted,
     textAlign: 'right',
   },
 })

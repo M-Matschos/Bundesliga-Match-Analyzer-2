@@ -1,0 +1,154 @@
+@import './tokens.css';
+
+/* ============================================================================
+   ERROR BANNER
+   Inline dismissible error message (usually at top of page/form)
+   ============================================================================ */
+
+.ErrorBanner {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-md);
+  padding: var(--space-md);
+  background: rgba(220, 38, 38, 0.1);
+  border: 1px solid var(--color-danger);
+  border-left: 4px solid var(--color-danger);
+  border-radius: var(--radius-md);
+  margin-bottom: var(--space-lg);
+  animation: ErrorBanner__slide-in var(--duration-fast) var(--easing-ease-out);
+}
+
+@keyframes ErrorBanner__slide-in {
+  from {
+    transform: translateY(-10px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.ErrorBanner--full-width {
+  margin-left: calc(-1 * var(--space-md));
+  margin-right: calc(-1 * var(--space-md));
+  margin-bottom: var(--space-lg);
+  border-radius: 0;
+  border-left: none;
+  border-top: 4px solid var(--color-danger);
+}
+
+/* ============================================================================
+   ERROR ICON
+   ============================================================================ */
+
+.ErrorBanner__icon {
+  font-size: 20px;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+/* ============================================================================
+   ERROR CONTENT
+   ============================================================================ */
+
+.ErrorBanner__content {
+  flex: 1;
+  min-width: 0;
+}
+
+.ErrorBanner__title {
+  margin: 0 0 var(--space-xs) 0;
+  font-size: var(--body-md-size);
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.ErrorBanner__message {
+  margin: 0;
+  font-size: var(--body-sm-size);
+  color: var(--color-danger-light);
+  line-height: 1.5;
+}
+
+/* ============================================================================
+   ACTION BUTTON
+   ============================================================================ */
+
+.ErrorBanner__action {
+  padding: var(--space-xs) var(--space-md);
+  background: transparent;
+  color: var(--color-danger);
+  border: none;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: var(--body-sm-size);
+  white-space: nowrap;
+  transition: var(--transition);
+  flex-shrink: 0;
+}
+
+.ErrorBanner__action:hover {
+  color: var(--color-danger-hover);
+  text-decoration: underline;
+}
+
+/* ============================================================================
+   CLOSE BUTTON
+   ============================================================================ */
+
+.ErrorBanner__close {
+  background: transparent;
+  border: none;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  padding: 0;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-sm);
+  transition: var(--transition);
+  flex-shrink: 0;
+  font-size: 14px;
+}
+
+.ErrorBanner__close:hover {
+  background: rgba(220, 38, 38, 0.1);
+  color: var(--color-danger);
+}
+
+/* ============================================================================
+   RESPONSIVE
+   ============================================================================ */
+
+@media (max-width: 768px) {
+  .ErrorBanner {
+    flex-wrap: wrap;
+    gap: var(--space-sm);
+    padding: var(--space-sm);
+  }
+
+  .ErrorBanner__content {
+    flex-basis: 100%;
+    order: 1;
+  }
+
+  .ErrorBanner__icon {
+    order: 0;
+  }
+
+  .ErrorBanner__action {
+    order: 2;
+  }
+
+  .ErrorBanner__close {
+    order: 3;
+  }
+
+  .ErrorBanner--full-width {
+    margin-left: calc(-1 * var(--space-sm));
+    margin-right: calc(-1 * var(--space-sm));
+  }
+}

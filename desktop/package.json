@@ -1,0 +1,51 @@
+{
+  "name": "match-oracle-desktop",
+  "version": "1.0.0",
+  "description": "Match Oracle - Fußball Prognosen für Windows Desktop",
+  "main": "main.js",
+  "homepage": "./",
+  "author": "Match Oracle Team",
+  "license": "MIT",
+  "scripts": {
+    "react-start": "react-scripts start",
+    "react-build": "react-scripts build",
+    "react-test": "react-scripts test",
+    "react-eject": "react-scripts eject",
+    "electron-start": "wait-on http://localhost:3000 && electron .",
+    "start": "concurrently \"npm run react-start\" \"wait-on http://localhost:3000 && electron .\"",
+    "build": "npx electron-builder",
+    "build:portable": "npx electron-builder --win portable"
+  },
+  "dependencies": {
+    "axios": "^1.15.2",
+    "react": "^19.2.5",
+    "react-dom": "^19.2.5",
+    "react-scripts": "^5.0.1"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.0",
+    "electron": "^27.0.0",
+    "electron-builder": "^24.6.4",
+    "electron-is-dev": "^2.0.0",
+    "wait-on": "^7.0.1"
+  },
+  "build": {
+    "appId": "com.matchoracle.app",
+    "productName": "Match Oracle",
+    "directories": {
+      "buildResources": "assets"
+    },
+    "files": [
+      "main.js",
+      "build/**/*",
+      "node_modules/**/*"
+    ],
+    "win": {
+      "target": [
+        "portable"
+      ],
+      "certificateFile": null,
+      "certificatePassword": null
+    }
+  }
+}

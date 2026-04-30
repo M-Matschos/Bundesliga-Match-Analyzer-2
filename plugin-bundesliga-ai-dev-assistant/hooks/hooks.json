@@ -1,0 +1,35 @@
+{
+  "version": "1.0",
+  "hooks": [
+    {
+      "name": "pre-commit-quality-check",
+      "event": "PreToolUse",
+      "condition": {
+        "toolNames": ["run-tests", "run-benchmarks", "security-audit", "check-dependencies"]
+      },
+      "type": "prompt-based",
+      "prompt": "Before proceeding with this operation, perform a quick sanity check: Does the code compile? Are there any obvious syntax errors? Is the test suite configuration valid? Report blockers that would prevent execution.",
+      "failBehavior": "block"
+    },
+    {
+      "name": "post-analysis-logging",
+      "event": "PostToolUse",
+      "condition": {
+        "toolNames": ["analyze-code-quality", "sports-analytics", "security-audit", "test-coverage"]
+      },
+      "type": "prompt-based",
+      "prompt": "Log this analysis for the project record: Capture the tool name, timestamp, key findings, and any critical issues discovered. If there are critical issues (severity >= HIGH), also note recommended next steps.",
+      "failBehavior": "warn"
+    },
+    {
+      "name": "safety-gate-deployment",
+      "event": "PreToolUse",
+      "condition": {
+        "toolNames": ["deployment-check"]
+      },
+      "type": "prompt-based",
+      "prompt": "This is a critical deployment check. Before proceeding, verify: 1) Have all model accuracy validations passed? 2) Is the kill-switch system functional and tested? 3) Are capital limits configured correctly? 4) Does the rollback plan exist and is it documented? If any answer is 'no', block deployment until rectified.",
+      "failBehavior": "block"
+    }
+  ]
+}

@@ -1,0 +1,116 @@
+@import './tokens.css';
+
+/* ============================================================================
+   DASHBOARD COMPONENT
+   Main layout with navigation tabs and content area
+   ============================================================================ */
+
+.dashboard {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  background: linear-gradient(135deg, var(--color-gradient-start) 0%, var(--color-gradient-end) 100%);
+}
+
+/* ============================================================================
+   DASHBOARD NAVIGATION (Tab bar)
+   ============================================================================ */
+
+.dashboard-nav {
+  display: flex;
+  gap: 0;
+  padding: 0;
+  background: var(--color-background);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.nav-btn {
+  flex: 1;
+  padding: var(--space-md) var(--space-md);
+  background: transparent;
+  color: var(--color-text-muted);
+  border: none;
+  border-bottom: 3px solid transparent;
+  font-size: var(--body-md-size);
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition);
+  text-align: center;
+}
+
+.nav-btn:hover {
+  color: var(--color-text-secondary);
+  background: rgba(59, 130, 246, 0.05);
+}
+
+.nav-btn.active {
+  color: var(--color-primary);
+  border-bottom-color: var(--color-primary);
+}
+
+/* ============================================================================
+   DASHBOARD CONTENT (Main area)
+   ============================================================================ */
+
+.dashboard-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--space-lg);
+}
+
+.tab-content {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.tab-content h2 {
+  font-size: var(--heading-lg-size);
+  color: var(--color-text-primary);
+  margin-bottom: var(--space-lg);
+}
+
+/* ============================================================================
+   STATES: Loading & Error
+   ============================================================================ */
+
+.loading {
+  text-align: center;
+  color: var(--color-text-muted);
+  padding: var(--space-xxl);
+  font-size: var(--body-lg-size);
+}
+
+.error {
+  padding: var(--space-md);
+  background: rgba(220, 38, 38, 0.1);
+  border: 1px solid var(--color-danger);
+  border-radius: var(--radius-md);
+  color: var(--color-danger-light);
+  margin-bottom: var(--space-md);
+  font-size: var(--body-md-size);
+}
+
+/* ============================================================================
+   RESPONSIVE — Tablet (768px and down)
+   ============================================================================ */
+
+@media (max-width: 768px) {
+  .dashboard-content {
+    padding: var(--space-md);
+  }
+
+  .tab-content h2 {
+    font-size: var(--heading-md-size);
+  }
+
+  .dashboard-nav {
+    overflow-x: auto;
+  }
+
+  .nav-btn {
+    white-space: nowrap;
+    flex: 0 0 auto;
+    padding: var(--space-sm) var(--space-md);
+    font-size: var(--label-md-size);
+  }
+}

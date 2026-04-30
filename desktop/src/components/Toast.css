@@ -1,0 +1,170 @@
+@import './tokens.css';
+
+/* ============================================================================
+   TOAST COMPONENT
+   Individual notification with icon, content, action, close button
+   ============================================================================ */
+
+.Toast {
+  position: relative;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-left: 4px solid var(--color-success);
+  border-radius: var(--radius-md);
+  padding: var(--space-md);
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  box-shadow: var(--shadow-lg);
+  z-index: 999;
+  min-width: 300px;
+  max-width: 400px;
+  animation: Toast__slide-in-top var(--duration-fast) var(--easing-ease-out);
+}
+
+@keyframes Toast__slide-in-top {
+  from {
+    transform: translateY(-100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes Toast__slide-out-top {
+  from {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateY(-100%);
+    opacity: 0;
+  }
+}
+
+.Toast.Toast--closing {
+  animation: Toast__slide-out-top var(--duration-fast) var(--easing-ease-out);
+}
+
+/* ============================================================================
+   TOAST ICON
+   ============================================================================ */
+
+.Toast__icon {
+  font-size: 20px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ============================================================================
+   TOAST CONTENT
+   ============================================================================ */
+
+.Toast__content {
+  flex: 1;
+  color: var(--color-text-primary);
+  font-size: var(--body-md-size);
+  line-height: 1.4;
+}
+
+/* ============================================================================
+   TOAST ACTION BUTTON
+   ============================================================================ */
+
+.Toast__action {
+  padding: var(--space-xs) var(--space-md);
+  background: transparent;
+  color: var(--color-primary);
+  border: none;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: var(--body-sm-size);
+  transition: var(--transition);
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.Toast__action:hover {
+  color: var(--color-primary-hover);
+  text-decoration: underline;
+}
+
+/* ============================================================================
+   TOAST CLOSE BUTTON
+   ============================================================================ */
+
+.Toast__close {
+  background: transparent;
+  border: none;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  padding: 0;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-sm);
+  transition: var(--transition);
+  flex-shrink: 0;
+  font-size: 14px;
+}
+
+.Toast__close:hover {
+  background: rgba(59, 130, 246, 0.1);
+  color: var(--color-text-primary);
+}
+
+/* ============================================================================
+   TOAST TYPE VARIANTS
+   ============================================================================ */
+
+.Toast--success {
+  border-left-color: var(--color-success);
+}
+
+.Toast--error {
+  border-left-color: var(--color-danger);
+}
+
+.Toast--warning {
+  border-left-color: var(--color-warning);
+}
+
+.Toast--info {
+  border-left-color: var(--color-info);
+}
+
+/* ============================================================================
+   HOVER STATE
+   ============================================================================ */
+
+.Toast:hover {
+  box-shadow: var(--shadow-xl);
+}
+
+/* ============================================================================
+   RESPONSIVE — Mobile (768px and down)
+   ============================================================================ */
+
+@media (max-width: 768px) {
+  .Toast {
+    min-width: auto;
+    max-width: calc(100vw - 32px);
+    margin: 0 16px;
+    border-radius: var(--radius-md);
+  }
+
+  .Toast__content {
+    font-size: var(--body-sm-size);
+  }
+
+  .Toast__action {
+    font-size: var(--body-xs-size);
+    padding: var(--space-xs) var(--space-sm);
+  }
+}

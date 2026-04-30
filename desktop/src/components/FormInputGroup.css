@@ -1,0 +1,201 @@
+@import './tokens.css';
+
+/* ============================================================================
+   FORM INPUT GROUP COMPONENT
+   Uses unified design tokens for consistency across Desktop + Mobile
+   ============================================================================ */
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: var(--space-lg);
+  width: 100%;
+}
+
+/* ============================================================================
+   LABEL STYLING
+   ============================================================================ */
+
+.form-label {
+  display: flex;
+  align-items: center;
+  font-size: var(--label-md-size);
+  font-weight: var(--label-md-weight);
+  color: var(--color-text-primary);
+  margin-bottom: var(--space-sm);
+  cursor: text;
+}
+
+.form-label__required {
+  color: var(--color-danger);
+  margin-left: var(--space-xs);
+}
+
+/* ============================================================================
+   INPUT WRAPPER & SPINNER
+   ============================================================================ */
+
+.form-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.form-input__spinner {
+  position: absolute;
+  right: var(--space-md);
+  width: 16px;
+  height: 16px;
+  border: 2px solid var(--color-border);
+  border-top-color: var(--color-primary);
+  border-radius: 50%;
+  animation: spinner-spin 0.8s linear infinite;
+  pointer-events: none;
+}
+
+@keyframes spinner-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ============================================================================
+   INPUT ELEMENT — States: Default, Focus, Error, Success, Disabled, Loading
+   ============================================================================ */
+
+.form-input {
+  width: 100%;
+  padding: var(--space-sm) var(--space-md);
+  font-size: var(--body-md-size);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background-color: var(--color-surface);
+  color: var(--color-text-primary);
+  transition: var(--transition);
+  font-family: inherit;
+  box-sizing: border-box;
+}
+
+.form-input::placeholder {
+  color: var(--color-text-muted);
+}
+
+/* Focus State */
+.form-input:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: var(--focus-ring);
+  background-color: var(--color-background);
+}
+
+.form-input--focus {
+  border-color: var(--color-primary);
+  box-shadow: var(--focus-ring);
+}
+
+/* Error State */
+.form-input--error {
+  border-color: var(--color-danger);
+  background-color: var(--color-background);
+}
+
+.form-input--error:focus {
+  border-color: var(--color-danger);
+  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.1);
+}
+
+/* Success State */
+.form-input--success {
+  border-color: var(--color-success);
+  background-color: var(--color-background);
+}
+
+.form-input--success:focus {
+  border-color: var(--color-success);
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+}
+
+/* Disabled State */
+.form-input--disabled {
+  background-color: var(--color-background);
+  color: var(--color-text-muted);
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.form-input--disabled::placeholder {
+  color: var(--color-border);
+}
+
+/* Loading State */
+.form-input--loading {
+  padding-right: var(--space-lg);
+}
+
+/* ============================================================================
+   MESSAGES (Error & Success)
+   ============================================================================ */
+
+.form-message {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-xs);
+  font-size: var(--body-sm-size);
+  margin-top: var(--space-xs);
+  animation: message-slide-in var(--duration-fast) ease-out;
+}
+
+@keyframes message-slide-in {
+  from {
+    opacity: 0;
+    transform: translateY(-2px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.form-message__icon {
+  flex-shrink: 0;
+  line-height: 1.4;
+}
+
+.form-message__text {
+  color: var(--color-danger-light);
+  word-break: break-word;
+}
+
+.form-message--error .form-message__text {
+  color: var(--color-danger-light);
+}
+
+.form-message--success .form-message__text {
+  color: var(--color-success-light);
+}
+
+/* ============================================================================
+   HINT TEXT
+   ============================================================================ */
+
+.form-hint {
+  font-size: var(--label-sm-size);
+  color: var(--color-text-muted);
+  margin-top: var(--space-xs);
+  font-weight: 400;
+}
+
+/* ============================================================================
+   RESPONSIVE — Mobile (640px and down)
+   ============================================================================ */
+
+@media (max-width: 640px) {
+  .form-group {
+    margin-bottom: var(--space-md);
+  }
+
+  .form-input {
+    padding: var(--space-sm) var(--space-sm);
+    font-size: var(--body-sm-size);
+  }
+}

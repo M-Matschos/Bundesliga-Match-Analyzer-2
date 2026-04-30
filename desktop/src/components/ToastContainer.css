@@ -1,0 +1,34 @@
+/* ============================================================================
+   TOAST CONTAINER
+   Fixed positioned container for stacking toasts in top-right
+   ============================================================================ */
+
+.ToastContainer {
+  position: fixed;
+  top: var(--space-lg);
+  right: var(--space-lg);
+  z-index: 998;
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+  max-width: 100%;
+}
+
+.ToastContainer > * {
+  pointer-events: auto;
+}
+
+/* ============================================================================
+   RESPONSIVE — Mobile (768px and down)
+   ============================================================================ */
+
+@media (max-width: 768px) {
+  .ToastContainer {
+    top: var(--space-md);
+    right: var(--space-md);
+    left: var(--space-md);
+    width: auto;
+    max-width: none;
+  }
+}

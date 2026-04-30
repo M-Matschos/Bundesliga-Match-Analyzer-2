@@ -8,11 +8,11 @@ from fastapi import APIRouter, HTTPException, Query, Depends, Header
 from sqlalchemy import select, and_
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.db import get_db
+from app.models.db import get_db
 from app.models.db import Bet, Match, User
-from app.core.security import get_current_user
+from app.core.security import verify_token, get_user_id_from_token, get_current_user
 
-router = APIRouter(prefix="/api/v1/virtual-bets", tags=["virtual-betting"])
+router = APIRouter(tags=["virtual-betting"])
 
 
 @router.post("")
@@ -22,7 +22,7 @@ async def place_bet(
     odds: float = Query(..., gt=0, description="Decimal odds"),
     amount: float = Query(..., gt=0, description="Bet amount"),
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    authorization: str = Header(...),
 ) -> dict:
     """Place a virtual bet on a match.
 
@@ -37,6 +37,20 @@ async def place_bet(
     POST /virtual-bets?match_id=550e8400...&bet_type=home_win&odds=1.95&amount=100
     ```
     """
+    # Extract token from Authorization header
+    try:
+        scheme, token = authorization.split()
+        if scheme.lower() != "bearer":
+            raise ValueError("Invalid scheme")
+    except (ValueError, AttributeError):
+        raise HTTPException(status_code=401, detail="Invalid authorization header")
+
+    # Verify token and get user_id
+    try:
+        user_id = UUID(get_user_id_from_token(token))
+    except (HTTPException, ValueError):
+        raise HTTPException(status_code=401, detail="Invalid token")
+
     # Validate bet_type
     if bet_type not in ["home_win", "draw", "away_win"]:
         raise HTTPException(status_code=400, detail="Invalid bet_type")
@@ -54,9 +68,8 @@ async def place_bet(
         raise HTTPException(status_code=400, detail="Match has already started")
 
     # Create bet
-    from app.models.db import Bet as BetModel
-    bet = BetModel(
-        user_id=current_user.id,
+    bet = Bet(
+        user_id=user_id,
         match_id=match_id,
         bet_type=bet_type,
         odds=odds,
@@ -72,8 +85,8 @@ async def place_bet(
         "bet_id": str(bet.id),
         "match_id": str(match_id),
         "bet_type": bet_type,
-        "odds": odds,
-        "amount": amount,
+        "odds": float(odds),
+        "amount": float(amount),
         "status": "pending",
         "created_at": bet.created_at.isoformat(),
     }
@@ -99,7 +112,7 @@ async def get_user_bets(
     GET /virtual-bets?status=pending
     ```
     """
-    filters = [Bet.user_id == current_user.id]
+    filters = [Bet.user_id == UUID(current_user.sub)]
 
     if status:
         if status not in ["pending", "won", "lost", "void"]:
@@ -119,10 +132,10 @@ async def get_user_bets(
                 "bet_id": str(b.id),
                 "match_id": str(b.match_id),
                 "bet_type": b.bet_type,
-                "odds": b.odds,
-                "amount": b.amount,
+                "odds": float(b.odds),
+                "amount": float(b.amount),
                 "status": b.status,
-                "win_amount": b.win_amount,
+                "win_amount": float(b.win_amount) if b.win_amount else None,
                 "created_at": b.created_at.isoformat(),
             }
             for b in bets
@@ -130,11 +143,62 @@ async def get_user_bets(
     }
 
 
+@router.get("/statistics/portfolio")
+async def get_portfolio_stats(
+    db: AsyncSession = Depends(get_db),
+    current_user = Depends(get_current_user),
+) -> dict:
+    """Get user's betting portfolio statistics.
+
+    **Example:**
+    ```
+    GET /virtual-bets/statistics/portfolio
+    ```
+    """
+    query = select(Bet).where(Bet.user_id == UUID(current_user.sub))
+    result = await db.execute(query)
+    bets = result.scalars().all()
+
+    if not bets:
+        return {
+            "total_bets": 0,
+            "stats": {
+                "total_staked": 0,
+                "total_winnings": 0,
+                "total_losses": 0,
+                "roi": 0,
+                "win_rate": 0,
+            }
+        }
+
+    total_staked = sum(float(b.amount) for b in bets)
+    total_winnings = sum(float(b.win_amount or 0) for b in bets if b.status == "won")
+    total_losses = sum(float(b.amount) for b in bets if b.status == "lost")
+
+    won_bets = sum(1 for b in bets if b.status == "won")
+    lost_bets = sum(1 for b in bets if b.status == "lost")
+
+    return {
+        "total_bets": len(bets),
+        "stats": {
+            "total_staked": total_staked,
+            "total_winnings": total_winnings,
+            "total_losses": total_losses,
+            "net_profit": total_winnings - total_losses,
+            "roi": float((total_winnings - total_staked) / total_staked) if total_staked > 0 else 0.0,
+            "win_rate": float(won_bets / len(bets)) if bets else 0.0,
+            "won_bets": won_bets,
+            "lost_bets": lost_bets,
+            "pending_bets": sum(1 for b in bets if b.status == "pending"),
+        }
+    }
+
+
 @router.get("/{bet_id}")
 async def get_bet_detail(
     bet_id: UUID,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user = Depends(get_current_user),
 ) -> dict:
     """Get bet details.
 
@@ -149,7 +213,7 @@ async def get_bet_detail(
     query = select(Bet).where(
         and_(
             Bet.id == bet_id,
-            Bet.user_id == current_user.id,
+            Bet.user_id == UUID(current_user.sub),
         )
     )
     result = await db.execute(query)
@@ -175,62 +239,11 @@ async def get_bet_detail(
             "away_score": match.away_score if match else None,
         } if match else None,
         "bet_type": bet.bet_type,
-        "odds": bet.odds,
-        "amount": bet.amount,
+        "odds": float(bet.odds),
+        "amount": float(bet.amount),
         "status": bet.status,
-        "win_amount": bet.win_amount,
+        "win_amount": float(bet.win_amount) if bet.win_amount else None,
         "created_at": bet.created_at.isoformat(),
-    }
-
-
-@router.get("/statistics/portfolio")
-async def get_portfolio_stats(
-    db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user),
-) -> dict:
-    """Get user's betting portfolio statistics.
-
-    **Example:**
-    ```
-    GET /virtual-bets/statistics/portfolio
-    ```
-    """
-    query = select(Bet).where(Bet.user_id == current_user.id)
-    result = await db.execute(query)
-    bets = result.scalars().all()
-
-    if not bets:
-        return {
-            "total_bets": 0,
-            "stats": {
-                "total_staked": 0,
-                "total_winnings": 0,
-                "total_losses": 0,
-                "roi": 0,
-                "win_rate": 0,
-            }
-        }
-
-    total_staked = sum(b.amount for b in bets)
-    total_winnings = sum(b.win_amount or 0 for b in bets if b.status == "won")
-    total_losses = sum(b.amount for b in bets if b.status == "lost")
-
-    won_bets = sum(1 for b in bets if b.status == "won")
-    lost_bets = sum(1 for b in bets if b.status == "lost")
-
-    return {
-        "total_bets": len(bets),
-        "stats": {
-            "total_staked": total_staked,
-            "total_winnings": total_winnings,
-            "total_losses": total_losses,
-            "net_profit": total_winnings - total_losses,
-            "roi": (total_winnings - total_staked) / total_staked if total_staked > 0 else 0,
-            "win_rate": won_bets / len(bets) if bets else 0,
-            "won_bets": won_bets,
-            "lost_bets": lost_bets,
-            "pending_bets": sum(1 for b in bets if b.status == "pending"),
-        }
     }
 
 
@@ -238,7 +251,7 @@ async def get_portfolio_stats(
 async def cancel_bet(
     bet_id: UUID,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user = Depends(get_current_user),
 ) -> dict:
     """Cancel a pending bet.
 
@@ -253,7 +266,7 @@ async def cancel_bet(
     query = select(Bet).where(
         and_(
             Bet.id == bet_id,
-            Bet.user_id == current_user.id,
+            Bet.user_id == UUID(current_user.sub),
         )
     )
     result = await db.execute(query)

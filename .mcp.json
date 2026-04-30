@@ -1,0 +1,24 @@
+{
+  "mcpServers": {
+    "filesystem": {
+      "command": "mcp",
+      "args": ["filesystem"],
+      "env": {}
+    },
+    "github": {
+      "command": "mcp",
+      "args": ["github"],
+      "env": {
+        "GITHUB_TOKEN": "${GITHUB_TOKEN}"
+      }
+    },
+    "postgres": {
+      "command": "mcp",
+      "args": ["postgres"],
+      "env": {
+        "DATABASE_URL": "${DATABASE_URL}"
+      }
+    }
+  },
+  "version": "1.0"
+}

@@ -17,17 +17,27 @@ import uuid
 logger = logging.getLogger(__name__)
 
 # Database engine configuration
-engine = create_async_engine(
-    settings.sqlalchemy_database_url_async,
-    echo=settings.db_echo,
-    pool_size=settings.db_pool_size,
-    max_overflow=settings.db_max_overflow,
-    # Connection pool settings
-    pool_pre_ping=True,  # Verify connections before using
-    pool_recycle=3600,  # Recycle connections after 1 hour
-    # Async settings
-    future=True,
-)
+# SQLite doesn't support pool_size, max_overflow, pool_recycle
+db_url = settings.sqlalchemy_database_url_async
+is_sqlite = "sqlite" in db_url
+
+engine_kwargs = {
+    "echo": settings.db_echo,
+    "future": True,
+}
+
+if not is_sqlite:
+    engine_kwargs.update({
+        "pool_size": settings.db_pool_size,
+        "max_overflow": settings.db_max_overflow,
+        "pool_pre_ping": True,
+        "pool_recycle": 3600,
+    })
+else:
+    # SQLite-specific settings
+    engine_kwargs["connect_args"] = {"timeout": 30, "check_same_thread": False}
+
+engine = create_async_engine(db_url, **engine_kwargs)
 
 # Session factory
 async_session_maker = async_sessionmaker(
@@ -120,6 +130,34 @@ class User(Base):
     )
 
 
+class Team(Base):
+    """Football team model."""
+
+    __tablename__ = "teams"
+
+    id = Column(PG_UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    name = Column(String(100), unique=True, nullable=False, index=True)
+    logo_url = Column(String(500), nullable=True)
+    league = Column(String(50), nullable=False, index=True)
+    position = Column(Integer, nullable=True)
+    wins = Column(Integer, default=0, nullable=False)
+    draws = Column(Integer, default=0, nullable=False)
+    losses = Column(Integer, default=0, nullable=False)
+    goals_for = Column(Integer, default=0, nullable=False)
+    goals_against = Column(Integer, default=0, nullable=False)
+    points = Column(Integer, default=0, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+
+    home_matches = relationship("Match", foreign_keys="[Match.home_team_id]", back_populates="home_team")
+    away_matches = relationship("Match", foreign_keys="[Match.away_team_id]", back_populates="away_team")
+
+    __table_args__ = (
+        Index("ix_teams_league", "league"),
+        Index("ix_teams_position", "position"),
+    )
+
+
 class Match(Base):
     """Football match model."""
 
@@ -127,8 +165,8 @@ class Match(Base):
 
     id = Column(PG_UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     api_football_id = Column(Integer, unique=True, nullable=True, index=True)
-    home_team_id = Column(String(50), nullable=False, index=True)
-    away_team_id = Column(String(50), nullable=False, index=True)
+    home_team_id = Column(PG_UUID(as_uuid=True), ForeignKey("teams.id", ondelete="RESTRICT"), nullable=False, index=True)
+    away_team_id = Column(PG_UUID(as_uuid=True), ForeignKey("teams.id", ondelete="RESTRICT"), nullable=False, index=True)
     league_id = Column(String(50), nullable=False, index=True)
     season = Column(String(10), nullable=False, index=True)
     matchday = Column(Integer, nullable=False)
@@ -143,6 +181,8 @@ class Match(Base):
 
     predictions = relationship("Prediction", back_populates="match", cascade="all, delete-orphan")
     bets = relationship("Bet", back_populates="match", cascade="all, delete-orphan")
+    home_team = relationship("Team", foreign_keys=[home_team_id], back_populates="home_matches")
+    away_team = relationship("Team", foreign_keys=[away_team_id], back_populates="away_matches")
 
     __table_args__ = (
         Index("ix_matches_league_season", "league_id", "season"),
