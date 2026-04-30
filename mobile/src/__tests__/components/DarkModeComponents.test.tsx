@@ -58,12 +58,12 @@ describe('MatchPredictionCard Dark Mode', () => {
   })
 
   it('applies dynamic background color', () => {
-    const { container } = render(
+    render(
       <ThemeProvider initialTheme="dark">
         <MatchPredictionCard match={mockMatch} />
       </ThemeProvider>
     )
-    expect(container).toBeTruthy()
+    expect(screen.getByText('Bayern')).toBeTruthy()
   })
 
   it('displays prediction data correctly', () => {
@@ -199,7 +199,7 @@ describe('Modal Dark Mode', () => {
   })
 
   it('applies surface background color dynamically', () => {
-    const { container } = render(
+    render(
       <ThemeProvider initialTheme="dark">
         <Modal
           isOpen={true}
@@ -210,7 +210,7 @@ describe('Modal Dark Mode', () => {
         </Modal>
       </ThemeProvider>
     )
-    expect(container).toBeTruthy()
+    expect(screen.getByText('Themed Modal')).toBeTruthy()
   })
 
   it('renders buttons with theme colors', () => {
@@ -336,7 +336,7 @@ describe('FormInputGroup Dark Mode', () => {
   })
 
   it('applies surface background to input in dark mode', () => {
-    const { container } = render(
+    render(
       <ThemeProvider initialTheme="dark">
         <FormInputGroup
           label="Username"
@@ -345,7 +345,7 @@ describe('FormInputGroup Dark Mode', () => {
         />
       </ThemeProvider>
     )
-    expect(container).toBeTruthy()
+    expect(screen.getByText('Username')).toBeTruthy()
   })
 
   it('displays error state with theme color', () => {
@@ -405,7 +405,7 @@ describe('FormInputGroup Dark Mode', () => {
   })
 
   it('supports loading state', () => {
-    const { container } = render(
+    render(
       <ThemeProvider initialTheme="dark">
         <FormInputGroup
           label="Email"
@@ -415,7 +415,7 @@ describe('FormInputGroup Dark Mode', () => {
         />
       </ThemeProvider>
     )
-    expect(container).toBeTruthy()
+    expect(screen.getByText('Email')).toBeTruthy()
   })
 })
 
