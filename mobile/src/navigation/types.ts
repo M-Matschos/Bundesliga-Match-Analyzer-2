@@ -32,6 +32,7 @@ export type AppStackParamList = {
   Profile: undefined
   Settings: undefined
   Help: undefined
+  PerformanceDebug: undefined
 }
 
 /**
@@ -55,6 +56,7 @@ export type PredictionsScreenProps = NativeStackScreenProps<AppStackParamList, '
 export type ProfileScreenProps = NativeStackScreenProps<AppStackParamList, 'Profile'>
 export type SettingsScreenProps = NativeStackScreenProps<AppStackParamList, 'Settings'>
 export type HelpScreenProps = NativeStackScreenProps<AppStackParamList, 'Help'>
+export type PerformanceDebugScreenProps = NativeStackScreenProps<AppStackParamList, 'PerformanceDebug'>
 
 /**
  * Deep Link Configuration
@@ -86,6 +88,7 @@ export const linking = {
       Profile: 'profile',
       Settings: 'settings',
       Help: 'help',
+      PerformanceDebug: 'performance-debug',
 
       // Catch-all for unmatched routes
       NotFound: '*',

@@ -20,6 +20,9 @@ import RegisterScreen from '../screens/RegisterScreen';
 import DashboardScreen from '../screens/DashboardScreen';
 import MatchDetailsScreen from '../screens/MatchDetailsScreen';
 
+// Screens - Performance Debug
+import PerformanceDebugScreen from '../screens/PerformanceDebugScreen';
+
 // Screens - Fixtures (Placeholder)
 const FixturesScreen = () => <Text>Spielplan</Text>;
 
@@ -172,6 +175,16 @@ export const RootNavigator: React.FC<RootNavigatorProps> = ({ isSignedIn }) => {
               component={MainTabsNavigator}
               options={{
                 animationEnabled: false,
+              }}
+            />
+            {/* Performance Debug Screen - Modal overlay */}
+            <RootStack.Screen
+              name="PerformanceDebug"
+              component={PerformanceDebugScreen}
+              options={{
+                title: 'Performance Debug',
+                headerShown: true,
+                cardStyle: { backgroundColor: '#FFFFFF' },
               }}
             />
           </RootStack.Group>
