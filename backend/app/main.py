@@ -8,7 +8,7 @@ import asyncio
 import json
 import logging
 
-from app.routers import matches, predictions, teams, players, betting, auth, websocket
+from app.routers import matches, predictions, teams, players, betting, auth, websocket, health
 from app.core.config import settings
 from app.core.redis_pubsub import pubsub_manager
 from app.models.db import Base, engine
@@ -36,6 +36,7 @@ app.include_router(teams.router,       prefix="/api/v1/teams",        tags=["Tea
 app.include_router(players.router,     prefix="/api/v1/players",      tags=["Players"])
 app.include_router(betting.router,     prefix="/api/v1/virtual-bets", tags=["Virtual Betting"])
 app.include_router(websocket.router,   prefix="/api/v1/ws",           tags=["WebSocket"])
+app.include_router(health.router,        tags=["Health"])
 
 
 @app.on_event("startup")
@@ -70,11 +71,6 @@ async def shutdown():
         logger.error(f"[ERROR] Shutdown failed: {str(e)}")
 
 
-@app.get("/health")
-async def health_check():
-    """Health check endpoint with Redis status."""
-    redis_connected = await pubsub_manager.is_connected()
-    return {
         "status": "ok",
         "version": "1.0.0",
         "redis": "connected" if redis_connected else "disconnected"
