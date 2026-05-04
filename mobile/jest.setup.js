@@ -22,7 +22,9 @@ jest.mock('expo-notifications', () => ({
     PROVISIONAL: 'provisional',
   },
   addNotificationResponseReceivedListener: jest.fn(() => ({ remove: jest.fn() })),
+  addNotificationReceivedListener: jest.fn(() => ({ remove: jest.fn() })),
   getDevicePushTokenAsync: jest.fn(),
+  getExpoPushTokenAsync: jest.fn(),
   setNotificationHandler: jest.fn((handler) => {
     mockNotificationHandlers.lastHandler = handler
   }),
