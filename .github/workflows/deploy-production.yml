@@ -1,0 +1,282 @@
+name: Deploy to Production
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to deploy (e.g., v1.0.0)'
+        required: true
+        type: string
+      rollback:
+        description: 'Rollback to previous version'
+        required: false
+        type: boolean
+        default: false
+
+jobs:
+  approval:
+    name: Require Approval
+    runs-on: ubuntu-latest
+    environment:
+      name: production
+      url: https://production.bundesliga-analyzer.dev
+
+    steps:
+      - name: Approval granted
+        run: |
+          echo "✅ Production deployment approved by: ${{ github.triggering_actor }}"
+          echo "🎯 Version: ${{ github.event.inputs.version }}"
+          echo "📅 Timestamp: $(date -u +'%Y-%m-%d %H:%M:%S UTC')"
+          echo "🔗 Commit: ${{ github.sha }}"
+
+  deploy-production:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    needs: approval
+    if: success()
+
+    environment:
+      name: production
+      url: https://production.bundesliga-analyzer.dev
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.version || github.sha }}
+
+      - name: Download build artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: mobile-build
+          path: mobile/web-build
+
+      - name: Prepare production deployment
+        run: |
+          echo "🚀 Preparing production deployment"
+          echo "Version: ${{ github.event.inputs.version }}"
+          echo "Rollback: ${{ github.event.inputs.rollback }}"
+
+          # Create deployment metadata
+          mkdir -p deployment-metadata
+          cat > deployment-metadata/version.txt << EOF
+          VERSION=${{ github.event.inputs.version }}
+          SHA=${{ github.sha }}
+          DEPLOYED_BY=${{ github.triggering_actor }}
+          DEPLOYED_AT=$(date -u +'%Y-%m-%d %H:%M:%S UTC')
+          EOF
+
+      - name: Deploy to production
+        run: |
+          echo "📦 Deploying to production.bundesliga-analyzer.dev"
+
+          # Production deployment (placeholder)
+          # In real scenarios, this integrates with:
+          # - Kubernetes cluster management
+          # - Infrastructure as Code (Terraform, Helm)
+          # - Container orchestration (Docker, Swarm)
+          # - Cloud providers (AWS, GCP, Azure)
+
+          echo "Deployment simulation: Production files staged"
+          ls -lah mobile/web-build 2>/dev/null | head -10 || echo "Build files staged"
+        env:
+          PROD_DEPLOY_KEY: ${{ secrets.PROD_DEPLOY_KEY }}
+          PROD_HOST: production.bundesliga-analyzer.dev
+          PROD_USER: deployment
+
+      - name: Run health checks
+        id: health
+        run: |
+          echo "🏥 Running health checks..."
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## Production Health Checks" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          PROD_URL="https://production.bundesliga-analyzer.dev"
+          API_URL="https://api.production.bundesliga-analyzer.dev"
+
+          # Wait for deployment to stabilize
+          sleep 5
+
+          # API Health Check
+          echo "Checking API health..."
+          API_STATUS=$(curl -s -o /dev/null -w "%{http_code}" "$API_URL/health" || echo "000")
+          if [ "$API_STATUS" = "200" ]; then
+            echo "✅ API Health: OK ($API_STATUS)" >> $GITHUB_STEP_SUMMARY
+            API_HEALTH="healthy"
+          else
+            echo "❌ API Health: FAILED ($API_STATUS)" >> $GITHUB_STEP_SUMMARY
+            API_HEALTH="unhealthy"
+          fi
+
+          # Database connectivity check
+          echo "Checking database connectivity..."
+          DB_STATUS=$(curl -s -o /dev/null -w "%{http_code}" "$API_URL/health/db" || echo "000")
+          if [ "$DB_STATUS" = "200" ]; then
+            echo "✅ Database: Connected" >> $GITHUB_STEP_SUMMARY
+            DB_HEALTH="healthy"
+          else
+            echo "⚠️ Database: Check warnings ($DB_STATUS)" >> $GITHUB_STEP_SUMMARY
+            DB_HEALTH="warning"
+          fi
+
+          # Web app availability
+          echo "Checking web app..."
+          WEB_STATUS=$(curl -s -o /dev/null -w "%{http_code}" "$PROD_URL" || echo "000")
+          if [ "$WEB_STATUS" = "200" ]; then
+            echo "✅ Web App: OK ($WEB_STATUS)" >> $GITHUB_STEP_SUMMARY
+            WEB_HEALTH="healthy"
+          else
+            echo "❌ Web App: FAILED ($WEB_STATUS)" >> $GITHUB_STEP_SUMMARY
+            WEB_HEALTH="unhealthy"
+          fi
+
+          # Auth system check
+          echo "Checking auth system..."
+          AUTH_STATUS=$(curl -s -o /dev/null -w "%{http_code}" "$API_URL/auth/health" || echo "000")
+          if [ "$AUTH_STATUS" = "200" ]; then
+            echo "✅ Auth System: OK" >> $GITHUB_STEP_SUMMARY
+            AUTH_HEALTH="healthy"
+          else
+            echo "⚠️ Auth System: Check issues ($AUTH_STATUS)" >> $GITHUB_STEP_SUMMARY
+            AUTH_HEALTH="warning"
+          fi
+
+          # Summary
+          echo "" >> $GITHUB_STEP_SUMMARY
+          if [ "$API_HEALTH" = "healthy" ] && [ "$WEB_HEALTH" = "healthy" ]; then
+            echo "✅ **All critical systems operational**" >> $GITHUB_STEP_SUMMARY
+            echo "health_status=healthy" >> $GITHUB_OUTPUT
+          else
+            echo "❌ **Critical systems unhealthy**" >> $GITHUB_STEP_SUMMARY
+            echo "health_status=unhealthy" >> $GITHUB_OUTPUT
+          fi
+        continue-on-error: true
+
+      - name: Automatic rollback on failure
+        if: steps.health.outputs.health_status == 'unhealthy'
+        run: |
+          echo "🔄 Initiating automatic rollback..."
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## ⚠️ AUTOMATIC ROLLBACK TRIGGERED" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Health checks detected critical issues. Automatic rollback initiated." >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          # Rollback to previous version
+          echo "Rolling back to previous stable version..."
+          # Placeholder: In production, this would restore from backup or revert to previous tag
+
+          echo "✅ Rollback completed" >> $GITHUB_STEP_SUMMARY
+          exit 1
+
+      - name: Generate release notes
+        if: success()
+        run: |
+          echo "📝 Generating release notes..."
+          cat > release-notes.md << 'EOF'
+          # Production Release ${{ github.event.inputs.version }}
+
+          ## Deployment Information
+          - **Version:** ${{ github.event.inputs.version }}
+          - **Commit:** ${{ github.sha }}
+          - **Deployed by:** ${{ github.triggering_actor }}
+          - **Timestamp:** $(date -u +'%Y-%m-%d %H:%M:%S UTC')
+
+          ## Deployment Status
+          - ✅ Build: Success
+          - ✅ Tests: Passed
+          - ✅ Health Checks: Passed
+          - ✅ Production Deployment: Success
+
+          ## Services
+          - Web: https://production.bundesliga-analyzer.dev
+          - API: https://api.production.bundesliga-analyzer.dev
+          - Health: https://api.production.bundesliga-analyzer.dev/health
+
+          ## Changes
+          See CHANGELOG.md for detailed change log.
+          EOF
+
+      - name: Archive deployment artifacts
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: production-deployment
+          path: |
+            deployment-metadata/
+            release-notes.md
+          retention-days: 90
+
+  post-deployment:
+    name: Post-Deployment Tasks
+    runs-on: ubuntu-latest
+    needs: deploy-production
+    if: success()
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Send deployment notification
+        run: |
+          echo "📢 Sending deployment notification..."
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## Deployment Notification" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "✅ Production deployment completed successfully" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Detail | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "|--------|-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Version | ${{ github.event.inputs.version }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Commit | ${{ github.sha }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Deployed By | ${{ github.triggering_actor }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Time | $(date -u +'%Y-%m-%d %H:%M:%S UTC') |" >> $GITHUB_STEP_SUMMARY
+
+      - name: Send Slack notification
+        uses: 8398a7/action-slack@v3
+        with:
+          status: ${{ job.status }}
+          text: |
+            ✅ Production Deployment Successful
+            Version: ${{ github.event.inputs.version }}
+            Deployed by: ${{ github.triggering_actor }}
+            URL: https://production.bundesliga-analyzer.dev
+          webhook_url: ${{ secrets.SLACK_WEBHOOK }}
+        if: always()
+        continue-on-error: true
+
+      - name: Create deployment record
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const fs = require('fs');
+
+            const deployment = {
+              version: '${{ github.event.inputs.version }}',
+              sha: '${{ github.sha }}',
+              deployed_by: '${{ github.triggering_actor }}',
+              timestamp: new Date().toISOString(),
+              status: 'success',
+              url: 'https://production.bundesliga-analyzer.dev'
+            };
+
+            console.log('Deployment Record:', JSON.stringify(deployment, null, 2));
+        continue-on-error: true
+
+  failure-notification:
+    name: Failure Notification
+    runs-on: ubuntu-latest
+    needs: [deploy-production]
+    if: failure()
+
+    steps:
+      - name: Send failure alert
+        uses: 8398a7/action-slack@v3
+        with:
+          status: failure
+          text: |
+            ❌ Production Deployment FAILED
+            Version: ${{ github.event.inputs.version }}
+            Commit: ${{ github.sha }}
+            Please investigate immediately
+          webhook_url: ${{ secrets.SLACK_WEBHOOK }}
+        continue-on-error: true

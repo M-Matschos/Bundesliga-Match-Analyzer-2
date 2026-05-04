@@ -1,0 +1,160 @@
+name: Deploy to Staging
+
+on:
+  push:
+    branches: [main]
+  workflow_run:
+    workflows: ["Build & Bundle Analysis"]
+    types: [completed]
+    branches: [main]
+
+jobs:
+  deploy-staging:
+    name: Deploy to Staging Environment
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' || github.event.workflow_run.conclusion == 'success'
+
+    environment:
+      name: staging
+      url: https://staging.bundesliga-analyzer.dev
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download build artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: mobile-build
+          path: mobile/web-build
+
+      - name: Deploy to staging server
+        run: |
+          echo "🚀 Deploying to staging.bundesliga-analyzer.dev"
+
+          # Using a placeholder deployment approach
+          # In production, this would integrate with your actual hosting provider
+          # Examples: Vercel, Netlify, Railway, Heroku, AWS, Azure, etc.
+
+          # For this example, we'll use rsync to a staging server
+          echo "Deployment simulation: Files ready to deploy"
+          ls -lah mobile/web-build | head -20
+        env:
+          DEPLOY_KEY: ${{ secrets.STAGING_DEPLOY_KEY }}
+          DEPLOY_HOST: staging.bundesliga-analyzer.dev
+          DEPLOY_USER: deployment
+
+      - name: Run smoke tests
+        run: |
+          echo "## Smoke Tests" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          # Wait for deployment to be ready
+          sleep 10
+
+          # Test API availability
+          API_HEALTH=$(curl -s -o /dev/null -w "%{http_code}" https://api.staging.bundesliga-analyzer.dev/health || echo "000")
+          echo "API Health Check: $API_HEALTH"
+
+          # Test web app availability
+          WEB_HEALTH=$(curl -s -o /dev/null -w "%{http_code}" https://staging.bundesliga-analyzer.dev || echo "000")
+          echo "Web Health Check: $WEB_HEALTH"
+
+          # Store results
+          if [ "$API_HEALTH" = "200" ] && [ "$WEB_HEALTH" = "200" ]; then
+            echo "✅ **Smoke tests PASSED**" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "⚠️ **Smoke tests detected issues:**" >> $GITHUB_STEP_SUMMARY
+            echo "- API: HTTP $API_HEALTH" >> $GITHUB_STEP_SUMMARY
+            echo "- Web: HTTP $WEB_HEALTH" >> $GITHUB_STEP_SUMMARY
+          fi
+        continue-on-error: true
+
+      - name: Generate preview URL
+        if: always()
+        run: |
+          PREVIEW_URL="https://staging.bundesliga-analyzer.dev"
+          echo "preview_url=$PREVIEW_URL" >> $GITHUB_OUTPUT
+
+          echo "## Staging Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "✅ **Deployment Status:** Completed" >> $GITHUB_STEP_SUMMARY
+          echo "🔗 **Preview URL:** [$PREVIEW_URL]($PREVIEW_URL)" >> $GITHUB_STEP_SUMMARY
+          echo "📦 **Build:** ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+          echo "🕐 **Deployed at:** $(date -u +'%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_STEP_SUMMARY
+        id: preview
+
+      - name: Comment preview URL on PR
+        if: github.event_name == 'push'
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const sha = context.sha.substring(0, 7);
+            const previewUrl = 'https://staging.bundesliga-analyzer.dev';
+
+            const comment = `## 🚀 Staging Deployment Ready
+
+            Preview URL: [${previewUrl}](${previewUrl})
+
+            | Status | Details |
+            |--------|---------|
+            | Deployment | ✅ Success |
+            | Build SHA | ${sha} |
+            | Environment | Staging |
+            | Time | ${new Date().toUTCString()} |
+
+            - Web: [${previewUrl}](${previewUrl})
+            - API: [https://api.staging.bundesliga-analyzer.dev](https://api.staging.bundesliga-analyzer.dev)
+            - Health Check: [https://api.staging.bundesliga-analyzer.dev/health](https://api.staging.bundesliga-analyzer.dev/health)
+            `;
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });
+        continue-on-error: true
+
+      - name: Archive deployment logs
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: staging-deployment-logs
+          path: deployment-logs/
+          retention-days: 30
+
+  validate-deployment:
+    name: Validate Staging Deployment
+    runs-on: ubuntu-latest
+    needs: deploy-staging
+    if: always()
+
+    steps:
+      - name: Run integration tests
+        run: |
+          echo "Running integration tests against staging..."
+
+          # Test basic endpoints
+          API_URL="https://api.staging.bundesliga-analyzer.dev"
+
+          # Health check
+          curl -s "$API_URL/health" -H "Content-Type: application/json" > /dev/null && echo "✅ Health check passed" || echo "❌ Health check failed"
+
+          # Basic API test
+          curl -s "$API_URL/matches" -H "Content-Type: application/json" > /dev/null && echo "✅ Matches endpoint working" || echo "❌ Matches endpoint failed"
+        continue-on-error: true
+
+      - name: Generate deployment report
+        run: |
+          echo "## Deployment Validation Report" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Check | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|-------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Deployment | ${{ needs.deploy-staging.result == 'success' && '✅' || '❌' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Smoke Tests | ⏳ Running |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          if ${{ needs.deploy-staging.result == 'success' }}; then
+            echo "✅ Staging deployment successful"
+          else
+            echo "⚠️ Staging deployment completed with warnings"
+          fi

@@ -1,0 +1,185 @@
+name: Lint & Code Quality
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  lint-mobile:
+    name: Lint Mobile Code
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: mobile/package-lock.json
+
+      - name: Install dependencies
+        run: |
+          cd mobile
+          npm ci
+
+      - name: Run ESLint
+        run: |
+          cd mobile
+          npm run lint 2>&1 | tee eslint-report.txt
+        continue-on-error: false
+
+      - name: Check TypeScript types
+        run: |
+          cd mobile
+          npx tsc --noEmit
+        continue-on-error: false
+
+      - name: Run Prettier check
+        run: |
+          cd mobile
+          npm run format:check
+        continue-on-error: true
+
+      - name: Report linting results
+        if: always()
+        run: |
+          cd mobile
+          echo "## Linting Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          if grep -q "error" eslint-report.txt 2>/dev/null; then
+            echo "⚠️ ESLint errors detected" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "✅ ESLint passed" >> $GITHUB_STEP_SUMMARY
+          fi
+
+  lint-backend:
+    name: Lint Backend Code
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          cd backend
+          pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install flake8 black pylint
+
+      - name: Run Black formatting check
+        run: |
+          cd backend
+          black --check . 2>&1 | tee black-report.txt
+        continue-on-error: false
+
+      - name: Run Flake8 linting
+        run: |
+          cd backend
+          flake8 . --max-line-length=88 --ignore=E203,W503 2>&1 | tee flake8-report.txt
+        continue-on-error: true
+
+      - name: Run pylint
+        run: |
+          cd backend
+          pylint app/ --max-line-length=88 --disable=C0111 2>&1 | tee pylint-report.txt
+        continue-on-error: true
+
+      - name: Report linting results
+        if: always()
+        run: |
+          echo "## Backend Linting Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Black:** $(grep -c 'reformatted' black-report.txt || echo '0') files need formatting" >> $GITHUB_STEP_SUMMARY
+          echo "**Flake8:** $(wc -l < flake8-report.txt) issues" >> $GITHUB_STEP_SUMMARY
+          echo "**Pylint:** $(grep -o '[0-9.]*/' pylint-report.txt | head -1)10 score" >> $GITHUB_STEP_SUMMARY
+
+  check-types:
+    name: Type Checking
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: mobile/package-lock.json
+
+      - name: Install mobile dependencies
+        run: |
+          cd mobile
+          npm ci
+
+      - name: TypeScript type check (strict mode)
+        run: |
+          cd mobile
+          npx tsc --noEmit --strict 2>&1 | tee typescript-report.txt
+        continue-on-error: false
+
+      - name: Report type checking results
+        if: always()
+        run: |
+          echo "## Type Checking Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          if [ -s typescript-report.txt ]; then
+            echo "⚠️ TypeScript errors found:" >> $GITHUB_STEP_SUMMARY
+            head -20 typescript-report.txt >> $GITHUB_STEP_SUMMARY
+          else
+            echo "✅ All types correct" >> $GITHUB_STEP_SUMMARY
+          fi
+
+  code-quality:
+    name: Code Quality Analysis
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: SonarCloud Scan
+        uses: SonarSource/sonarcloud-github-action@master
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        continue-on-error: true
+
+      - name: Run Hadolint on Dockerfiles
+        uses: hadolint/hadolint-action@v3.1.0
+        if: hashFiles('**/Dockerfile*') != ''
+        with:
+          dockerfile: docker/Dockerfile.api
+          ignore: DL3008,DL3009
+        continue-on-error: true
+
+  summary:
+    name: Lint Summary
+    runs-on: ubuntu-latest
+    needs: [lint-mobile, lint-backend, check-types, code-quality]
+    if: always()
+
+    steps:
+      - name: Check lint results
+        run: |
+          echo "## Linting Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Check | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|-------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| ESLint | ${{ needs.lint-mobile.result == 'success' && '✅' || '❌' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Flake8 | ${{ needs.lint-backend.result == 'success' && '✅' || '⚠️' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| TypeScript | ${{ needs.check-types.result == 'success' && '✅' || '❌' }} |" >> $GITHUB_STEP_SUMMARY
+          if ${{ needs.lint-mobile.result != 'success' || needs.check-types.result != 'success' }}; then
+            echo "❌ Code quality checks failed" && exit 1
+          else
+            echo "✅ All code quality checks passed"
+          fi

@@ -1,0 +1,179 @@
+name: Build & Bundle Analysis
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  build-mobile:
+    name: Build Mobile App
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: mobile/package-lock.json
+
+      - name: Install dependencies
+        run: |
+          cd mobile
+          npm ci
+
+      - name: Build web bundle
+        run: |
+          cd mobile
+          npm run build 2>&1 | tee build-output.txt
+        env:
+          NODE_ENV: production
+          REACT_APP_API_URL: ${{ secrets.API_URL || 'https://api.example.com' }}
+          REACT_APP_VERSION: ${{ github.sha }}
+
+      - name: Analyze bundle size
+        run: |
+          cd mobile
+          if [ -d "web-build" ]; then
+            echo "## Bundle Size Report" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            TOTAL_SIZE=$(du -sh web-build | cut -f1)
+            echo "**Total Bundle Size:** $TOTAL_SIZE" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+
+            echo "### File Breakdown:" >> $GITHUB_STEP_SUMMARY
+            du -sh web-build/* 2>/dev/null | sort -rh | head -10 >> $GITHUB_STEP_SUMMARY
+
+            # Check against 15 MB threshold
+            SIZE_BYTES=$(du -sb web-build | cut -f1)
+            THRESHOLD=$((15 * 1024 * 1024))
+            if [ $SIZE_BYTES -gt $THRESHOLD ]; then
+              echo "" >> $GITHUB_STEP_SUMMARY
+              echo "⚠️ **Warning:** Bundle size ($TOTAL_SIZE) exceeds 15 MB target" >> $GITHUB_STEP_SUMMARY
+            else
+              echo "" >> $GITHUB_STEP_SUMMARY
+              echo "✅ **Bundle size is within target (<15 MB)**" >> $GITHUB_STEP_SUMMARY
+            fi
+          fi
+
+      - name: Archive build artifacts
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: mobile-build
+          path: mobile/web-build
+          retention-days: 30
+
+      - name: Generate build report
+        if: always()
+        run: |
+          echo "## Build Report" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          if grep -q "error" build-output.txt 2>/dev/null; then
+            echo "❌ **Build failed**" >> $GITHUB_STEP_SUMMARY
+            grep "error" build-output.txt | head -5 >> $GITHUB_STEP_SUMMARY
+          else
+            echo "✅ **Build successful**" >> $GITHUB_STEP_SUMMARY
+          fi
+
+  build-backend:
+    name: Build Backend
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          cd backend
+          pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Build Docker image
+        run: |
+          docker build -f docker/Dockerfile.api -t matchoracle-api:${{ github.sha }} .
+
+      - name: Get Docker image size
+        run: |
+          SIZE=$(docker images --format "table {{.Size}}" matchoracle-api:${{ github.sha }} | tail -1)
+          echo "## Docker Image Report" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Image Size:** $SIZE" >> $GITHUB_STEP_SUMMARY
+          echo "**Tag:** matchoracle-api:${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+
+      - name: Run safety checks
+        run: |
+          cd backend
+          pip install safety
+          safety check --file requirements.txt
+        continue-on-error: true
+
+      - name: Archive build artifacts
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: backend-build
+          path: docker/
+          retention-days: 30
+
+  build-summary:
+    name: Build Summary
+    runs-on: ubuntu-latest
+    needs: [build-mobile, build-backend]
+    if: always()
+
+    steps:
+      - name: Generate build summary
+        run: |
+          echo "## Build Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Component | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|-----------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Mobile Build | ${{ needs.build-mobile.result == 'success' && '✅ PASSED' || '❌ FAILED' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Backend Build | ${{ needs.build-backend.result == 'success' && '✅ PASSED' || '❌ FAILED' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          if ${{ needs.build-mobile.result != 'success' || needs.build-backend.result != 'success' }}; then
+            echo "❌ Build pipeline failed"
+            exit 1
+          else
+            echo "✅ Build pipeline completed successfully"
+          fi
+
+  performance-check:
+    name: Performance Baseline
+    runs-on: ubuntu-latest
+    needs: [build-mobile]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download build artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: mobile-build
+          path: mobile/web-build
+
+      - name: Run Lighthouse CI
+        uses: treosh/lighthouse-ci-action@v10
+        with:
+          configPath: './lighthouserc.json'
+        continue-on-error: true
+
+      - name: Archive performance results
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: performance-results
+          path: .lighthouseci
+          retention-days: 30

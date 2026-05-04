@@ -1,0 +1,230 @@
+name: Publish Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Version tag to release (e.g., v1.0.0)'
+        required: true
+        type: string
+
+jobs:
+  create-release:
+    name: Create GitHub Release
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Get version
+        id: version
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            VERSION=${{ github.event.inputs.tag }}
+          else
+            VERSION=${GITHUB_REF#refs/tags/}
+          fi
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Version: $VERSION"
+
+      - name: Get previous version
+        id: previous
+        run: |
+          CURRENT=${{ steps.version.outputs.version }}
+          PREVIOUS=$(git tag -l | grep -v "$CURRENT" | sort -V | tail -1)
+          echo "previous=$PREVIOUS" >> $GITHUB_OUTPUT
+          echo "Previous: $PREVIOUS"
+
+      - name: Generate changelog
+        id: changelog
+        run: |
+          VERSION=${{ steps.version.outputs.version }}
+          PREVIOUS=${{ steps.previous.outputs.previous }}
+
+          echo "## Changelog" > CHANGELOG_RELEASE.md
+          echo "" >> CHANGELOG_RELEASE.md
+
+          if [ -z "$PREVIOUS" ]; then
+            echo "### Initial Release - $VERSION" >> CHANGELOG_RELEASE.md
+            echo "" >> CHANGELOG_RELEASE.md
+            git log --pretty=format:"- %s (%h)" >> CHANGELOG_RELEASE.md
+          else
+            echo "### Changes from $PREVIOUS to $VERSION" >> CHANGELOG_RELEASE.md
+            echo "" >> CHANGELOG_RELEASE.md
+
+            # Features
+            echo "#### Features" >> CHANGELOG_RELEASE.md
+            git log $PREVIOUS..$VERSION --grep="^feat" --pretty=format:"- %s" >> CHANGELOG_RELEASE.md || echo "- No new features" >> CHANGELOG_RELEASE.md
+            echo "" >> CHANGELOG_RELEASE.md
+
+            # Bug Fixes
+            echo "#### Bug Fixes" >> CHANGELOG_RELEASE.md
+            git log $PREVIOUS..$VERSION --grep="^fix" --pretty=format:"- %s" >> CHANGELOG_RELEASE.md || echo "- No bug fixes" >> CHANGELOG_RELEASE.md
+            echo "" >> CHANGELOG_RELEASE.md
+
+            # Documentation
+            echo "#### Documentation" >> CHANGELOG_RELEASE.md
+            git log $PREVIOUS..$VERSION --grep="^docs" --pretty=format:"- %s" >> CHANGELOG_RELEASE.md || echo "- No documentation updates" >> CHANGELOG_RELEASE.md
+            echo "" >> CHANGELOG_RELEASE.md
+
+            # Refactoring
+            echo "#### Refactoring" >> CHANGELOG_RELEASE.md
+            git log $PREVIOUS..$VERSION --grep="^refactor" --pretty=format:"- %s" >> CHANGELOG_RELEASE.md || echo "- No refactoring" >> CHANGELOG_RELEASE.md
+            echo "" >> CHANGELOG_RELEASE.md
+
+            # Performance
+            echo "#### Performance" >> CHANGELOG_RELEASE.md
+            git log $PREVIOUS..$VERSION --grep="^perf" --pretty=format:"- %s" >> CHANGELOG_RELEASE.md || echo "- No performance improvements" >> CHANGELOG_RELEASE.md
+            echo "" >> CHANGELOG_RELEASE.md
+
+            # All commits
+            echo "#### All Commits" >> CHANGELOG_RELEASE.md
+            echo '```' >> CHANGELOG_RELEASE.md
+            git log $PREVIOUS..$VERSION --oneline >> CHANGELOG_RELEASE.md
+            echo '```' >> CHANGELOG_RELEASE.md
+          fi
+
+          cat CHANGELOG_RELEASE.md
+
+      - name: Calculate stats
+        id: stats
+        run: |
+          VERSION=${{ steps.version.outputs.version }}
+          PREVIOUS=${{ steps.previous.outputs.previous }}
+
+          if [ -z "$PREVIOUS" ]; then
+            COMMIT_COUNT=$(git rev-list --count HEAD)
+            AUTHOR_COUNT=$(git log --pretty=format:"%an" | sort -u | wc -l)
+          else
+            COMMIT_COUNT=$(git rev-list --count $PREVIOUS..$VERSION)
+            AUTHOR_COUNT=$(git log $PREVIOUS..$VERSION --pretty=format:"%an" | sort -u | wc -l)
+          fi
+
+          echo "commit_count=$COMMIT_COUNT" >> $GITHUB_OUTPUT
+          echo "author_count=$AUTHOR_COUNT" >> $GITHUB_OUTPUT
+
+      - name: Create release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ steps.version.outputs.version }}
+          body_path: CHANGELOG_RELEASE.md
+          draft: false
+          prerelease: false
+          files: |
+            CHANGELOG_RELEASE.md
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Generate release summary
+        run: |
+          echo "## Release ${{ steps.version.outputs.version }} Published" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "✅ **Release Status:** Published" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Metric | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "|--------|-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Version | ${{ steps.version.outputs.version }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Previous | ${{ steps.previous.outputs.previous || 'Initial' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Commits | ${{ steps.stats.outputs.commit_count }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Authors | ${{ steps.stats.outputs.author_count }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Release Time | $(date -u +'%Y-%m-%d %H:%M:%S UTC') |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "[View Release](https://github.com/${{ github.repository }}/releases/tag/${{ steps.version.outputs.version }})" >> $GITHUB_STEP_SUMMARY
+
+  publish-artifacts:
+    name: Publish Release Artifacts
+    runs-on: ubuntu-latest
+    needs: create-release
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download mobile build
+        uses: actions/download-artifact@v3
+        with:
+          name: mobile-build
+          path: mobile/web-build
+
+      - name: Download backend build
+        uses: actions/download-artifact@v3
+        with:
+          name: backend-build
+          path: backend/build
+
+      - name: Create release assets
+        run: |
+          VERSION=${{ github.ref_name }}
+
+          # Create dist directory
+          mkdir -p release-assets
+
+          # Package mobile build
+          if [ -d "mobile/web-build" ]; then
+            tar -czf "release-assets/bundesliga-analyzer-web-$VERSION.tar.gz" mobile/web-build/
+          fi
+
+          # Copy backend artifacts
+          if [ -d "backend/build" ]; then
+            cp -r backend/build/* release-assets/ 2>/dev/null || true
+          fi
+
+          # Create release manifest
+          cat > release-assets/MANIFEST.json << EOF
+          {
+            "version": "$VERSION",
+            "created_at": "$(date -u +'%Y-%m-%dT%H:%M:%SZ')",
+            "artifacts": [
+              {
+                "name": "web-build",
+                "file": "bundesliga-analyzer-web-$VERSION.tar.gz",
+                "description": "React Native web build"
+              }
+            ]
+          }
+          EOF
+
+          ls -lah release-assets/
+
+      - name: Upload release assets
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ github.ref_name || github.event.inputs.tag }}
+          files: release-assets/*
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  notify-release:
+    name: Notify Release
+    runs-on: ubuntu-latest
+    needs: [create-release, publish-artifacts]
+    if: success()
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Send release notification
+        uses: 8398a7/action-slack@v3
+        with:
+          status: success
+          text: |
+            ✅ Release Published: ${{ github.ref_name || github.event.inputs.tag }}
+            GitHub Release: https://github.com/${{ github.repository }}/releases/tag/${{ github.ref_name || github.event.inputs.tag }}
+            View on GitHub: https://github.com/${{ github.repository }}
+          webhook_url: ${{ secrets.SLACK_WEBHOOK }}
+        if: always()
+        continue-on-error: true
+
+      - name: Update release documentation
+        run: |
+          echo "## Release Published" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "✅ Release ${{ github.ref_name || github.event.inputs.tag }} has been published" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Download & Release Links:**" >> $GITHUB_STEP_SUMMARY
+          echo "- [GitHub Release Page](https://github.com/${{ github.repository }}/releases/tag/${{ github.ref_name || github.event.inputs.tag }})" >> $GITHUB_STEP_SUMMARY
+          echo "- [Release Assets](https://github.com/${{ github.repository }}/releases/tag/${{ github.ref_name || github.event.inputs.tag }}/assets)" >> $GITHUB_STEP_SUMMARY
