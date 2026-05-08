@@ -30,17 +30,6 @@
     }
   },
   "submit": {
-    "preview": {},
-    "production": {
-      "android": {
-        "serviceAccount": "TODO: path-to-service-account.json",
-        "track": "internal"
-      },
-      "ios": {
-        "appleId": "your-apple-id@example.com",
-        "ascAppId": "0000000000",
-        "appleTeamId": "0000000000"
-      }
-    }
+    "production": {}
   }
 }
