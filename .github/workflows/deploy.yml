@@ -1,0 +1,88 @@
+commit 5b900d4909db29e4b0e7630c2a12c39c345e4279
+Author: M-Matschos <michael.matschos@googlemail.com>
+Date:   Fri Apr 24 23:31:23 2026 +0200
+
+    Initial commit - Match Oracle MVP v1.0.0
+
+diff --git a/.github/workflows/deploy.yml b/.github/workflows/deploy.yml
+new file mode 100644
+index 0000000..7dd7e3c
+--- /dev/null
++++ b/.github/workflows/deploy.yml
+@@ -0,0 +1,76 @@
++name: Deploy to Production
++
++on:
++  push:
++    branches: [main]
++    tags:
++      - 'v*'
++
++jobs:
++  deploy:
++    runs-on: ubuntu-latest
++    if: startsWith(github.ref, 'refs/tags/v')
++
++    steps:
++      - uses: actions/checkout@v4
++
++      - name: Get version
++        id: version
++        run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
++
++      - name: Set up Docker Buildx
++        uses: docker/setup-buildx-action@v2
++
++      - name: Log in to Docker Hub
++        uses: docker/login-action@v2
++        with:
++          username: ${{ secrets.DOCKER_USERNAME }}
++          password: ${{ secrets.DOCKER_PASSWORD }}
++
++      - name: Build and push versioned image
++        uses: docker/build-push-action@v4
++        with:
++          context: .
++          file: ./docker/Dockerfile.api
++          push: true
++          tags: |
++            ${{ secrets.DOCKER_USERNAME }}/matchoracle-api:${{ steps.version.outputs.VERSION }}
++            ${{ secrets.DOCKER_USERNAME }}/matchoracle-api:latest
++
++      - name: Deploy to Railway
++        run: |
++          npm install -g railway
++          railway login --token ${{ secrets.RAILWAY_TOKEN }}
++          railway link ${{ secrets.RAILWAY_PROJECT_ID }}
++          railway up
++        continue-on-error: true
++
++      - name: Deploy to Render
++        run: |
++          curl https://api.render.com/deploy/srv-${{ secrets.RENDER_SERVICE_ID }}?key=${{ secrets.RENDER_API_KEY }} \
++            -d '{"clearCache":"do_clear"}'
++        continue-on-error: true
++
++      - name: Create GitHub Release
++        uses: actions/create-release@v1
++        env:
++          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
++        with:
++          tag_name: ${{ steps.version.outputs.VERSION }}
++          release_name: Release ${{ steps.version.outputs.VERSION }}
++          body: |
++            ## Changes in ${{ steps.version.outputs.VERSION }}
++
++            See CHANGELOG.md for details.
++          draft: false
++          prerelease: false
++
++      - name: Post deployment message
++        uses: 8398a7/action-slack@v3
++        with:
++          status: ${{ job.status }}
++          text: |
++            Deployed ${{ steps.version.outputs.VERSION }} to production
++            Docker: ${{ secrets.DOCKER_USERNAME }}/matchoracle-api:${{ steps.version.outputs.VERSION }}
++          webhook_url: ${{ secrets.SLACK_WEBHOOK }}
++        if: always()
