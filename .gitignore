@@ -25,6 +25,7 @@ htmlcov/
 # Node & Mobile
 node_modules/
 package-lock.json
+!mobile/package-lock.json
 .expo/
 .expo-shared/
 expo-server.log
