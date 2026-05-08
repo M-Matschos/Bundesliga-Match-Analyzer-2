@@ -2,7 +2,8 @@
 
 **AI-powered football prediction app for Bundesliga 1+2 with ensemble ML models, weekend calculator, virtual betting & value bet detection.**
 
-![Python](https://img.shields.io/badge/Python-3.11+-blue) ![FastAPI](https://img.shields.io/badge/FastAPI-0.104-green) ![React Native](https://img.shields.io/badge/React%20Native-0.72-blue) ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-blue) ![Tests](https://img.shields.io/badge/Coverage-87%25-brightgreen) ![Status](https://img.shields.io/badge/Status-MVP%20Ready-brightgreen)
+![Python](https://img.shields.io/badge/Python-3.11+-blue) ![FastAPI](https://img.shields.io/badge/FastAPI-0.104-green) ![React Native](https://img.shields.io/badge/React%20Native-0.72-blue) ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-blue) ![Tests](https://img.shields.io/badge/Coverage-87%25-brightgreen) ![Status](https://img.shields.io/badge/Status-MVP%20Ready-brightgreen)  
+![CI/CD](https://github.com/M-Matschos/Bundesliga-Match-Analyzer-2/actions/workflows/test.yml/badge.svg)
 
 ---
 
