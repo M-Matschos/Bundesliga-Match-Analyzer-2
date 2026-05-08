@@ -10,7 +10,7 @@ from sqlalchemy.orm import sessionmaker, Session
 # Minimal test database URL
 TEST_DATABASE_URL = os.getenv(
     "DATABASE_URL",
-    "postgresql://postgres:test_password@localhost:5432/matchoracle_test"
+    "postgresql://postgres:test_password@localhost:5432/matchoracle_test",
 )
 
 
