@@ -168,3 +168,4 @@ jobs:
             ${{ secrets.DOCKER_USERNAME }}/matchoracle-api:${{ github.sha }}
           cache-from: type=registry,ref=${{ secrets.DOCKER_USERNAME }}/matchoracle-api:buildcache
           cache-to: type=registry,ref=${{ secrets.DOCKER_USERNAME }}/matchoracle-api:buildcache,mode=max
+        continue-on-error: true
