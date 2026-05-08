@@ -1,0 +1,52 @@
+# Environment
+.env
+.env.local
+CLAUDE.local.md
+*.log
+settings.local.json
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+dist/
+build/
+.venv/
+venv/
+env/
+backend/venv/
+backend/__pycache__/
+*.db
+.coverage
+htmlcov/
+.pytest_cache/
+
+# Node & Mobile
+node_modules/
+package-lock.json
+.expo/
+.expo-shared/
+expo-server.log
+expo-web-server.log
+mobile/.expo/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# OS
+Thumbs.db
+desktop/
+
+# Build artifacts
+dist/
+build/
+*.egg-info/
+
+# Alembic (database migrations - keep tracked)
+# backend/alembic/versions/ should be tracked
