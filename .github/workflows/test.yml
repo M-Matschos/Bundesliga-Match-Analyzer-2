@@ -91,7 +91,7 @@ jobs:
       - name: Install dependencies
         run: |
           cd mobile
-          npm ci
+          npm ci --legacy-peer-deps
 
       - name: Run ESLint
         run: |
