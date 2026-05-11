@@ -18,7 +18,7 @@ from app.services.notification_service import get_notification_service, Notifica
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(prefix="/api/v1/notifications", tags=["notifications"])
+router = APIRouter(tags=["notifications"])
 
 
 async def get_service() -> NotificationService:

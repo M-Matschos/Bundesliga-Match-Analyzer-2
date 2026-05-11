@@ -47,12 +47,13 @@ class TestWebSocketRedisIntegration:
     async def test_match(self, db: AsyncSession):
         """Create test match."""
         match = Match(
-            external_id="test_match_123",
-            home_team="FC Bayern",
-            away_team="Borussia Dortmund",
+            api_football_id=123456,
+            home_team_id=uuid4(),
+            away_team_id=uuid4(),
+            league_id="bundesliga",
+            season="2024-2025",
+            matchday=25,
             kickoff=datetime.utcnow(),
-            league="Bundesliga",
-            season=2025,
             status="live",
         )
         db.add(match)

@@ -58,16 +58,16 @@ class ModelPerformance(BaseModel):
     league: str
     kickoff: datetime
 
-    predicted_home_prob: float
+    home_win_prob: float
     confidence: float
     confidence_label: str  # 'HIGH' | 'MEDIUM' | 'LOW'
 
-    actual_outcome: str  # 'home' | 'draw' | 'away'
-    was_correct: bool
+    actual_outcome: Optional[str] = None  # 'home' | 'draw' | 'away'
+    was_correct: Optional[bool] = None
 
-    odds_at_prediction: float
-    bookmaker_implied_prob: float
-    divergence: float  # Our prob - Bookmaker prob
+    odds_at_prediction: Optional[float] = None
+    bookmaker_implied_prob: Optional[float] = None
+    divergence: Optional[float] = None  # Our prob - Bookmaker prob
 
 
 # ─────────────────────────────────────────────────────────────
@@ -112,12 +112,11 @@ async def calculate_accuracy(
         )
 
     # Calculate accuracy
-    # TODO: was_correct / actual_outcome require DB migration (fields not yet in Prediction model)
-    correct = sum(1 for p in predictions if getattr(p, 'was_correct', False))
+    correct = sum(1 for p in predictions if p.was_correct is True)
     accuracy = (correct / len(predictions)) * 100 if predictions else 0
 
     # Win rate (for betting context)
-    win_count = sum(1 for p in predictions if getattr(p, 'actual_outcome', None) == 'home' and p.home_win_prob > 0.5)
+    win_count = sum(1 for p in predictions if p.actual_outcome == 'home' and p.home_win_prob > 0.5)
     win_rate = (win_count / len(predictions)) * 100 if predictions else 0
 
     return AccuracyMetrics(
@@ -163,8 +162,7 @@ async def calculate_calibration_curve(
         if not bin_predictions:
             continue
 
-        # TODO: actual_outcome requires DB migration
-        wins = sum(1 for p in bin_predictions if getattr(p, 'actual_outcome', None) == 'home')
+        wins = sum(1 for p in bin_predictions if p.actual_outcome == 'home')
         actual_win_rate = wins / len(bin_predictions)
 
         calibration_points.append(CalibrationPoint(
@@ -188,7 +186,6 @@ async def calculate_roi_trend(
         start_date = datetime.utcnow() - timedelta(days=day_offset + 7)
         end_date = datetime.utcnow() - timedelta(days=day_offset)
 
-        # TODO: betting_outcome / betting_profit / betting_stake require DB migration
         query = select(Prediction).where(
             and_(
                 Prediction.created_at >= start_date,
@@ -199,8 +196,8 @@ async def calculate_roi_trend(
         predictions = result.scalars().all()
 
         if predictions:
-            profit = sum(getattr(p, 'betting_profit', 0) for p in predictions)
-            stake = sum(getattr(p, 'betting_stake', 0) for p in predictions)
+            profit = sum((p.betting_profit or 0) for p in predictions)
+            stake = sum((p.betting_stake or 0) for p in predictions)
             roi = (profit / stake * 100) if stake > 0 else 0
 
             roi_trend.append({
@@ -374,8 +371,8 @@ async def get_performance_history(
                 'predicted_home_prob': round(pred.home_win_prob, 3),
                 'confidence': round(pred.confidence, 2),
                 'confidence_label': pred.confidence_label,
-                'actual_outcome': getattr(pred, 'actual_outcome', None),
-                'was_correct': getattr(pred, 'was_correct', None),
+                'actual_outcome': pred.actual_outcome,
+                'was_correct': pred.was_correct,
                 'created_at': pred.created_at.isoformat(),
             })
 

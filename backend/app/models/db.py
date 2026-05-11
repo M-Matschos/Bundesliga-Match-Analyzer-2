@@ -207,6 +207,16 @@ class Prediction(Base):
     expected_goals_away = Column(Float, nullable=True)
     most_likely_score = Column(String(10), nullable=True)
     model_version = Column(String(20), default="v1.0", nullable=False)
+
+    # Outcome tracking for metrics
+    was_correct = Column(Boolean, nullable=True, default=None)
+    actual_outcome = Column(String(20), nullable=True)
+
+    # Betting metrics
+    betting_stake = Column(Float, nullable=True, default=None)
+    betting_profit = Column(Float, nullable=True, default=None)
+    betting_outcome = Column(String(20), nullable=True)
+
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
 

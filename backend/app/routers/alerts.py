@@ -14,7 +14,7 @@ from app.models.db import get_db, User
 from app.models.alerts import NewsAlert, UserAlertSubscription, AlertType, AlertPriority, NewsSource
 from app.models.schemas import UserResponse
 
-router = APIRouter(prefix="/api/v1/alerts", tags=["Alerts"])
+router = APIRouter(tags=["alerts"])
 
 
 # ─────────────────────────────────────────────────────────────

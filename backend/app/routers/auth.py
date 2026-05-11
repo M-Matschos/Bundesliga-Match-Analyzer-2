@@ -78,19 +78,19 @@ async def get_current_user(
     return user
 
 
-@router.post("/register", status_code=status.HTTP_201_CREATED, response_model=UserResponse)
+@router.post("/register", status_code=status.HTTP_201_CREATED, response_model=TokenResponse)
 async def register(
     user_data: UserRegister,
     db: AsyncSession = Depends(get_db),
-) -> User:
-    """Register a new user.
+) -> TokenResponse:
+    """Register a new user and return JWT tokens.
 
     Args:
         user_data: User registration data (email, password)
         db: Database session
 
     Returns:
-        Created user data
+        Access token, refresh token, and expiry info
 
     Raises:
         HTTPException: If email already exists or validation fails
@@ -120,8 +120,25 @@ async def register(
     await db.commit()
     await db.refresh(new_user)
 
+    # Create tokens
+    access_token = create_token(
+        data={"sub": str(new_user.id), "email": new_user.email},
+        token_type="access",
+    )
+
+    refresh_token = create_token(
+        data={"sub": str(new_user.id), "email": new_user.email},
+        token_type="refresh",
+    )
+
     logger.info(f"New user registered: {new_user.email}")
-    return new_user
+
+    return TokenResponse(
+        access_token=access_token,
+        refresh_token=refresh_token,
+        token_type="bearer",
+        expires_in=settings.jwt_expire_minutes * 60,
+    )
 
 
 @router.post("/login", response_model=TokenResponse)
