@@ -80,3 +80,5 @@ build/
 venv/
 .venv/
 env/
+desktop/dist/
+desktop/dist2/
