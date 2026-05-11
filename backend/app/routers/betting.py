@@ -82,6 +82,7 @@ async def place_bet(
     await db.refresh(bet)
 
     return {
+        "id": str(bet.id),
         "bet_id": str(bet.id),
         "match_id": str(match_id),
         "bet_type": bet_type,
@@ -129,6 +130,7 @@ async def get_user_bets(
         "offset": offset,
         "bets": [
             {
+                "id": str(b.id),
                 "bet_id": str(b.id),
                 "match_id": str(b.match_id),
                 "bet_type": b.bet_type,
@@ -162,35 +164,46 @@ async def get_portfolio_stats(
     if not bets:
         return {
             "total_bets": 0,
-            "stats": {
-                "total_staked": 0,
-                "total_winnings": 0,
-                "total_losses": 0,
-                "roi": 0,
-                "win_rate": 0,
-            }
+            "total_balance": 0.0,
+            "total_staked": 0.0,
+            "total_returns": 0.0,
+            "roi_percent": 0.0,
+            "wins": 0,
+            "losses": 0,
+            "voids": 0,
+            "win_rate_percent": 0.0,
         }
 
     total_staked = sum(float(b.amount) for b in bets)
-    total_winnings = sum(float(b.win_amount or 0) for b in bets if b.status == "won")
+    total_returns = sum(float(b.win_amount or 0) for b in bets if b.status == "won")
     total_losses = sum(float(b.amount) for b in bets if b.status == "lost")
-
     won_bets = sum(1 for b in bets if b.status == "won")
     lost_bets = sum(1 for b in bets if b.status == "lost")
+    void_bets = sum(1 for b in bets if b.status == "void")
+    net_profit = total_returns - total_losses
 
     return {
         "total_bets": len(bets),
+        "total_balance": round(net_profit, 2),
+        "total_staked": round(total_staked, 2),
+        "total_returns": round(total_returns, 2),
+        "roi_percent": round((net_profit / total_staked * 100) if total_staked > 0 else 0.0, 2),
+        "wins": won_bets,
+        "losses": lost_bets,
+        "voids": void_bets,
+        "win_rate_percent": round((won_bets / len(bets) * 100) if bets else 0.0, 2),
+        # Legacy nested format kept for backward compat
         "stats": {
-            "total_staked": total_staked,
-            "total_winnings": total_winnings,
-            "total_losses": total_losses,
-            "net_profit": total_winnings - total_losses,
-            "roi": float((total_winnings - total_staked) / total_staked) if total_staked > 0 else 0.0,
-            "win_rate": float(won_bets / len(bets)) if bets else 0.0,
+            "total_staked": round(total_staked, 2),
+            "total_winnings": round(total_returns, 2),
+            "total_losses": round(total_losses, 2),
+            "net_profit": round(net_profit, 2),
+            "roi": round((total_returns - total_staked) / total_staked if total_staked > 0 else 0.0, 4),
+            "win_rate": round(won_bets / len(bets) if bets else 0.0, 4),
             "won_bets": won_bets,
             "lost_bets": lost_bets,
             "pending_bets": sum(1 for b in bets if b.status == "pending"),
-        }
+        },
     }
 
 

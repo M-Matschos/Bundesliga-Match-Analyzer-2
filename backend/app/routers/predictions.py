@@ -62,12 +62,26 @@ async def get_prediction(
     predictor = get_predictor()
     prediction = predictor.predict(match.home_team_id, match.away_team_id)
 
+    # Derive confidence_label from confidence score
+    confidence = prediction.get("confidence", 0.0)
+    if confidence >= 0.7:
+        confidence_label = "HIGH"
+    elif confidence >= 0.5:
+        confidence_label = "MEDIUM"
+    else:
+        confidence_label = "LOW"
+
     return {
         "match_id": str(match_id),
         "home_team": match.home_team_id,
         "away_team": match.away_team_id,
         "kickoff": match.kickoff.isoformat(),
         **prediction,
+        # Mobile-compatible field aliases (mobile uses home_win / draw / away_win)
+        "home_win": prediction.get("home_win_prob"),
+        "draw": prediction.get("draw_prob"),
+        "away_win": prediction.get("away_win_prob"),
+        "confidence_label": confidence_label,
     }
 
 

@@ -23,7 +23,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useAnalytics } from '../context/AnalyticsContext'
 import { useMatchPrediction } from '../hooks/useMatchPrediction'
 import { getColors } from '../theme/colors'
-import { spacing, typography } from '../theme'
+import { SPACING, typography } from '../theme'
 import { PredictionCard } from '../components/PredictionCard'
 import { ConfidenceIndicator } from '../components/ConfidenceIndicator'
 
@@ -534,25 +534,25 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   listContent: {
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.md,
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.md,
   },
   header: {
-    marginBottom: spacing.lg,
+    marginBottom: SPACING.lg,
   },
   headerTitle: {
     ...typography.heading1,
-    marginBottom: spacing.sm,
+    marginBottom: SPACING.sm,
   },
   subheader: {
     ...typography.label,
-    marginTop: spacing.md,
+    marginTop: SPACING.md,
   },
   modelInfoBadge: {
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.sm,
     borderRadius: 8,
-    marginBottom: spacing.sm,
+    marginBottom: SPACING.sm,
   },
   modelInfoText: {
     ...typography.caption,
@@ -560,14 +560,14 @@ const styles = StyleSheet.create({
   cardContainer: {
     borderWidth: 1,
     borderRadius: 12,
-    padding: spacing.md,
-    marginBottom: spacing.md,
+    padding: SPACING.md,
+    marginBottom: SPACING.md,
   },
   cardHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: spacing.md,
+    marginBottom: SPACING.md,
   },
   teamContainer: {
     alignItems: 'center',
@@ -579,39 +579,39 @@ const styles = StyleSheet.create({
   },
   teamRating: {
     ...typography.caption,
-    marginTop: spacing.xs,
+    marginTop: SPACING.xs,
   },
   vs: {
     ...typography.body,
-    marginHorizontal: spacing.md,
+    marginHorizontal: SPACING.md,
   },
   matchDate: {
     ...typography.caption,
-    marginBottom: spacing.md,
+    marginBottom: SPACING.md,
   },
   probabilitiesContainer: {
     flexDirection: 'row',
     justifyContent: 'space-around',
     borderRadius: 8,
-    paddingVertical: spacing.md,
-    marginBottom: spacing.md,
+    paddingVertical: SPACING.md,
+    marginBottom: SPACING.md,
   },
   probabilityItem: {
     alignItems: 'center',
   },
   probabilityLabel: {
     ...typography.caption,
-    marginBottom: spacing.xs,
+    marginBottom: SPACING.xs,
   },
   probabilityValue: {
     ...typography.heading3,
     fontWeight: '700',
   },
   predictionBadge: {
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.sm,
     borderRadius: 8,
-    marginBottom: spacing.md,
+    marginBottom: SPACING.md,
     alignItems: 'center',
   },
   predictionText: {
@@ -619,22 +619,22 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   confidenceContainer: {
-    marginBottom: spacing.md,
+    marginBottom: SPACING.md,
   },
   valueBetsContainer: {
-    marginTop: spacing.md,
+    marginTop: SPACING.md,
   },
   valueBetsTitle: {
     ...typography.label,
-    marginBottom: spacing.sm,
+    marginBottom: SPACING.sm,
   },
   valueBetItem: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.sm,
     borderRadius: 6,
-    marginBottom: spacing.xs,
+    marginBottom: SPACING.xs,
   },
   valueBetLabel: {
     ...typography.caption,
@@ -648,11 +648,11 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingVertical: spacing.xl,
+    paddingVertical: SPACING.xl,
   },
   emptyStateText: {
     ...typography.body,
-    marginBottom: spacing.sm,
+    marginBottom: SPACING.sm,
   },
   emptyStateSubtext: {
     ...typography.caption,

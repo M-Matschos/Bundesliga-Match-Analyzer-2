@@ -14,7 +14,7 @@ from app.models.db import User, Match, get_db
 from app.core.security import verify_token
 from app.core.redis_pubsub import pubsub_manager, RedisPubSubManager
 
-router = APIRouter(tags=["websocket"], prefix="/ws")
+router = APIRouter(tags=["websocket"])
 logger = logging.getLogger(__name__)
 
 
@@ -339,7 +339,7 @@ async def websocket_live_match(
         return
 
     # Verify match exists
-    stmt = select(Match).where(Match.external_id == match_id)
+    stmt = select(Match).where(Match.api_football_id == match_id)
     result = await db.execute(stmt)
     match = result.scalar_one_or_none()
 
@@ -366,7 +366,7 @@ async def websocket_live_match(
     # Send welcome message
     await manager.send_status(
         websocket,
-        f"Connected to {match.home_team} vs {match.away_team}",
+        f"Connected to match {match.home_team_id} vs {match.away_team_id}",
     )
 
     try:

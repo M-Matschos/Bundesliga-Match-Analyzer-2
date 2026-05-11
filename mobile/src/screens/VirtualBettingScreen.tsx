@@ -13,6 +13,7 @@ import {
   RefreshControl,
 } from 'react-native'
 import { getColors, SPACING, RADIUS, formatProb } from '../theme/colors'
+import { useTheme } from '../context/ThemeContext'
 import { bettingService, predictionService } from '../services/api'
 
 interface Bet {
@@ -42,21 +43,13 @@ interface Portfolio {
 }
 
 export default function VirtualBettingScreen({ navigation }: any) {
+  const { mode } = useTheme()
+  const colors = getColors(mode)
   const [bets, setBets] = useState<Bet[]>([])
-  const { mode } = useTheme()
-  const colors = getColors(mode)
   const [portfolio, setPortfolio] = useState<Portfolio | null>(null)
-  const { mode } = useTheme()
-  const colors = getColors(mode)
   const [loading, setLoading] = useState(false)
-  const { mode } = useTheme()
-  const colors = getColors(mode)
   const [refreshing, setRefreshing] = useState(false)
-  const { mode } = useTheme()
-  const colors = getColors(mode)
   const [selectedTab, setSelectedTab] = useState<'all' | 'pending' | 'settled'>('all')
-  const { mode } = useTheme()
-  const colors = getColors(mode)
 
   useEffect(() => {
     fetchData()

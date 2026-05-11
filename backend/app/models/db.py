@@ -242,3 +242,7 @@ class Bet(Base):
         Index("ix_bets_user_id", "user_id"),
         Index("ix_bets_match_id", "match_id"),
     )
+
+
+# Compatibility alias — some tests import VirtualBet instead of Bet
+VirtualBet = Bet

@@ -87,7 +87,7 @@ class Settings(BaseSettings):
     )
     celery_task_serializer: str = Field(default="json", env="CELERY_TASK_SERIALIZER")
     celery_accept_content: str = Field(
-        default="json,pickle", env="CELERY_ACCEPT_CONTENT"
+        default="json", env="CELERY_ACCEPT_CONTENT"
     )
 
     # --- ML MODELS ---
@@ -145,14 +145,24 @@ class Settings(BaseSettings):
 
     @property
     def sqlalchemy_database_url_async(self) -> str:
-        """Return async-compatible database URL for SQLAlchemy."""
-        # Convert postgresql:// to postgresql+asyncpg://
-        if "postgresql://" in self.database_url:
-            return self.database_url.replace("postgresql://", "postgresql+asyncpg://")
-        # Convert sqlite:// to sqlite+aiosqlite://
-        if "sqlite://" in self.database_url:
-            return self.database_url.replace("sqlite://", "sqlite+aiosqlite://")
-        return self.database_url
+        """Return async-compatible database URL for SQLAlchemy.
+
+        Guards against double-patching: only add an async driver suffix when
+        one is not already present.  The naive substring check
+        ``"sqlite://" in url`` matches inside ``"sqlite+aiosqlite://"`` and
+        would produce the triple-component driver name
+        ``"sqlite+aiosqlite+aiosqlite://"`` which breaks SQLAlchemy's
+        dialect loader on Python 3.14.
+        """
+        url = self.database_url
+        # Already carries an async driver — nothing to do.
+        if "+asyncpg" in url or "+aiosqlite" in url:
+            return url
+        if url.startswith("postgresql://"):
+            return url.replace("postgresql://", "postgresql+asyncpg://", 1)
+        if url.startswith("sqlite://"):
+            return url.replace("sqlite://", "sqlite+aiosqlite://", 1)
+        return url
 
     @property
     def is_production(self) -> bool:

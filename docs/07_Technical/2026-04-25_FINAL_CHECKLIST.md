@@ -1,8 +1,13 @@
-# ✅ Final MVP Checklist — Match Oracle
+# Final MVP Checklist — Match Oracle
 
-**Status: PRODUCTION READY**  
-**Completion: 100%**  
-**Tested: 390+ tests (87% coverage)**
+> **OUTDATED (Stand: 2026-04-25)** — Dieser Stand ist überholt.
+> Aktuelle Bewertung: `Release-Checkliste (10.05.2026).md` und `Aufgabenliste (11.05.2026).md` im Projektstamm.
+> Realer Stand (2026-05-11): Phase C / Stabilisierung. P0-Blocker behoben, P1 abgearbeitet.
+> Kein belastbarer Production-Ready-Stand bis Staging-Smoke-Tests grün sind.
+
+~~**Status: PRODUCTION READY**~~ ← Stand April 2026, überholt  
+~~**Completion: 100%**~~ ← Stand April 2026, überholt  
+**Tested (April 2026):** 390+ tests / Stand Mai 2026: 502 passing, 383 failing (Basis-Cleanup läuft)
 
 ---
 

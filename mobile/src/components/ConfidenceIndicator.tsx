@@ -16,7 +16,7 @@ import {
   ViewStyle,
 } from 'react-native'
 import { getColors } from '../theme/colors'
-import { spacing, typography } from '../theme'
+import { SPACING, typography } from '../theme'
 
 // ─── Types ───────────────────────────────────────────────────
 
@@ -372,7 +372,7 @@ const styles = StyleSheet.create({
   circleContainer: {
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: spacing.md,
+    marginBottom: SPACING.md,
     position: 'relative',
   },
   circle: {
@@ -394,11 +394,11 @@ const styles = StyleSheet.create({
   label: {
     ...typography.body,
     fontWeight: '600',
-    marginBottom: spacing.xs,
+    marginBottom: SPACING.xs,
   },
   levelIndicator: {
-    paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.xs,
+    paddingHorizontal: SPACING.sm,
+    paddingVertical: SPACING.xs,
     borderRadius: 4,
   },
   levelText: {
@@ -412,7 +412,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: spacing.sm,
+    marginBottom: SPACING.sm,
   },
   barLabel: {
     ...typography.body,

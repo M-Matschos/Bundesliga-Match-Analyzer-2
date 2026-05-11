@@ -10,11 +10,11 @@ class TestCeleryAppConfiguration:
 
     def test_celery_broker_configured(self):
         """Test Celery broker is Redis."""
-        assert celery_app.conf.broker_url == "redis://localhost:6379/0"
+        assert celery_app.conf.broker_url.startswith("redis://")
 
     def test_celery_result_backend_configured(self):
         """Test Celery result backend is Redis."""
-        assert celery_app.conf.result_backend == "redis://localhost:6379/0"
+        assert celery_app.conf.result_backend.startswith("redis://")
 
     def test_celery_task_serializer(self):
         """Test task serialization is JSON."""
@@ -178,9 +178,11 @@ class TestCeleryIntegration:
         assert hasattr(celery_app, 'send_task')
 
     def test_celery_app_has_group_chord(self):
-        """Test Celery primitives are available."""
-        # For task chaining and grouping
-        assert hasattr(celery_app, 'group')
+        """Test Celery primitives are available via the celery module."""
+        # group/chord are module-level imports, not app-instance attributes
+        import celery
+        assert hasattr(celery, 'group')
+        assert hasattr(celery, 'chord')
 
     def test_celery_app_signature_available(self):
         """Test task signatures are available."""

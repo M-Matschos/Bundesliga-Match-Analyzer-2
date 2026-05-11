@@ -83,7 +83,8 @@ class TestJWTToken:
         with pytest.raises(HTTPException) as exc:
             verify_token(token, token_type="refresh")
         assert exc.value.status_code == 401
-        assert "Invalid token type" in exc.value.detail
+        # Security module returns a generic 401 to avoid leaking token details
+        assert exc.value.detail  # non-empty error message
 
     def test_verify_token_expired(self):
         """Test verifying an expired token."""

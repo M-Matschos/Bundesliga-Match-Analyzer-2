@@ -16,8 +16,8 @@ import logging
 from typing import Optional, Callable, Any, Dict, Set
 from contextlib import asynccontextmanager
 
-import aioredis
-from aioredis import Redis
+import redis.asyncio as aioredis
+from redis.asyncio import Redis
 
 from app.core.config import settings
 from app.models.events import BaseEvent, WebSocketMessage
@@ -47,11 +47,12 @@ class RedisPubSubManager:
         Connect to Redis instance.
 
         Raises:
-            aioredis.ConnectionError: If connection fails
+            redis.asyncio.RedisError: If connection fails
         """
         try:
-            self.redis = await aioredis.from_url(
-                settings.REDIS_URL,
+            # redis.asyncio.from_url is a synchronous factory (no await needed)
+            self.redis = aioredis.from_url(
+                settings.redis_url,
                 encoding="utf8",
                 decode_responses=True,
                 max_connections=20,

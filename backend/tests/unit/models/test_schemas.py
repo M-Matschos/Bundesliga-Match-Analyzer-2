@@ -1,7 +1,7 @@
 """Tests for Pydantic request/response schemas."""
 
 import pytest
-from datetime import datetime, timedelta
+from datetime import datetime
 from pydantic import ValidationError
 
 from app.models.schemas import (
@@ -20,6 +20,14 @@ from app.models.schemas import (
     PagedResponse,
     ErrorResponse,
 )
+
+# ── Shared test fixtures ──────────────────────────────────────────────────────
+# Pydantic v2 enforces UUID fields strictly — always use proper UUIDs.
+
+TEST_USER_UUID  = "550e8400-e29b-41d4-a716-446655440000"
+TEST_MATCH_UUID = "660e8400-e29b-41d4-a716-446655440001"
+TEST_PRED_UUID  = "770e8400-e29b-41d4-a716-446655440002"
+TEST_NOW        = datetime.utcnow()
 
 
 class TestUserSchemas:
@@ -43,13 +51,12 @@ class TestUserSchemas:
             )
 
     def test_user_register_short_password(self):
-        """Test password validation."""
-        # Depending on minimum length requirement
-        user = UserRegister(
-            email="test@example.com",
-            password="short"  # May or may not fail depending on schema
-        )
-        assert user.password == "short"
+        """Test password validation — passwords below min_length=8 must be rejected."""
+        with pytest.raises(ValidationError):
+            UserRegister(
+                email="test@example.com",
+                password="short"
+            )
 
     def test_user_login_valid(self):
         """Test valid user login schema."""
@@ -75,11 +82,12 @@ class TestUserSchemas:
     def test_user_response_valid(self):
         """Test user response schema."""
         user = UserResponse(
-            id="user-123",
+            id=TEST_USER_UUID,
             email="test@example.com",
-            username="testuser"
+            username="testuser",
+            created_at=TEST_NOW,
         )
-        assert user.id == "user-123"
+        assert str(user.id) == TEST_USER_UUID
         assert user.email == "test@example.com"
 
 
@@ -100,7 +108,8 @@ class TestMatchSchemas:
         assert match.league_id == "bundesliga"
 
     def test_match_create_with_scores(self):
-        """Test match creation with scores."""
+        """Test match creation — MatchCreate inherits MatchBase (no score fields).
+        Scores are set post-match via MatchUpdate, not at creation time."""
         match = MatchCreate(
             home_team_id="fcb",
             away_team_id="bvb",
@@ -108,33 +117,32 @@ class TestMatchSchemas:
             season="2024-25",
             matchday=28,
             kickoff="2025-03-29T18:30:00Z",
-            status="completed",
-            home_score=2,
-            away_score=1
+            status="scheduled",
         )
-        assert match.home_score == 2
-        assert match.away_score == 1
-        assert match.status == "completed"
+        assert match.home_team_id == "fcb"
+        assert match.status == "scheduled"
 
     def test_match_response_valid(self):
         """Test match response schema."""
         match = MatchResponse(
-            id="match-123",
+            id=TEST_MATCH_UUID,
             home_team_id="fcb",
             away_team_id="bvb",
             league_id="bundesliga",
             season="2024-25",
             matchday=28,
             kickoff="2025-03-29T18:30:00Z",
-            status="scheduled"
+            status="scheduled",
+            created_at=TEST_NOW,
+            updated_at=TEST_NOW,
         )
-        assert match.id == "match-123"
+        assert str(match.id) == TEST_MATCH_UUID
         assert match.status == "scheduled"
 
     def test_match_response_with_scores(self):
         """Test match response with final scores."""
         match = MatchResponse(
-            id="match-123",
+            id=TEST_MATCH_UUID,
             home_team_id="fcb",
             away_team_id="bvb",
             league_id="bundesliga",
@@ -143,7 +151,9 @@ class TestMatchSchemas:
             kickoff="2025-03-29T18:30:00Z",
             status="completed",
             home_score=2,
-            away_score=1
+            away_score=1,
+            created_at=TEST_NOW,
+            updated_at=TEST_NOW,
         )
         assert match.home_score == 2
         assert match.away_score == 1
@@ -155,7 +165,7 @@ class TestPredictionSchemas:
     def test_prediction_base_valid(self):
         """Test valid prediction base schema."""
         pred = PredictionBase(
-            match_id="match-123",
+            match_id=TEST_MATCH_UUID,
             home_win_prob=0.58,
             draw_prob=0.22,
             away_win_prob=0.20,
@@ -167,7 +177,7 @@ class TestPredictionSchemas:
     def test_prediction_probabilities_sum_to_one(self):
         """Test prediction probabilities."""
         pred = PredictionBase(
-            match_id="match-123",
+            match_id=TEST_MATCH_UUID,
             home_win_prob=0.58,
             draw_prob=0.22,
             away_win_prob=0.20,
@@ -179,8 +189,8 @@ class TestPredictionSchemas:
     def test_prediction_response_full(self):
         """Test complete prediction response."""
         pred = PredictionResponse(
-            id="pred-123",
-            match_id="match-123",
+            id=TEST_PRED_UUID,
+            match_id=TEST_MATCH_UUID,
             home_win_prob=0.58,
             draw_prob=0.22,
             away_win_prob=0.20,
@@ -188,7 +198,8 @@ class TestPredictionSchemas:
             confidence_label="MEDIUM",
             expected_goals_home=1.8,
             expected_goals_away=1.1,
-            most_likely_score="2:1"
+            most_likely_score="2:1",
+            created_at=TEST_NOW,
         )
         assert pred.confidence_label == "MEDIUM"
         assert pred.most_likely_score == "2:1"
@@ -196,13 +207,17 @@ class TestPredictionSchemas:
     def test_prediction_confidence_bounds(self):
         """Test confidence is between 0 and 1."""
         pred = PredictionResponse(
-            id="pred-123",
-            match_id="match-123",
+            id=TEST_PRED_UUID,
+            match_id=TEST_MATCH_UUID,
             home_win_prob=0.58,
             draw_prob=0.22,
             away_win_prob=0.20,
             confidence=0.72,
-            confidence_label="MEDIUM"
+            confidence_label="MEDIUM",
+            expected_goals_home=1.8,
+            expected_goals_away=1.1,
+            most_likely_score="2:1",
+            created_at=TEST_NOW,
         )
         assert 0 <= pred.confidence <= 1
 
@@ -245,7 +260,8 @@ class TestWeekendCalculatorSchemas:
             job_id="job-123",
             status="calculating",
             total_matches=12,
-            estimated_seconds=8
+            estimated_seconds=8,
+            created_at=TEST_NOW,
         )
         assert resp.job_id == "job-123"
         assert resp.status == "calculating"
@@ -257,21 +273,21 @@ class TestWeekendCalculatorSchemas:
             job_id="job-123",
             status="completed",
             total_matches=12,
-            estimated_seconds=0
+            estimated_seconds=0,
+            created_at=TEST_NOW,
         )
         assert resp.status == "completed"
 
     def test_weekend_calculate_response_with_error(self):
-        """Test weekend calculate response with error."""
+        """Test weekend calculate response with failed status."""
         resp = WeekendCalculateResponse(
             job_id="job-123",
             status="failed",
             total_matches=0,
-            estimated_seconds=-1,
-            error="API unavailable"
+            estimated_seconds=0,
+            created_at=TEST_NOW,
         )
         assert resp.status == "failed"
-        assert resp.error == "API unavailable"
 
 
 class TestPaginationSchemas:
@@ -290,11 +306,9 @@ class TestPaginationSchemas:
         assert params.offset == 100
 
     def test_pagination_params_limit_bounds(self):
-        """Test pagination limit bounds."""
-        # Should clamp to max 100
-        params = PaginationParams(limit=200)
-        # Depending on implementation, may be clamped
-        assert params.limit >= 1
+        """Test pagination limit bounds — values above max (100) raise ValidationError."""
+        with pytest.raises(ValidationError):
+            PaginationParams(limit=200)
 
     def test_paged_response_valid(self):
         """Test paged response schema."""
@@ -385,9 +399,7 @@ class TestSchemaFromAttributes:
 
     def test_schemas_support_from_attributes(self):
         """Test schemas can be created from ORM objects."""
-        # Check if from_attributes is enabled
         config = UserResponse.model_config
-        # Schema should support creating from ORM objects
         assert config is not None
 
 
@@ -396,12 +408,10 @@ class TestSchemaExamples:
 
     def test_match_response_has_example(self):
         """Test match response has example."""
-        # Schema may have examples for documentation
         assert MatchResponse is not None
 
     def test_prediction_response_has_example(self):
         """Test prediction response has example."""
-        # Schema may have examples for documentation
         assert PredictionResponse is not None
 
     def test_weekend_calculate_request_has_example(self):

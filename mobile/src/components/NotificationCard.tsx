@@ -14,8 +14,8 @@ import {
 } from 'react-native';
 import { Text, IconButton, Divider } from 'react-native-paper';
 import MaterialIcon from '@expo/vector-icons/MaterialIcons';
-import { getColors } from '../styles/colors';
-import { spacing } from '../theme/spacing';
+import { getColors } from '../theme/colors';
+import { SPACING } from '../theme/spacing';
 import { Notification } from '../services/NotificationService';
 
 interface INotificationCardProps {
@@ -291,9 +291,9 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.md,
-    marginBottom: spacing.sm,
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.md,
+    marginBottom: SPACING.sm,
     borderRadius: 8,
     borderLeftWidth: 4,
     position: 'relative',
@@ -309,7 +309,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: spacing.md,
+    marginRight: SPACING.md,
   },
   textContent: {
     flex: 1,
@@ -317,15 +317,15 @@ const styles = StyleSheet.create({
   typeLabel: {
     fontSize: 11,
     fontWeight: '700',
-    marginBottom: spacing.xs,
+    marginBottom: SPACING.xs,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
   title: {
-    marginBottom: spacing.xs,
+    marginBottom: SPACING.xs,
   },
   body: {
-    marginBottom: spacing.xs,
+    marginBottom: SPACING.xs,
     lineHeight: 18,
   },
   timestamp: {
@@ -334,14 +334,14 @@ const styles = StyleSheet.create({
   actions: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginLeft: spacing.sm,
+    marginLeft: SPACING.sm,
   },
   unreadDot: {
     width: 8,
     height: 8,
     borderRadius: 4,
     position: 'absolute',
-    top: spacing.md,
-    right: spacing.md,
+    top: SPACING.md,
+    right: SPACING.md,
   },
 });

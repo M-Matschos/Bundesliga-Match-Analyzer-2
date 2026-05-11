@@ -72,17 +72,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const register = async (email: string, password: string, username?: string) => {
     try {
-      const response = await authService.register(email, password, username)
-      const { access_token, refresh_token } = response
-
-      // Store tokens
-      await AsyncStorage.setItem('auth_token', access_token)
-      await AsyncStorage.setItem('refresh_token', refresh_token)
-      setToken(access_token)
-
-      // Fetch user profile
-      const profile = await authService.getProfile()
-      setUser(profile as User)
+      // Backend /register returns User only — login separately to obtain tokens
+      await authService.register(email, password, username)
+      await login(email, password)
     } catch (error) {
       console.error('Registration failed:', error)
       throw error

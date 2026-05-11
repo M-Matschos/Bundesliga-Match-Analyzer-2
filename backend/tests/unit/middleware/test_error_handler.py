@@ -187,7 +187,7 @@ class TestValidationExceptionHandler:
             }
         ]
 
-        exc = RequestValidationError(raw_errors=mock_error.errors())
+        exc = RequestValidationError(errors=mock_error.errors())
 
         response = await validation_exception_handler(mock_request, exc)
 
@@ -216,7 +216,7 @@ class TestValidationExceptionHandler:
             },
         ]
 
-        exc = RequestValidationError(raw_errors=mock_error.errors())
+        exc = RequestValidationError(errors=mock_error.errors())
 
         response = await validation_exception_handler(mock_request, exc)
 
@@ -240,7 +240,7 @@ class TestValidationExceptionHandler:
             }
         ]
 
-        exc = RequestValidationError(raw_errors=mock_error.errors())
+        exc = RequestValidationError(errors=mock_error.errors())
 
         response = await validation_exception_handler(mock_request, exc)
 
@@ -256,7 +256,7 @@ class TestValidationExceptionHandler:
         mock_error = MagicMock()
         mock_error.errors.return_value = []
 
-        exc = RequestValidationError(raw_errors=mock_error.errors())
+        exc = RequestValidationError(errors=mock_error.errors())
 
         with patch('app.middleware.error_handler.logger') as mock_logger:
             await validation_exception_handler(mock_request, exc)
@@ -393,7 +393,7 @@ class TestErrorResponseContentType:
 
         mock_error = MagicMock()
         mock_error.errors.return_value = []
-        exc = RequestValidationError(raw_errors=mock_error.errors())
+        exc = RequestValidationError(errors=mock_error.errors())
 
         response = await validation_exception_handler(mock_request, exc)
 

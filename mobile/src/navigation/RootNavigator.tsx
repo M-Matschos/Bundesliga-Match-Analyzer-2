@@ -1,6 +1,7 @@
 /**
- * RootNavigator — Zentrale Navigation mit Auth & Main Stack
- * Phase C: Real-time Event Streaming Navigation Setup
+ * @deprecated Nicht aktiv. Produktiver Navigation-Root ist mobile/src/_layout.tsx.
+ * Diese Datei ist legacy (Tab-basiert, hardcoded Colors) und wird nicht vom App-Einstieg genutzt.
+ * Kann in P2 entfernt werden.
  */
 
 import React from 'react';

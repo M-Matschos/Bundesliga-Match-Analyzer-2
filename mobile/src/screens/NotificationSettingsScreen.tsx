@@ -14,8 +14,8 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { Text, Switch, Button, Portal, Dialog } from 'react-native-paper';
-import { getColors } from '../styles/colors';
-import { spacing } from '../theme/spacing';
+import { getColors } from '../theme/colors';
+import { SPACING } from '../theme/spacing';
 import { useNotificationPreferences } from '../context/NotificationPreferencesContext';
 import { usePushNotifications } from '../hooks/usePushNotifications';
 
@@ -491,32 +491,32 @@ export function NotificationSettingsScreen({}: INotificationSettingsScreenProps)
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.md,
+    paddingHorizontal: SPACING.lg,
+    paddingVertical: SPACING.md,
   },
   section: {
-    marginBottom: spacing.xl,
+    marginBottom: SPACING.xl,
   },
   sectionTitle: {
-    marginBottom: spacing.md,
+    marginBottom: SPACING.md,
     fontWeight: '600',
   },
   preferenceRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.md,
-    marginBottom: spacing.sm,
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.md,
+    marginBottom: SPACING.sm,
     borderRadius: 8,
   },
   preferenceName: {
     flex: 1,
   },
   errorBanner: {
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.md,
-    marginBottom: spacing.lg,
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.md,
+    marginBottom: SPACING.lg,
     borderRadius: 8,
   },
   errorText: {
@@ -526,11 +526,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: spacing.md,
+    marginBottom: SPACING.md,
   },
   notificationItem: {
-    padding: spacing.md,
-    marginBottom: spacing.sm,
+    padding: SPACING.md,
+    marginBottom: SPACING.sm,
     borderRadius: 8,
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -538,25 +538,25 @@ const styles = StyleSheet.create({
   },
   notificationContent: {
     flex: 1,
-    marginRight: spacing.md,
+    marginRight: SPACING.md,
   },
   notificationType: {
     fontSize: 12,
     fontWeight: '700',
-    marginBottom: spacing.xs,
+    marginBottom: SPACING.xs,
   },
   notificationTitle: {
     fontWeight: '600',
-    marginBottom: spacing.xs,
+    marginBottom: SPACING.xs,
   },
   notificationBody: {
-    marginBottom: spacing.xs,
+    marginBottom: SPACING.xs,
   },
   notificationTime: {
     fontSize: 12,
   },
   emptyText: {
     textAlign: 'center',
-    paddingVertical: spacing.xl,
+    paddingVertical: SPACING.xl,
   },
 });

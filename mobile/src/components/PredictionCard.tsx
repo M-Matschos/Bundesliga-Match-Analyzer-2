@@ -18,7 +18,7 @@ import {
   ViewStyle,
 } from 'react-native'
 import { getColors } from '../theme/colors'
-import { spacing, typography } from '../theme'
+import { SPACING, typography } from '../theme'
 import { PredictionResult, ValueBet } from '../services/MatchAnalyticsService'
 import { ConfidenceIndicator } from './ConfidenceIndicator'
 
@@ -416,7 +416,7 @@ const styles = StyleSheet.create({
   container: {
     borderWidth: 1,
     borderRadius: 12,
-    padding: spacing.md,
+    padding: SPACING.md,
     overflow: 'hidden',
   },
   containerFull: {
@@ -428,14 +428,14 @@ const styles = StyleSheet.create({
   matchName: {
     ...typography.heading3,
     fontWeight: '600',
-    marginBottom: spacing.md,
+    marginBottom: SPACING.md,
   },
   probabilitiesContainer: {
     flexDirection: 'row',
     justifyContent: 'space-around',
     borderRadius: 8,
-    paddingVertical: spacing.md,
-    marginBottom: spacing.md,
+    paddingVertical: SPACING.md,
+    marginBottom: SPACING.md,
   },
   probabilityItem: {
     alignItems: 'center',
@@ -443,7 +443,7 @@ const styles = StyleSheet.create({
   },
   probabilityLabel: {
     ...typography.caption,
-    marginBottom: spacing.xs,
+    marginBottom: SPACING.xs,
   },
   probabilityValue: {
     ...typography.heading2,
@@ -451,14 +451,14 @@ const styles = StyleSheet.create({
   },
   divider: {
     width: 1,
-    height: spacing.lg,
+    height: SPACING.lg,
     opacity: 0.2,
   },
   outcomeContainer: {
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.sm,
     borderRadius: 8,
-    marginBottom: spacing.md,
+    marginBottom: SPACING.md,
     alignItems: 'center',
   },
   outcomeText: {
@@ -466,31 +466,31 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   confidenceSection: {
-    marginBottom: spacing.md,
+    marginBottom: SPACING.md,
   },
   confidenceLabel: {
     ...typography.caption,
-    marginBottom: spacing.sm,
+    marginBottom: SPACING.sm,
   },
   valueBetsSection: {
-    marginTop: spacing.md,
-    paddingTop: spacing.md,
+    marginTop: SPACING.md,
+    paddingTop: SPACING.md,
     borderTopWidth: 1,
     borderTopColor: 'rgba(0, 0, 0, 0.1)',
   },
   valueBetsTitle: {
     ...typography.label,
-    marginBottom: spacing.sm,
+    marginBottom: SPACING.sm,
     fontWeight: '600',
   },
   valueBetRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.sm,
     borderRadius: 6,
-    marginBottom: spacing.xs,
+    marginBottom: SPACING.xs,
   },
   betInfoContainer: {
     flex: 1,
@@ -501,26 +501,26 @@ const styles = StyleSheet.create({
   },
   betOdds: {
     ...typography.caption,
-    marginTop: spacing.xs,
+    marginTop: SPACING.xs,
   },
   betEdge: {
     ...typography.body,
     fontWeight: '700',
   },
   agreementContainer: {
-    paddingVertical: spacing.md,
+    paddingVertical: SPACING.md,
     borderTopWidth: 1,
     borderTopColor: 'rgba(0, 0, 0, 0.1)',
   },
   agreementLabel: {
     ...typography.caption,
-    marginBottom: spacing.sm,
+    marginBottom: SPACING.sm,
   },
   agreementBar: {
     height: 8,
     borderRadius: 4,
     backgroundColor: 'rgba(0, 0, 0, 0.1)',
-    marginBottom: spacing.sm,
+    marginBottom: SPACING.sm,
     overflow: 'hidden',
   },
   agreementFill: {
@@ -534,26 +534,26 @@ const styles = StyleSheet.create({
   loadingText: {
     ...typography.body,
     textAlign: 'center',
-    paddingVertical: spacing.lg,
+    paddingVertical: SPACING.lg,
   },
   errorTitle: {
     ...typography.body,
     fontWeight: '600',
-    marginBottom: spacing.sm,
+    marginBottom: SPACING.sm,
   },
   errorMessage: {
     ...typography.caption,
-    marginBottom: spacing.sm,
+    marginBottom: SPACING.sm,
   },
   retryHint: {
     ...typography.caption,
     fontWeight: '600',
-    marginTop: spacing.sm,
+    marginTop: SPACING.sm,
   },
   emptyText: {
     ...typography.body,
     textAlign: 'center',
-    paddingVertical: spacing.lg,
+    paddingVertical: SPACING.lg,
   },
 })
 

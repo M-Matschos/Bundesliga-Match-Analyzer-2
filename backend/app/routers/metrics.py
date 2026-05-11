@@ -15,7 +15,7 @@ from app.core.security import get_current_user
 from app.models.db import get_db, Prediction, Match, User
 from app.models.schemas import UserResponse
 
-router = APIRouter(prefix="/api/v1/metrics", tags=["Metrics"])
+router = APIRouter(tags=["Metrics"])
 
 
 # ─────────────────────────────────────────────────────────────
@@ -97,7 +97,7 @@ async def calculate_accuracy(
             query = query.where(Prediction.confidence < 0.5)
 
     if league:
-        query = query.join(Match).where(Match.league == league)
+        query = query.join(Match).where(Match.league_id == league)
 
     predictions = await db.execute(query)
     predictions = predictions.scalars().all()
@@ -112,11 +112,12 @@ async def calculate_accuracy(
         )
 
     # Calculate accuracy
-    correct = sum(1 for p in predictions if p.was_correct)
+    # TODO: was_correct / actual_outcome require DB migration (fields not yet in Prediction model)
+    correct = sum(1 for p in predictions if getattr(p, 'was_correct', False))
     accuracy = (correct / len(predictions)) * 100 if predictions else 0
 
     # Win rate (for betting context)
-    win_count = sum(1 for p in predictions if p.actual_outcome == 'home' and p.predicted_home_prob > 0.5)
+    win_count = sum(1 for p in predictions if getattr(p, 'actual_outcome', None) == 'home' and p.home_win_prob > 0.5)
     win_rate = (win_count / len(predictions)) * 100 if predictions else 0
 
     return AccuracyMetrics(
@@ -156,14 +157,14 @@ async def calculate_calibration_curve(
         # Find predictions in this bin
         bin_predictions = [
             p for p in predictions
-            if bin_start <= p.predicted_home_prob <= bin_end
+            if bin_start <= p.home_win_prob <= bin_end
         ]
 
         if not bin_predictions:
             continue
 
-        # Calculate actual win rate in bin
-        wins = sum(1 for p in bin_predictions if p.actual_outcome == 'home')
+        # TODO: actual_outcome requires DB migration
+        wins = sum(1 for p in bin_predictions if getattr(p, 'actual_outcome', None) == 'home')
         actual_win_rate = wins / len(bin_predictions)
 
         calibration_points.append(CalibrationPoint(
@@ -187,19 +188,19 @@ async def calculate_roi_trend(
         start_date = datetime.utcnow() - timedelta(days=day_offset + 7)
         end_date = datetime.utcnow() - timedelta(days=day_offset)
 
+        # TODO: betting_outcome / betting_profit / betting_stake require DB migration
         query = select(Prediction).where(
             and_(
                 Prediction.created_at >= start_date,
                 Prediction.created_at <= end_date,
-                Prediction.betting_outcome is not None,  # Has result
             )
         )
         result = await db.execute(query)
         predictions = result.scalars().all()
 
         if predictions:
-            profit = sum(p.betting_profit for p in predictions)
-            stake = sum(p.betting_stake for p in predictions)
+            profit = sum(getattr(p, 'betting_profit', 0) for p in predictions)
+            stake = sum(getattr(p, 'betting_stake', 0) for p in predictions)
             roi = (profit / stake * 100) if stake > 0 else 0
 
             roi_trend.append({
@@ -370,11 +371,11 @@ async def get_performance_history(
                 'match_id': pred.match_id,
                 'home_team': match.home_team_id,
                 'away_team': match.away_team_id,
-                'predicted_home_prob': round(pred.predicted_home_prob, 3),
+                'predicted_home_prob': round(pred.home_win_prob, 3),
                 'confidence': round(pred.confidence, 2),
                 'confidence_label': pred.confidence_label,
-                'actual_outcome': pred.actual_outcome,
-                'was_correct': pred.was_correct,
+                'actual_outcome': getattr(pred, 'actual_outcome', None),
+                'was_correct': getattr(pred, 'was_correct', None),
                 'created_at': pred.created_at.isoformat(),
             })
 

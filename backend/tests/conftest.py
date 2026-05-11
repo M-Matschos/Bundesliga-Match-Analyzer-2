@@ -4,6 +4,7 @@ import os
 import pytest
 from typing import Generator
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
+from sqlalchemy.pool import NullPool
 
 # Set testing environment
 os.environ["ENVIRONMENT"] = "testing"
@@ -29,18 +30,20 @@ async def async_db_session() -> Generator[AsyncSession, None, None]:
 
     Uses in-memory SQLite database.
     """
-    # Create engine
+    # Create engine — NullPool prevents connection reuse between tests,
+    # avoiding "index already exists" errors with SQLite in-memory databases.
     engine = create_async_engine(
         "sqlite+aiosqlite:///:memory:",
         echo=False,
         future=True,
+        poolclass=NullPool,
     )
 
-    # Create tables
+    # Create tables (checkfirst=True skips existing tables gracefully)
     async with engine.begin() as conn:
         from app.models.db import Base
 
-        await conn.run_sync(Base.metadata.create_all)
+        await conn.run_sync(lambda c: Base.metadata.create_all(c, checkfirst=True))
 
     # Create session
     async_session = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)

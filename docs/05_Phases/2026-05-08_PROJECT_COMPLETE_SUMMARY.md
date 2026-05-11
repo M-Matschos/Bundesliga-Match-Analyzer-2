@@ -1,8 +1,13 @@
 # Bundesliga Match Analyzer — Vollständige Implementierungs-Zusammenfassung
 
+> **OUTDATED (Stand: 2026-05-08)** — Widerspricht dem realen Code-Zustand.
+> Aktuelle Bewertung: `Release-Checkliste (10.05.2026).md` im Projektstamm.
+> Realer Stand (2026-05-11): Backend hatte Import-Fehler beim Start, Auth-Flow war
+> inkonsistent, mehrere Router-/DB-Mismatches. P0+P1 behoben, Production-Freigabe ausstehend.
+
 **Stand:** 2026-05-08  
-**Status:** ✅ Phase D-Production ABGESCHLOSSEN — CI/CD-Pipeline stabil  
-**Gesamt-Phasen:** A → B → C → D (Production Ready)
+~~**Status:** Phase D-Production ABGESCHLOSSEN — CI/CD-Pipeline stabil~~ ← überholt  
+**Gesamt-Phasen:** A → B → C → Stabilisierung (noch nicht freigegeben)
 
 ---
 

@@ -8,7 +8,7 @@ import asyncio
 import json
 import logging
 
-from app.routers import matches, predictions, teams, players, betting, auth, websocket, health
+from app.routers import matches, predictions, teams, players, betting, auth, websocket, health, alerts, notifications, weekend, metrics
 from app.core.config import settings
 from app.core.redis_pubsub import pubsub_manager
 from app.models.db import Base, engine
@@ -21,11 +21,19 @@ app = FastAPI(
     version="1.0.0",
 )
 
+def _cors_list(value) -> list:
+    """Parse CORS setting — handles both str and list from config validators."""
+    if isinstance(value, list):
+        return value
+    return [v.strip() for v in str(value).split(",")]
+
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_origins=_cors_list(settings.cors_origins),
+    allow_credentials=settings.cors_allow_credentials,
+    allow_methods=_cors_list(settings.cors_allow_methods),
+    allow_headers=_cors_list(settings.cors_allow_headers),
 )
 
 # Routen einbinden
@@ -37,6 +45,10 @@ app.include_router(players.router,     prefix="/api/v1/players",      tags=["Pla
 app.include_router(betting.router,     prefix="/api/v1/virtual-bets", tags=["Virtual Betting"])
 app.include_router(websocket.router,   prefix="/api/v1/ws",           tags=["WebSocket"])
 app.include_router(health.router,        tags=["Health"])
+app.include_router(alerts.router,        prefix="/api/v1/alerts",        tags=["Alerts"])
+app.include_router(notifications.router, prefix="/api/v1/notifications", tags=["Notifications"])
+app.include_router(weekend.router,       prefix="/api/v1/weekend",       tags=["Weekend"])
+app.include_router(metrics.router,       prefix="/api/v1/metrics",       tags=["Metrics"])
 
 
 @app.on_event("startup")
@@ -69,9 +81,3 @@ async def shutdown():
         logger.info("[OK] Redis Pub/Sub disconnected")
     except Exception as e:
         logger.error(f"[ERROR] Shutdown failed: {str(e)}")
-
-
-        "status": "ok",
-        "version": "1.0.0",
-        "redis": "connected" if redis_connected else "disconnected"
-    }

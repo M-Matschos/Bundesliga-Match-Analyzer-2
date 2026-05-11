@@ -500,3 +500,19 @@ async def get_ingestion_service(
     if _ingestion_service is None:
         _ingestion_service = APIFootballIngestion(api_key, redis_client)
     return _ingestion_service
+
+
+# Compatibility alias — older tests may import BundesligaDataIngestion
+BundesligaDataIngestion = APIFootballIngestion
+
+
+async def init_ingestion(api_key: str) -> APIFootballIngestion:
+    """Create and return an APIFootballIngestion instance.
+
+    Convenience factory used by tests and startup scripts.
+    """
+    from redis.asyncio import from_url as redis_from_url
+    from app.core.config import settings
+
+    redis_client = redis_from_url(settings.redis_url, decode_responses=True)
+    return APIFootballIngestion(api_key, redis_client)

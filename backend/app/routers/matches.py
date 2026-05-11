@@ -7,9 +7,10 @@ from uuid import UUID
 from fastapi import APIRouter, HTTPException, Query, Depends, Header
 from sqlalchemy import select, and_, or_, func
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from app.core.config import settings
-from app.models.db import get_db, Match, User
+from app.models.db import get_db, Match, User, Team
 from app.models.schemas import (
     MatchResponse,
     MatchListResponse,
@@ -20,7 +21,41 @@ from app.core.security import get_current_user
 router = APIRouter(tags=["matches"])
 
 
-@router.get("", response_model=MatchListResponse)
+def _match_to_dict(match: Match) -> dict:
+    """Convert Match ORM object to enriched dict with nested team objects."""
+    home = match.home_team
+    away = match.away_team
+    return {
+        "id": str(match.id),
+        "match_id": str(match.id),
+        "home_team_id": str(match.home_team_id),
+        "away_team_id": str(match.away_team_id),
+        "home_team": {
+            "id": str(home.id),
+            "name": home.name,
+            "logo_url": home.logo_url,
+        } if home else {"id": str(match.home_team_id), "name": str(match.home_team_id), "logo_url": None},
+        "away_team": {
+            "id": str(away.id),
+            "name": away.name,
+            "logo_url": away.logo_url,
+        } if away else {"id": str(match.away_team_id), "name": str(match.away_team_id), "logo_url": None},
+        "league_id": match.league_id,
+        "league": match.league_id,
+        "season": match.season,
+        "matchday": match.matchday,
+        "kickoff": match.kickoff.isoformat(),
+        "status": match.status,
+        "home_score": match.home_score,
+        "away_score": match.away_score,
+        "home_goals": match.home_score,
+        "away_goals": match.away_score,
+        "created_at": match.created_at.isoformat(),
+        "updated_at": match.updated_at.isoformat(),
+    }
+
+
+@router.get("")
 async def list_matches(
     league: Optional[str] = Query(None, description="League ID (e.g., 'bundesliga')"),
     season: Optional[str] = Query(None, description="Season (e.g., '2024-25')"),
@@ -48,8 +83,11 @@ async def list_matches(
     GET /matches?league=bundesliga&matchday=28
     ```
     """
-    # Build query
-    query = select(Match)
+    # Build query with eager team loading
+    query = select(Match).options(
+        selectinload(Match.home_team),
+        selectinload(Match.away_team),
+    )
     filters = []
 
     if league:
@@ -79,12 +117,12 @@ async def list_matches(
     count_result = await db.execute(count_query)
     total = count_result.scalar() or 0
 
-    return MatchListResponse(
-        total=total,
-        limit=limit,
-        offset=offset,
-        matches=matches,
-    )
+    return {
+        "total": total,
+        "limit": limit,
+        "offset": offset,
+        "matches": [_match_to_dict(m) for m in matches],
+    }
 
 
 @router.get("/live", response_model=MatchListResponse)
@@ -101,16 +139,21 @@ async def get_live_matches(
     GET /matches/live
     ```
     """
-    query = select(Match).where(Match.status == "live").order_by(Match.kickoff.asc())
+    query = (
+        select(Match)
+        .options(selectinload(Match.home_team), selectinload(Match.away_team))
+        .where(Match.status == "live")
+        .order_by(Match.kickoff.asc())
+    )
     result = await db.execute(query)
     matches = result.scalars().all()
 
-    return MatchListResponse(
-        total=len(matches),
-        limit=100,
-        offset=0,
-        matches=[MatchResponse.from_orm(m) for m in matches],
-    )
+    return {
+        "total": len(matches),
+        "limit": 100,
+        "offset": 0,
+        "matches": [_match_to_dict(m) for m in matches],
+    }
 
 
 @router.get("/{match_id}", response_model=MatchDetailResponse)
@@ -135,14 +178,22 @@ async def get_match_detail(
     GET /matches/550e8400-e29b-41d4-a716-446655440000
     ```
     """
-    query = select(Match).where(Match.id == match_id)
+    query = (
+        select(Match)
+        .options(selectinload(Match.home_team), selectinload(Match.away_team))
+        .where(Match.id == match_id)
+    )
     result = await db.execute(query)
     match = result.scalar_one_or_none()
 
     if not match:
         raise HTTPException(status_code=404, detail="Match not found")
 
-    return MatchDetailResponse.from_orm(match)
+    detail = _match_to_dict(match)
+    detail["home_xg"] = match.home_xg
+    detail["away_xg"] = match.away_xg
+    detail["api_football_id"] = match.api_football_id
+    return detail
 
 
 @router.get("/by-date/{date_str}", response_model=MatchListResponse)

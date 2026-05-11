@@ -1,24 +1,16 @@
 /**
-import { useTheme } from '../context/ThemeContext'
  * Match Oracle — Kelly Staking Calculator
-import { useTheme } from '../context/ThemeContext'
  * Half-Kelly (Conservative) für sichere Wettgrößen basierend auf Edge
-import { useTheme } from '../context/ThemeContext'
  *
-import { useTheme } from '../context/ThemeContext'
  * Kelly Formula: f = (b*p - q) / b
-import { useTheme } from '../context/ThemeContext'
  * where: b = odds-1, p = probability, q = 1-p
-import { useTheme } from '../context/ThemeContext'
  * Half-Kelly = f / 2 (mehr konservativ)
-import { useTheme } from '../context/ThemeContext'
  */
-import { useTheme } from '../context/ThemeContext'
 import React, { useState, useCallback } from 'react'
-import { useTheme } from '../context/ThemeContext'
 import { View, Text, TextInput, TouchableOpacity } from 'react-native'
+import { getColors, SPACING, RADIUS } from '../theme/colors'
+import { typography } from '../theme/typography'
 import { useTheme } from '../context/ThemeContext'
-import { getColors, SPACING, RADIUS, typography } from '../theme/colors'
 
 interface KellyCalculatorProps {
   bankroll: number
@@ -29,6 +21,8 @@ export default function KellyStakingCalculator({
   bankroll,
   onStakeChange,
 }: KellyCalculatorProps) {
+  const { mode } = useTheme()
+  const colors = getColors(mode)
   const [odds, setOdds] = useState<string>('1.85')
   const [probability, setProbability] = useState<string>('0.55')
   const [kellyMethod, setKellyMethod] = useState<'full' | 'half' | 'quarter'>('half')

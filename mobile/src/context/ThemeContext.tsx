@@ -12,15 +12,22 @@ interface ThemeContextType {
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined)
 
-export function ThemeProvider({ children }: { children: React.ReactNode }) {
+interface ThemeProviderProps {
+  children: React.ReactNode
+  initialTheme?: ThemeMode
+}
+
+export function ThemeProvider({ children, initialTheme }: ThemeProviderProps) {
   const systemColorScheme = useColorScheme()
   const [mode, setMode] = useState<ThemeMode>(
-    (systemColorScheme as ThemeMode) || 'dark'
+    initialTheme ?? (systemColorScheme as ThemeMode) ?? 'dark'
   )
-  const [isLoading, setIsLoading] = useState(true)
+  const [isLoading, setIsLoading] = useState(!initialTheme)
 
-  // Load theme preference from AsyncStorage on mount
+  // Load theme preference from AsyncStorage on mount (skipped when initialTheme is set)
   useEffect(() => {
+    if (initialTheme) return
+
     const loadThemePreference = async () => {
       try {
         const savedTheme = await AsyncStorage.getItem('theme')
@@ -31,7 +38,6 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
         }
       } catch (error) {
         console.error('Failed to load theme preference:', error)
-        // Fallback to system scheme if AsyncStorage fails
         if (systemColorScheme) {
           setMode(systemColorScheme as ThemeMode)
         }
@@ -41,7 +47,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     }
 
     loadThemePreference()
-  }, [systemColorScheme])
+  }, [systemColorScheme, initialTheme])
 
   // Persist theme to AsyncStorage when mode changes
   useEffect(() => {

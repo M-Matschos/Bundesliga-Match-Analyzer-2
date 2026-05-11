@@ -2,11 +2,11 @@ name: Deploy to Staging
 
 on:
   push:
-    branches: [main]
+    branches: [master]
   workflow_run:
     workflows: ["Build & Bundle Analysis"]
     types: [completed]
-    branches: [main]
+    branches: [master]
 
 jobs:
   deploy-staging:
@@ -117,7 +117,7 @@ jobs:
 
       - name: Archive deployment logs
         if: always()
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: staging-deployment-logs
           path: deployment-logs/
