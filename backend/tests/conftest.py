@@ -224,7 +224,7 @@ def db_other_user(db_session: Session) -> User:
         id=uuid4(),
         email="other@example.com",
         username="otheruser",
-        password_hash=hash_password("other_password_123"),
+        password_hash=hash_password("test_password_123"),
         is_active=True,
         is_superuser=False,
     )
@@ -523,14 +523,49 @@ def test_prediction_data() -> dict:
 
 @pytest.fixture
 def pubsub_manager() -> RedisPubSubManager:
-    """Patch global pubsub_manager with mocked Redis for testing."""
+    """Create a RedisPubSubManager instance with mocked Redis for testing."""
     from unittest.mock import AsyncMock
-    from app.core.redis_pubsub import pubsub_manager as global_pm
 
-    global_pm.redis = AsyncMock()
-    global_pm.is_connected = AsyncMock(return_value=True)
+    manager = RedisPubSubManager()
+    manager.redis = AsyncMock()
+    manager.is_connected = AsyncMock(return_value=True)
 
-    return global_pm
+    return manager
+
+
+# ============================================================================
+# CACHE INITIALIZATION FIXTURES
+# ============================================================================
+
+@pytest.fixture(scope="session")
+async def init_cache_fixture():
+    """Initialize global cache manager once per test session.
+
+    Ensures Redis cache is initialized for integration tests that depend on caching.
+    Session-scoped so it runs once for the entire test suite.
+    """
+    from app.core.cache import init_cache, close_cache
+
+    await init_cache()
+    yield
+    await close_cache()
+
+
+@pytest.fixture(scope="function")
+async def clear_cache(init_cache_fixture):
+    """Clear cache between tests.
+
+    Depends on session-scoped init_cache_fixture to ensure cache manager is initialized.
+    Clears all cached data before each test function runs.
+    """
+    from app.core.cache import cache
+
+    if cache:
+        await cache.clear_pattern("*")
+    yield
+    # Optional: clear again after test
+    if cache:
+        await cache.clear_pattern("*")
 
 
 # ============================================================================

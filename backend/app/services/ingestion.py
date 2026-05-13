@@ -75,7 +75,12 @@ class MatchEventConverter:
             if api_event.get("type") != "Goal":
                 return None
 
-            team = Team.HOME if api_event.get("team_id") == home_team_id else Team.AWAY
+            team_id = api_event.get("team_id")
+            if team_id is None:
+                logger.error("Goal event missing team_id")
+                return None
+
+            team = Team.HOME if team_id == home_team_id else Team.AWAY
             minute = api_event.get("time", 0)
             player = api_event.get("player", {})
             assist = api_event.get("assist", {})
@@ -456,43 +461,52 @@ class APIFootballIngestion:
             # Wait before next poll
             await asyncio.sleep(self.poll_interval)
 
-    async def process_match_events(
+    async def process_match_events_from_api(
         self,
         match_id: int,
         home_team_id: int,
         events: List[Dict[str, Any]],
-    ) -> None:
+    ) -> int:
         """
-        Process match events and publish to Redis.
+        Process match events and publish to Redis (from API format).
 
         Args:
             match_id: Match identifier
             home_team_id: Home team ID
             events: List of event dicts from API
+
+        Returns:
+            Number of events published
         """
         if not self.redis or not events:
-            return
+            return 0
 
+        published_count = 0
         for event in events:
             event_type = event.get("type", "").upper()
+            converted = None
+
             if event_type == "GOAL":
                 converted = self.converter.convert_goal_event(
                     event, str(match_id), home_team_id
                 )
-                if converted:
-                    await event_publisher.publish_event(converted)
             elif event_type == "CARD":
                 converted = self.converter.convert_card_event(
                     event, str(match_id), home_team_id
                 )
-                if converted:
-                    await event_publisher.publish_event(converted)
             elif event_type in ("SUBST", "SUBSTITUTION"):
                 converted = self.converter.convert_substitution_event(
                     event, str(match_id), home_team_id
                 )
-                if converted:
-                    await event_publisher.publish_event(converted)
+
+            if converted:
+                try:
+                    await event_publisher.publish_event(str(match_id), converted)
+                    published_count += 1
+                except Exception as e:
+                    logger.error(f"Failed to publish event: {e}")
+
+        return published_count
 
     async def process_match_statistics(
         self,
@@ -519,10 +533,14 @@ class APIFootballIngestion:
 
         try:
             import json
-            await self.redis.publish(
+            # Handle both sync and async redis clients
+            publish_result = self.redis.publish(
                 f"stats:{match_id}",
                 json.dumps(stats_data),
             )
+            # If result is awaitable, await it; otherwise it's already done
+            if hasattr(publish_result, "__await__"):
+                await publish_result
         except Exception as e:
             logger.warning(f"Failed to publish stats for match {match_id}: {e}")
 

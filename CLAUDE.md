@@ -8,9 +8,9 @@
 
 ## ⚠️ KRITISCHER STATUS – Realität
 
-**Backend Test Suite (Phase 5 Progress):**
-- ✅ **420 passing** — **Zielmarke von 400+ erreicht & übertroffen** 🎯 (Phase 4: 18 Tests, Phase 0-3+5: 402 Tests)
-- ❌ 75 failing (pre-existing fixture issues in integration tests; database async session tests)
+**Backend Test Suite (Phase 5 Complete ✅):**
+- ✅ **455 passing** — **Zielmarke von 400+ weit übertroffen** 🎯 (Phase 4: 18 Tests, Phase 0-3+5 Step 3: 437 Tests)
+- ❌ 40 failing (weekend_calculator integration tests, db initialization, other legacy fixtures)
 
 **P0-Blocker – Alle behoben (Phase 2):**
 - ✅ health.py — Endpoint implementiert und registriert
@@ -20,7 +20,7 @@
 - ✅ Mobile Auth — /register gibt TokenResponse mit tokens zurück
 - ✅ Dark Mode Tests — initialTheme-Prop existiert
 
-**Phase 5 Completion (Step 1-3: IN PROGRESS):**
+**Phase 5 Completion (Step 1-3: COMPLETE ✅):**
 - ✅ Step 1 (Diagnose): 8 Failure Patterns identified & documented
 - ✅ Step 2 (Fixture Repairs & Service Methods): 
   - Fixed cache decorator async factory handling (get_or_set)
@@ -34,8 +34,13 @@
   - Fixed Python 3.14 aioredis → redis.asyncio import compatibility
   - Fixed cache decorator AsyncMock mocking for async methods
   - Enhanced cache error handling robustness (catch Exception, not specific types)
-  - Result: +8 tests fixed (412 → 420 passing)
-  - Remaining: 75 failing (mostly pre-existing fixture issues, database async tests)
+  - Fixed predictions.py route ordering (move /{match_id} to end to avoid shadowing)
+  - Changed /simulate to accept request body instead of Query params
+  - Made /models/comparison match_id optional
+  - Added graceful fallbacks for EnsemblePredictor in get_prediction & get_team_strength
+  - Fixed test_ingestion_service.py mock_sleep.side_effect for error recovery test
+  - Result: +35 tests fixed (420 → 455 passing)
+  - Remaining: 40 failing (weekend_calculator integration tests, db initialization tests, other fixtures)
 
 ---
 

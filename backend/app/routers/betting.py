@@ -17,14 +17,14 @@ router = APIRouter(tags=["virtual-betting"])
 logger = logging.getLogger(__name__)
 
 
-@router.post("")
+@router.post("", status_code=status.HTTP_201_CREATED)
 async def place_bet(
     match_id: UUID,
     bet_type: str = Query(..., description="home_win, draw, away_win"),
     odds: float = Query(..., gt=0, description="Decimal odds"),
     amount: float = Query(..., gt=0, description="Bet amount"),
     db: AsyncSession = Depends(get_db),
-    authorization: str = Header(...),
+    authorization: str = Header(None),
 ) -> dict:
     """Place a virtual bet on a match.
 
@@ -39,6 +39,10 @@ async def place_bet(
     POST /virtual-bets?match_id=550e8400...&bet_type=home_win&odds=1.95&amount=100
     ```
     """
+    # Check if authorization header is missing
+    if not authorization:
+        raise HTTPException(status_code=401, detail="Missing authorization header")
+
     # Extract token from Authorization header
     try:
         scheme, token = authorization.split()
@@ -102,7 +106,7 @@ async def get_user_bets(
     offset: int = Query(0, ge=0),
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
-) -> dict:
+) -> list:
     """Get user's bets.
 
     **Query Parameters:**
@@ -126,28 +130,23 @@ async def get_user_bets(
     result = await db.execute(query)
     bets = result.scalars().all()
 
-    return {
-        "total": len(bets),
-        "limit": limit,
-        "offset": offset,
-        "bets": [
-            {
-                "id": str(b.id),
-                "bet_id": str(b.id),
-                "match_id": str(b.match_id),
-                "bet_type": b.bet_type,
-                "odds": float(b.odds),
-                "amount": float(b.amount),
-                "status": b.status,
-                "win_amount": float(b.win_amount) if b.win_amount else None,
-                "created_at": b.created_at.isoformat(),
-            }
-            for b in bets
-        ],
-    }
+    return [
+        {
+            "id": str(b.id),
+            "bet_id": str(b.id),
+            "match_id": str(b.match_id),
+            "bet_type": b.bet_type,
+            "odds": float(b.odds),
+            "amount": float(b.amount),
+            "status": b.status,
+            "win_amount": float(b.win_amount) if b.win_amount else None,
+            "created_at": b.created_at.isoformat(),
+        }
+        for b in bets
+    ]
 
 
-@router.get("/statistics/portfolio")
+@router.get("/portfolio/stats")
 async def get_portfolio_stats(
     db: AsyncSession = Depends(get_db),
     current_user = Depends(get_current_user),
@@ -156,7 +155,7 @@ async def get_portfolio_stats(
 
     **Example:**
     ```
-    GET /virtual-bets/statistics/portfolio
+    GET /virtual-bets/portfolio/stats
     ```
     """
     query = select(Bet).where(Bet.user_id == UUID(current_user.sub))
@@ -184,12 +183,17 @@ async def get_portfolio_stats(
     void_bets = sum(1 for b in bets if b.status == "void")
     net_profit = total_returns - total_losses
 
+    roi = round((total_returns - total_staked) / total_staked if total_staked > 0 else 0.0, 4)
+    win_rate = round(won_bets / len(bets) if bets else 0.0, 4)
+
     return {
         "total_bets": len(bets),
         "total_balance": round(net_profit, 2),
         "total_staked": round(total_staked, 2),
         "total_returns": round(total_returns, 2),
         "roi_percent": round((net_profit / total_staked * 100) if total_staked > 0 else 0.0, 2),
+        "roi": roi,
+        "win_rate": win_rate,
         "wins": won_bets,
         "losses": lost_bets,
         "voids": void_bets,
@@ -200,8 +204,8 @@ async def get_portfolio_stats(
             "total_winnings": round(total_returns, 2),
             "total_losses": round(total_losses, 2),
             "net_profit": round(net_profit, 2),
-            "roi": round((total_returns - total_staked) / total_staked if total_staked > 0 else 0.0, 4),
-            "win_rate": round(won_bets / len(bets) if bets else 0.0, 4),
+            "roi": roi,
+            "win_rate": win_rate,
             "won_bets": won_bets,
             "lost_bets": lost_bets,
             "pending_bets": sum(1 for b in bets if b.status == "pending"),
@@ -211,7 +215,7 @@ async def get_portfolio_stats(
 
 @router.get("/{bet_id}")
 async def get_bet_detail(
-    bet_id: UUID,
+    bet_id: str,
     db: AsyncSession = Depends(get_db),
     current_user = Depends(get_current_user),
 ) -> dict:
@@ -225,9 +229,15 @@ async def get_bet_detail(
     GET /virtual-bets/550e8400-e29b-41d4-a716-446655440000
     ```
     """
+    # Try to parse UUID, return 404 if invalid
+    try:
+        bet_uuid = UUID(bet_id)
+    except ValueError:
+        raise HTTPException(status_code=404, detail="Bet not found")
+
     query = select(Bet).where(
         and_(
-            Bet.id == bet_id,
+            Bet.id == bet_uuid,
             Bet.user_id == UUID(current_user.sub),
         )
     )
@@ -243,6 +253,7 @@ async def get_bet_detail(
     match = match_result.scalar_one_or_none()
 
     return {
+        "id": str(bet.id),
         "bet_id": str(bet.id),
         "match_id": str(bet.match_id),
         "match": {
@@ -264,7 +275,7 @@ async def get_bet_detail(
 
 @router.post("/{bet_id}/cancel")
 async def cancel_bet(
-    bet_id: UUID,
+    bet_id: str,
     db: AsyncSession = Depends(get_db),
     current_user = Depends(get_current_user),
 ) -> dict:
@@ -278,9 +289,15 @@ async def cancel_bet(
     POST /virtual-bets/550e8400-e29b-41d4-a716-446655440000/cancel
     ```
     """
+    # Try to parse UUID, return 404 if invalid
+    try:
+        bet_uuid = UUID(bet_id)
+    except ValueError:
+        raise HTTPException(status_code=404, detail="Bet not found")
+
     query = select(Bet).where(
         and_(
-            Bet.id == bet_id,
+            Bet.id == bet_uuid,
             Bet.user_id == UUID(current_user.sub),
         )
     )
@@ -294,12 +311,13 @@ async def cancel_bet(
         raise HTTPException(status_code=400, detail="Only pending bets can be cancelled")
 
     # Cancel bet
-    bet.status = "void"
+    bet.status = "cancelled"
     await db.commit()
 
     return {
+        "id": str(bet.id),
         "bet_id": str(bet.id),
-        "status": "void",
+        "status": "cancelled",
         "message": "Bet cancelled successfully",
     }
 

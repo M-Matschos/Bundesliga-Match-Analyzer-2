@@ -593,7 +593,7 @@ class TestAPIFootballIngestion:
             ]
 
             with patch("asyncio.sleep", new_callable=AsyncMock) as mock_sleep:
-                mock_sleep.side_effect = KeyboardInterrupt()
+                mock_sleep.side_effect = [None, KeyboardInterrupt()]
 
                 with pytest.raises(KeyboardInterrupt):
                     await ingestion_service.run_ingestion_loop()

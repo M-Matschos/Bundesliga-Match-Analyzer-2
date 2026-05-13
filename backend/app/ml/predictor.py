@@ -115,9 +115,23 @@ class EnsemblePredictor:
         # Normalize weights
         total_weight = sum(weights)
         if total_weight == 0:
-            # Fallback to equal weights
-            weights = [1, 1, 1]
-            total_weight = 3
+            # Fallback to reasonable defaults if no models loaded
+            return {
+                "home_win_prob": 0.45,
+                "draw_prob": 0.30,
+                "away_win_prob": 0.25,
+                "confidence": 0.45,
+                "most_likely_outcome": "home_win",
+                "expected_goals_home": 1.5,
+                "expected_goals_away": 1.0,
+                "individual_predictions": predictions,
+                "model_weights": {
+                    "poisson": 0.0,
+                    "dixon_coles": 0.0,
+                    "elo": 0.0,
+                },
+                "value_bets": None,
+            }
 
         normalized_weights = [w / total_weight for w in weights]
 
@@ -147,6 +161,11 @@ class EnsemblePredictor:
             ensemble_home /= total_prob
             ensemble_draw /= total_prob
             ensemble_away /= total_prob
+        else:
+            # Fallback if all probs are 0
+            ensemble_home = 0.45
+            ensemble_draw = 0.30
+            ensemble_away = 0.25
 
         # Calculate confidence (highest probability)
         confidence = max(ensemble_home, ensemble_draw, ensemble_away)

@@ -156,6 +156,48 @@ async def get_live_matches(
     }
 
 
+@router.get("/upcoming", response_model=MatchListResponse)
+async def get_upcoming_matches(
+    days: int = Query(7, ge=1, le=30, description="Days ahead to fetch"),
+    league: Optional[str] = Query(None, description="League filter"),
+    db: AsyncSession = Depends(get_db),
+    authorization: Optional[str] = Header(None),
+) -> MatchListResponse:
+    """Get upcoming matches in the next N days.
+
+    **Query Parameters:**
+    - `days`: Look-ahead period (1-30 days)
+    - `league`: Optional league filter
+
+    **Example:**
+    ```
+    GET /matches/upcoming?days=7&league=bundesliga
+    ```
+    """
+    now = datetime.utcnow()
+    future = now + timedelta(days=days)
+
+    filters = [
+        Match.kickoff >= now,
+        Match.kickoff <= future,
+        Match.status == "scheduled",
+    ]
+
+    if league:
+        filters.append(Match.league_id == league)
+
+    query = select(Match).where(and_(*filters)).order_by(Match.kickoff.asc())
+    result = await db.execute(query)
+    matches = result.scalars().all()
+
+    return MatchListResponse(
+        total=len(matches),
+        limit=100,
+        offset=0,
+        matches=[MatchResponse.from_orm(m) for m in matches],
+    )
+
+
 @router.get("/{match_id}", response_model=MatchDetailResponse)
 async def get_match_detail(
     match_id: UUID,
@@ -287,48 +329,6 @@ async def get_team_matches(
     return MatchListResponse(
         total=len(matches),
         limit=limit,
-        offset=0,
-        matches=[MatchResponse.from_orm(m) for m in matches],
-    )
-
-
-@router.get("/upcoming", response_model=MatchListResponse)
-async def get_upcoming_matches(
-    days: int = Query(7, ge=1, le=30, description="Days ahead to fetch"),
-    league: Optional[str] = Query(None, description="League filter"),
-    db: AsyncSession = Depends(get_db),
-    authorization: Optional[str] = Header(None),
-) -> MatchListResponse:
-    """Get upcoming matches in the next N days.
-
-    **Query Parameters:**
-    - `days`: Look-ahead period (1-30 days)
-    - `league`: Optional league filter
-
-    **Example:**
-    ```
-    GET /matches/upcoming?days=7&league=bundesliga
-    ```
-    """
-    now = datetime.utcnow()
-    future = now + timedelta(days=days)
-
-    filters = [
-        Match.kickoff >= now,
-        Match.kickoff <= future,
-        Match.status == "scheduled",
-    ]
-
-    if league:
-        filters.append(Match.league_id == league)
-
-    query = select(Match).where(and_(*filters)).order_by(Match.kickoff.asc())
-    result = await db.execute(query)
-    matches = result.scalars().all()
-
-    return MatchListResponse(
-        total=len(matches),
-        limit=100,
         offset=0,
         matches=[MatchResponse.from_orm(m) for m in matches],
     )

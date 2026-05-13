@@ -23,8 +23,16 @@ from app.models.events import (
 
 @pytest.fixture
 def pubsub_manager():
-    """Create a RedisPubSubManager instance for testing."""
-    return RedisPubSubManager()
+    """Create a RedisPubSubManager instance for testing with mocked Redis."""
+    from unittest.mock import AsyncMock, MagicMock
+
+    manager = RedisPubSubManager()
+    # Create a real AsyncMock for redis with properly mocked methods
+    manager.redis = AsyncMock()
+    manager.redis.ping = AsyncMock(return_value=True)
+    manager.redis.publish = AsyncMock(return_value=1)
+    manager.redis.close = AsyncMock()
+    return manager
 
 
 @pytest.fixture
