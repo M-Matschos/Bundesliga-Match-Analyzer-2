@@ -6,22 +6,6 @@ from fastapi.testclient import TestClient
 from app.main import app
 
 
-@pytest.fixture
-def client():
-    return TestClient(app)
-
-
-@pytest.fixture
-def auth_headers(client, db_user):
-    """Get auth headers."""
-    response = client.post(
-        "/api/v1/auth/login",
-        json={"email": db_user.email, "password": "test_password_123"},
-    )
-    token = response.json()["access_token"]
-    return {"Authorization": f"Bearer {token}"}
-
-
 class TestPredictionsFlow:
     """Integration tests for prediction endpoints."""
 

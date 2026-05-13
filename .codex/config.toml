@@ -1,0 +1,13 @@
+[mcp_servers.filesystem]
+args = ["filesystem"]
+command = "mcp"
+
+[mcp_servers.github]
+args = ["github"]
+command = "mcp"
+env_vars = ["GITHUB_TOKEN"]
+
+[mcp_servers.postgres]
+args = ["postgres"]
+command = "mcp"
+env_vars = ["DATABASE_URL"]

@@ -11,11 +11,6 @@ from app.main import app
 
 
 @pytest.fixture
-def client():
-    return TestClient(app)
-
-
-@pytest.fixture
 def authenticated_client(client):
     """Create authenticated test client with JWT token."""
     # Register

@@ -8,7 +8,7 @@ import asyncio
 import json
 import logging
 
-from app.routers import matches, predictions, teams, players, betting, auth, websocket, health, alerts, notifications, weekend, metrics
+from app.routers import matches, predictions, teams, players, betting, auth, websocket, health, alerts, notifications, weekend, metrics, events
 from app.core.config import settings
 from app.core.redis_pubsub import pubsub_manager
 from app.models.db import Base, engine
@@ -49,6 +49,7 @@ app.include_router(alerts.router,        prefix="/api/v1/alerts",        tags=["
 app.include_router(notifications.router, prefix="/api/v1/notifications", tags=["Notifications"])
 app.include_router(weekend.router,       prefix="/api/v1/weekend",       tags=["Weekend"])
 app.include_router(metrics.router,       prefix="/api/v1/metrics",       tags=["Metrics"])
+app.include_router(events.router,        prefix="/api/v1/events",        tags=["Events"])
 
 
 @app.on_event("startup")

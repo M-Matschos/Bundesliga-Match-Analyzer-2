@@ -1,25 +1,25 @@
 # ⚽ Bundesliga Match Analyzer — Match Oracle
 
-**AI-powered football prediction app for Bundesliga 1+2 with ensemble ML models, weekend calculator, virtual betting & value bet detection.**
+**KI-gestützte Fußball-Prognose-App für Bundesliga 1+2 mit Ensemble-ML-Modellen, Wochenendkalkulator, virtuelles Wettbewerb & Value-Bet-Erkennung.**
 
-![Python](https://img.shields.io/badge/Python-3.11+-blue) ![FastAPI](https://img.shields.io/badge/FastAPI-0.104-green) ![React Native](https://img.shields.io/badge/React%20Native-0.72-blue) ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-blue) ![Tests](https://img.shields.io/badge/Coverage-87%25-brightgreen) ![Status](https://img.shields.io/badge/Status-MVP%20Ready-brightgreen)  
+![Python](https://img.shields.io/badge/Python-3.11+-blue) ![FastAPI](https://img.shields.io/badge/FastAPI-0.104-green) ![React Native](https://img.shields.io/badge/React%20Native-0.72-blue) ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-blue) ![Tests](https://img.shields.io/badge/Tests-378%2F499-brightgreen) ![Status](https://img.shields.io/badge/Status-Phase%205-yellow)  
 ![CI/CD](https://github.com/M-Matschos/Bundesliga-Match-Analyzer-2/actions/workflows/test.yml/badge.svg)
 
 ---
 
-## 🎯 Quick Start (5 minutes)
+## 🎯 Schnellstart (5 Minuten)
 
-**Requirements:** Docker, Python 3.11+, Node.js 18+
+**Anforderungen:** Docker, Python 3.11+, Node.js 18+
 
 ```bash
-# 1. Clone
+# 1. Repository klonen
 git clone https://github.com/your-org/bundesliga-analyzer.git
 cd bundesliga-analyzer
 
-# 2. Start services (PostgreSQL + Redis)
+# 2. Services starten (PostgreSQL + Redis)
 docker-compose up -d
 
-# 3. Backend setup
+# 3. Backend-Setup
 cd backend
 python -m venv venv
 source venv/bin/activate
@@ -27,11 +27,11 @@ pip install -r requirements.txt
 alembic upgrade head
 python ../scripts/seed_database.py --leagues bundesliga,bundesliga2
 
-# 4. Start API
+# 4. API starten
 uvicorn app.main:app --reload
 # → http://localhost:8000/docs (Swagger)
 
-# 5. Mobile setup
+# 5. Mobile-Setup
 cd ../mobile
 npm install
 npx expo start
@@ -43,132 +43,132 @@ npx expo start
 
 | Feature | Status | Details |
 |---------|--------|---------|
-| **Weekend Calculator** | ✅ Complete | Predict 12+ matches in < 10s with 100k MC simulations |
-| **Predictions** | ✅ Complete | Home/Draw/Away + xG + Confidence using ensemble (Poisson, Dixon-Coles, Elo) |
-| **Value Bets** | ✅ Complete | Detect +5% edge opportunities, Kelly Criterion sizing |
-| **Virtual Betting** | ✅ Complete | Place/track bets, portfolio stats (ROI, win rate, Sharpe) |
-| **Team Info** | ✅ Complete | Form (last 10), standings, head-to-head |
-| **Player Stats** | ✅ Complete | Profiles, seasonal stats, injury tracking |
-| **Authentication** | ✅ Complete | JWT tokens (7-day), refresh tokens, secure sessions |
-| **Mobile UI** | ✅ Complete | 5 screens (Dashboard, Weekend, Betting, Teams, Players) |
-| **Testing** | ✅ Complete | 340+ tests (87% coverage), E2E flows |
-| **Deployment** | ✅ Complete | Docker, Railway/Render, Sentry monitoring |
+| **Wochenendkalkulator** | ✅ Fertig | 12+ Spiele in < 10s mit 100k MC-Simulationen vorhersagen |
+| **Prognosen** | ✅ Fertig | Heimsieg/Unentschieden/Auswärtssieg + xG + Konfidenz mit Ensemble (Poisson, Dixon-Coles, Elo) |
+| **Value Bets** | ✅ Fertig | +5% Edge-Chancen erkennen, Kelly-Kriterium-Dimensionierung |
+| **Virtuelles Wettbewerb** | ✅ Fertig | Wetten platzieren/verfolgen, Portfolio-Statistiken (ROI, Gewinnquote, Sharpe) |
+| **Team-Infos** | ✅ Fertig | Form (letzte 10), Tabelle, Kopf-an-Kopf |
+| **Spieler-Statistiken** | ✅ Fertig | Profile, Saisonstatistiken, Verletzungsverfolgung |
+| **Authentifizierung** | ✅ Fertig | JWT-Tokens (7-Tage), Refresh-Tokens, sichere Sitzungen |
+| **Mobile UI** | ✅ Fertig | 5 Screens (Dashboard, Wochenende, Wettbewerb, Teams, Spieler) |
+| **Tests** | ✅ Laufend | 378 bestanden, 121 Fixture-Probleme (Phase 5), E2E-Flows |
+| **Deployment** | ✅ Fertig | Docker, Railway/Render, Sentry-Überwachung |
 
 ---
 
-## 🏗️ Architecture
+## 🏗️ Architektur
 
 ```
 Mobile (iOS/Android)
     ↓ HTTPS + JWT
 FastAPI Backend (8000)
-    ├─ Auth Router (Login, Register, Profile)
+    ├─ Auth Router (Anmeldung, Registrierung, Profil)
     ├─ Matches Router (Fixtures, Live, Details)
     ├─ Predictions Router (ML Ensemble + Value Bets)
-    ├─ Teams Router (Standings, Form, H2H)
-    ├─ Players Router (Stats, Injuries)
-    ├─ Betting Router (Virtual Bets, Portfolio)
+    ├─ Teams Router (Tabelle, Form, Kopf-an-Kopf)
+    ├─ Players Router (Statistiken, Verletzungen)
+    ├─ Betting Router (Virtuelle Wetten, Portfolio)
     └─ Weekend Router (Async Jobs)
         ↓
 PostgreSQL (5432)
-    ├─ Users, Matches, Predictions, Bets
-    └─ Historical Data (100k+ matches)
+    ├─ Benutzer, Spiele, Prognosen, Wetten
+    └─ Historische Daten (100k+ Spiele)
         ↓
 Redis (6379)
-    ├─ Session Cache (24h)
-    ├─ Prediction Cache (6h)
+    ├─ Sitzungs-Cache (24h)
+    ├─ Prognose-Cache (6h)
     └─ Rate Limiting
 ```
 
 ---
 
-## 📚 Documentation
+## 📚 Dokumentation
 
-| Document | Purpose |
-|----------|---------|
-| [CLAUDE.md](CLAUDE.md) | Dev conventions, security, architecture |
-| [TESTING_STRATEGY.md](docs/TESTING_STRATEGY.md) | 340+ tests, 87% coverage, patterns |
-| [DEPLOYMENT.md](docs/DEPLOYMENT.md) | Docker, production setup, monitoring |
-| [ARCHITECTURE.md](docs/ARCHITECTURE.md) | System design, data models, flows |
-| [API.md](docs/API.md) | REST endpoints, Swagger docs |
-| [MODELS.md](docs/MODELS.md) | Poisson, Dixon-Coles, Elo, Kelly specs |
+| Dokument | Zweck |
+|----------|-------|
+| [CLAUDE.md](CLAUDE.md) | Dev-Konventionen, Sicherheit, Architektur |
+| [TESTING_STRATEGY.md](docs/TESTING_STRATEGY.md) | 378 bestandene Tests, Phase 5 Stabilisierung, Muster |
+| [DEPLOYMENT.md](docs/DEPLOYMENT.md) | Docker, Production-Setup, Überwachung |
+| [ARCHITECTURE.md](docs/ARCHITECTURE.md) | Systemdesign, Datenmodelle, Flows |
+| [API.md](docs/API.md) | REST-Endpoints, Swagger-Docs |
+| [MODELS.md](docs/MODELS.md) | Poisson, Dixon-Coles, Elo, Kelly-Spezifikationen |
 
 ---
 
-## 🧪 Testing
+## 🧪 Tests
 
-**340+ Tests, 87% Coverage:**
+**378 bestandene Tests (Phase 5 — Fixture-Stabilisierung in Arbeit):**
 
 ```bash
-# Run all backend tests
+# Alle Backend-Tests ausführen
 cd backend
 pytest tests/ -v --cov=app --cov-report=html
 
-# Run mobile tests
+# Mobile-Tests ausführen
 cd mobile
 npm test -- --coverage
 
-# Test quick reference
-pytest tests/unit/ -v               # Unit only
-pytest tests/integration/ -v         # Integration only
-pytest -k "auth" -v                 # Specific tests
+# Test-Schnellreferenz
+pytest tests/unit/ -v               # Nur Unit-Tests
+pytest tests/integration/ -v         # Nur Integration
+pytest -k "auth" -v                 # Spezifische Tests
 ```
 
-**Coverage by Component:**
+**Coverage nach Komponente:**
 - Auth Router: 95%
 - Predictions ML: 85%
 - Betting: 90%
-- Weekend Calculator: 88%
+- Wochenendkalkulator: 88%
 
 ---
 
-## 🚀 Deploy (3 steps)
+## 🚀 Deployment (3 Schritte)
 
-**1. Push to main branch:**
+**1. Auf Main-Branch pushen:**
 ```bash
 git push origin main
 ```
 
-**2. GitHub Actions auto-triggers:**
-- Run 340+ tests
-- Build Docker image
-- Deploy to staging
-- Run E2E tests
-- Deploy to production
+**2. GitHub Actions triggert automatisch:**
+- Führe 340+ Tests aus
+- Erstelle Docker-Image
+- Deploye zu Staging
+- Führe E2E-Tests aus
+- Deploye zu Production
 
-**3. Monitor:**
-- Sentry → Error tracking
-- Railway/Render → Logs & metrics
+**3. Überwachen:**
+- Sentry → Fehler-Tracking
+- Railway/Render → Logs & Metriken
 
-See [DEPLOYMENT.md](docs/DEPLOYMENT.md) for manual setup.
+Siehe [DEPLOYMENT.md](docs/DEPLOYMENT.md) für manuelles Setup.
 
 ---
 
-## 🔐 Security
+## 🔐 Sicherheit
 
-- ✅ JWT auth (7-day expiry)
-- ✅ Bcrypt password hashing (cost=12)
-- ✅ SQL injection prevention (parameterized queries)
-- ✅ Rate limiting (100 req/min/IP)
-- ✅ CORS whitelist (no wildcards)
-- ✅ Secrets in .env (never hardcoded)
+- ✅ JWT-Auth (7-Tage Ablauf)
+- ✅ Bcrypt Password-Hashing (cost=12)
+- ✅ SQL-Injection-Prävention (parametrisierte Abfragen)
+- ✅ Rate Limiting (100 req/min/IP)
+- ✅ CORS-Whitelist (keine Wildcards)
+- ✅ Secrets in .env (nie hardcoded)
 
 ---
 
 ## 📊 Performance
 
-| Metric | Target | Actual |
-|--------|--------|--------|
-| Weekend Calc (12 matches) | < 10s | 7.2s ✅ |
+| Metrik | Ziel | Aktuell |
+|--------|------|---------|
+| Wochenendkalkulator (12 Spiele) | < 10s | 7.2s ✅ |
 | API Response (P99) | < 200ms | 120ms ✅ |
-| Login | < 100ms | 45ms ✅ |
+| Anmeldung | < 100ms | 45ms ✅ |
 | Unit Tests | < 30s | 12.5s ✅ |
 
 ---
 
-## 🛠️ Development
+## 🛠️ Entwicklung
 
-**Run Tests Before Commit:**
+**Tests vor dem Commit ausführen:**
 ```bash
 pytest backend/tests/ -v --cov=app
 npm test --watchAll=false
@@ -176,7 +176,7 @@ black backend/ && flake8 backend/
 prettier --write mobile/src/
 ```
 
-**Database Migrations:**
+**Datenbank-Migrationen:**
 ```bash
 alembic revision --autogenerate -m "Add new table"
 alembic upgrade head
@@ -185,31 +185,31 @@ alembic downgrade -1  # Rollback
 
 ---
 
-## 📁 Project Structure
+## 📁 Projektstruktur
 
 ```
 .
-├── CLAUDE.md                    ← Dev guide & conventions
+├── CLAUDE.md                    ← Dev-Leitfaden & Konventionen
 ├── backend/
 │   ├── app/
-│   │   ├── routers/             ← 50+ REST endpoints
+│   │   ├── routers/             ← 50+ REST-Endpoints
 │   │   ├── models/              ← SQLAlchemy ORM
-│   │   ├── core/                ← Config, security, cache
-│   │   └── ml/                  ← Models (Poisson, Elo, XGBoost)
+│   │   ├── core/                ← Config, Sicherheit, Cache
+│   │   └── ml/                  ← Modelle (Poisson, Elo, XGBoost)
 │   ├── tests/
-│   │   ├── unit/                ← 300+ unit tests
-│   │   └── integration/         ← 40 E2E tests
+│   │   ├── unit/                ← 300+ Unit-Tests
+│   │   └── integration/         ← 40 E2E-Tests
 │   └── requirements.txt
 ├── mobile/
 │   ├── src/
-│   │   ├── screens/             ← 5 main screens
-│   │   ├── components/          ← Reusable UI
-│   │   ├── services/            ← API client (25+ methods)
-│   │   └── theme/               ← Colors, spacing, typography
+│   │   ├── screens/             ← 5 Haupt-Screens
+│   │   ├── components/          ← Wiederverwendbare UI
+│   │   ├── services/            ← API-Client (25+ Methoden)
+│   │   └── theme/               ← Farben, Abstände, Typografie
 │   └── package.json
 ├── database/
 │   ├── schema.sql
-│   ├── migrations/              ← Alembic versions
+│   ├── migrations/              ← Alembic-Versionen
 │   └── seeds/
 ├── docker/
 │   ├── Dockerfile.api
@@ -224,12 +224,12 @@ alembic downgrade -1  # Rollback
 
 ## 📞 Support
 
-- 🐛 Report bug: [GitHub Issues](https://github.com/your-org/bundesliga-analyzer/issues)
-- 💬 Discuss: [GitHub Discussions](https://github.com/your-org/bundesliga-analyzer/discussions)
+- 🐛 Bug melden: [GitHub Issues](https://github.com/your-org/bundesliga-analyzer/issues)
+- 💬 Diskussion: [GitHub Discussions](https://github.com/your-org/bundesliga-analyzer/discussions)
 - 📧 Email: support@matchoracle.app
 
 ---
 
-**Status:** MVP Ready ✅ · Tests: 340+ (87% coverage) · Production: Railway/Render · License: MIT
+**Status:** Phase 5 – Stabilisierung ✅ · Tests: 378 bestanden, 121 Fixture-Probleme · Production: Railway/Render · Lizenz: MIT
 
-**Last Updated:** April 24, 2026 · Version: 1.0.0-MVP
+**Zuletzt aktualisiert:** 13. Mai 2026 · Version: 1.0.0-RC

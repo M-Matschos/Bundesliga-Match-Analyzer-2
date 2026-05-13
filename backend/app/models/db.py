@@ -124,11 +124,6 @@ class User(Base):
     predictions = relationship("Prediction", back_populates="user", cascade="all, delete-orphan")
     bets = relationship("Bet", back_populates="user", cascade="all, delete-orphan")
 
-    __table_args__ = (
-        Index("ix_users_email", "email"),
-        Index("ix_users_username", "username"),
-    )
-
 
 class Team(Base):
     """Football team model."""
@@ -151,11 +146,6 @@ class Team(Base):
 
     home_matches = relationship("Match", foreign_keys="[Match.home_team_id]", back_populates="home_team")
     away_matches = relationship("Match", foreign_keys="[Match.away_team_id]", back_populates="away_team")
-
-    __table_args__ = (
-        Index("ix_teams_league", "league"),
-        Index("ix_teams_position", "position"),
-    )
 
 
 class Match(Base):
@@ -186,7 +176,6 @@ class Match(Base):
 
     __table_args__ = (
         Index("ix_matches_league_season", "league_id", "season"),
-        Index("ix_matches_kickoff", "kickoff"),
     )
 
 
@@ -223,11 +212,6 @@ class Prediction(Base):
     match = relationship("Match", back_populates="predictions")
     user = relationship("User", back_populates="predictions")
 
-    __table_args__ = (
-        Index("ix_predictions_match_id", "match_id"),
-        Index("ix_predictions_user_id", "user_id"),
-    )
-
 
 class Bet(Base):
     """Virtual betting model."""
@@ -248,10 +232,52 @@ class Bet(Base):
     user = relationship("User", back_populates="bets")
     match = relationship("Match", back_populates="bets")
 
-    __table_args__ = (
-        Index("ix_bets_user_id", "user_id"),
-        Index("ix_bets_match_id", "match_id"),
-    )
+
+class Device(Base):
+    """User device registration for push notifications."""
+
+    __tablename__ = "devices"
+
+    id = Column(PG_UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id = Column(PG_UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    device_token = Column(String(255), nullable=False, index=True)
+    platform = Column(String(20), nullable=False)  # ios, android, web
+    is_active = Column(Boolean, default=True, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+
+    user = relationship("User", cascade="all")
+
+
+class MatchSubscription(Base):
+    """User match subscriptions for notifications."""
+
+    __tablename__ = "match_subscriptions"
+
+    id = Column(PG_UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id = Column(PG_UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    match_id = Column(PG_UUID(as_uuid=True), ForeignKey("matches.id", ondelete="CASCADE"), nullable=False, index=True)
+    subscribed_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+
+    user = relationship("User", cascade="all")
+    match = relationship("Match", cascade="all")
+
+
+class NotificationHistory(Base):
+    """History of sent notifications."""
+
+    __tablename__ = "notification_history"
+
+    id = Column(PG_UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id = Column(PG_UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    match_id = Column(PG_UUID(as_uuid=True), ForeignKey("matches.id", ondelete="CASCADE"), nullable=False, index=True)
+    notification_type = Column(String(50), nullable=False)  # goal, card, substitution, kickoff, final_whistle
+    payload = Column(String(1000), nullable=True)
+    is_read = Column(Boolean, default=False, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+
+    user = relationship("User", cascade="all")
+    match = relationship("Match", cascade="all")
 
 
 # Compatibility alias — some tests import VirtualBet instead of Bet

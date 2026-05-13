@@ -512,3 +512,39 @@ def initialize_notification_service(
     global _notification_service
     _notification_service = NotificationService(db, firebase_credentials_path)
     return _notification_service
+
+
+# Module-level function for testing and simple FCM sends
+async def send_fcm_notification(
+    device_token: str,
+    title: str,
+    body: str,
+    data: Optional[Dict[str, str]] = None,
+    image_url: Optional[str] = None,
+) -> bool:
+    """
+    Send FCM notification via global service instance.
+
+    Args:
+        device_token: Firebase device token
+        title: Notification title
+        body: Notification body
+        data: Optional data payload
+        image_url: Optional image URL
+
+    Returns:
+        True if sent successfully, False otherwise
+    """
+    try:
+        service = get_notification_service()
+        message_id = await service.send_push_notification(
+            device_token=device_token,
+            title=title,
+            body=body,
+            data=data,
+            image_url=image_url,
+        )
+        return message_id is not None
+    except Exception as e:
+        logger.error(f"Failed to send FCM notification: {str(e)}")
+        return False

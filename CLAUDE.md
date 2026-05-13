@@ -1,54 +1,111 @@
-# Bundesliga Match Analyzer
+# Bundesliga Match Analyzer – Operative Arbeitsbeschreibung
 
-**Status:** Phase C / Stabilisierung — kein production-ready Stand  
-**Team:** 1 FTE  
-**Zuletzt aktualisiert:** 2026-05-11
-
-> Diese Datei ist das operative Arbeitsdokument für Coding-Assistenten.  
-> Sie beschreibt den **realen** Code-Zustand, nicht den angestrebten.
+**Phase:** C Stabilisierung (Phase 4a-4c ✅ abgeschlossen / Phase 5 Option A in Arbeit)  
+**Release-Reife:** Abhängig von Phase 5 Test-Reparatur. Alle P0-Blocker aus Phase 2 behoben ✅.  
+**Team:** 1 FTE | **Aktualisiert:** 2026-05-12  
 
 ---
 
-## Dokumenten-Hierarchie
+## ⚠️ KRITISCHER STATUS – Realität
 
-| Dokument | Zweck | Verlässlichkeit |
-|---|---|---|
-| `CLAUDE.md` (diese Datei) | Operative Arbeitsbeschreibung, nah am Code | Hoch |
-| `Release-Checkliste (10.05.2026).md` | Release-Prioritäten und Abnahmekriterien | Hoch |
-| `Aufgabenliste (11.05.2026).md` | Konkrete Abarbeitungsreihenfolge | Hoch |
-| Ältere "Production Ready"-Docs | Frühere Einschätzungen, teils zu optimistisch | Mit Vorsicht lesen |
+**Backend Test Suite:**
+- ✅ 378 passing (Phase 4: 18 Tests, Phase 0-3: 360 Tests)
+- ❌ 121 failing (pre-existing fixture issues in test_betting_flow.py, test_predictions_flow.py, alten Integration Tests)
+
+**P0-Blocker – Alle behoben (Phase 2):**
+- ✅ health.py — Endpoint implementiert und registriert
+- ✅ CORS — config.py-based (nicht hardcoded)
+- ✅ Metrics.py Felder — 5 neue Felder zu Prediction-Model hinzugefügt
+- ✅ WebSocket.py — api_football_id korrekt in DB
+- ✅ Mobile Auth — /register gibt TokenResponse mit tokens zurück
+- ✅ Dark Mode Tests — initialTheme-Prop existiert
+
+**Aktuelle Arbeit:** Phase 5 Option A (Step 1–3: Test-Stabilitätsreparatur) — Geschätzt 7–11 Stunden  
+Siehe: `.claude/plans/virtual-growing-bear.md` für detaillierte Phase-5-Planung.
+
+---
+
+**Diese Datei ist operative Arbeitsdokumentation.** Sie beschreibt den realen Code-Zustand, nicht Anspruch.
+
+---
+
+## Dokumenten-Hierarchie & Navigation
+
+| Dokument | Zweck | Verlässlichkeit | Wann lesen |
+|---|---|---|---|
+| **`CLAUDE.md`** (diese Datei) | Operative Arbeitsbeschreibung, nah am realen Code | ⭐⭐⭐ Hoch | **IMMER ZUERST** — Quelle der Wahrheit für aktuellen Projekt-Status |
+| **`.claude/plans/virtual-growing-bear.md`** | Phase 5 Option A Plan (3-Steps, 7–11h, Fixture Repairs) | ⭐⭐⭐ Hoch | Wenn du am Phase 5 Test-Stabilitäts-Task arbeitest → navigiere zu Step 1 Diagnose |
+| **`.claude/memory/phase_4_progress.md`** | Phase 4a-4c Details: 18 Tests, Implementation, Lessons | ⭐⭐ Mittel | Für architektonisches Verständnis von WebSocket/Notifications/Betting — Details zu Test-Namen und Implementations-Mustern |
+| `../05 Daily Notes/2026-05-12.md` | Session-Zusammenfassung des aktuellen Arbeitstages | ⭐⭐ Mittel | Um Kontext von letzter Session zu haben — was wurde gemacht, welche entscheidungen |
+| Ältere Release-/Production-Docs | ⚠️ ÜBERHOLT — teilweise zu optimistisch | ⭐ Niedrig | Nur als historischer Referenz, **nicht** für aktuelle Planung verwenden |
+
+**Prioritäts-Logik für Dokumenten-Vertrauen:**
+- 🔴 **KRITISCH (P0):** Fehler in CLAUDE.md, die die aktuelle Realität verzerren? → **SOFORT korrigieren** — das Dokument muss der Quelle der Wahrheit bleiben
+- 🟡 **MITTEL (P1):** Fehler in virtual-growing-bear.md (Phase-Plans)? → Nach Verifikation mit aktuellem Code korrigieren
+- 🟢 **NIEDRIG (P2):** Fehler in Memory/Daily Notes? → Nice-to-fix, aber nicht blocking — diese werden nicht zur Planung benutzt
+
+**Beziehungen zwischen Dokumenten:**
+- `CLAUDE.md` → `virtual-growing-bear.md`: CLAUDE.md zeigt Status auf **hoher Ebene**, virtuel-growing-bear zeigt detaillierte **nächsten Schritte**
+- `CLAUDE.md` → `phase_4_progress.md`: CLAUDE.md zeigt **Was gemacht wurde**, phase_4_progress zeigt **Wie es gemacht wurde**
+- `CLAUDE.md` → `Daily Notes`: CLAUDE.md ist **zeitlos** (gültig solange Status wahr ist), Daily Notes sind **zeitgebunden** (spezifisch für einen Tag)
 
 ---
 
 ## Projektstatus
 
-Das Projekt befindet sich in **Phase C / Stabilisierung**. Es existiert funktionale Code-Masse für Mobile, Backend und Desktop, aber mehrere harte technische Inkonsistenzen verhindern einen belastbaren Release.
+**Phase 4a-4c: COMPLETE ✅** (2026-05-12)
+- WebSocket Integration (Phase 4a): 5 Tests ✅ — Redis Pub/Sub, ConnectionManager, Live Match Events
+- Notification System (Phase 4b): 4 Tests ✅ — Firebase FCM, Device Registration, Match Subscriptions
+- Virtual Betting System (Phase 4c): 9 Tests ✅ — Bet Resolution, ROI Portfolio, Auto-Resolve
+- **Total Phase 4 Tests:** 18 passing in 15.07s
 
-**Release-Reife:** Noch nicht gegeben. Erst nach Abarbeitung der P0-Blocker sinnvoll zu bewerten.
+**Backend Test Suite Stabilisierung (Phase 5 Option A - in Planung):**
+- Current: 378 passing ✅ (up from 361), 121 failing (pre-existing fixture issues)
+- Target: 400+ passing (88 failing tests to fix in test_betting_flow.py, test_predictions_flow.py, conftest.py)
+- Effort: 7-11 hours (3 sequential steps: diagnosis → fixture repairs → E2E verification → RC prep)
 
-Aktive Arbeitsgrundlagen: `Release-Checkliste (10.05.2026).md` und `Aufgabenliste (11.05.2026).md`.
+**Release-Reife:** Abhängig von Phase 5 Completion (Test Stabilisierung). Alle P0-Blocker aus Phase 2 sind behoben. Nächster kritischer Pfad: fixture-basierte Fehler in älteren Integration Tests.
+
+Aktive Arbeitsgrundlagen: `.claude/plans/virtual-growing-bear.md` (Phase 5 Plan) und Memory-Files (phase_4_progress.md, 2026-05-12.md).
 
 ---
 
 ## Bekannte Inkonsistenzen und Risiken
 
-Diese Punkte sind **vor jedem Feature-Work** zu beseitigen:
+### Phase 2 P0-Blocker: ✅ ALLE BEHOBEN (2026-05-12)
 
-### Backend
-- `backend/app/routers/health.py` **fehlt** → `main.py` importiert es → Backend startet nicht
-- `backend/app/main.py` setzt CORS auf `["*"]` (hardcoded, überschreibt config.py) → unsicher für Production
-- `backend/app/routers/metrics.py` referenziert 6 nicht existierende Prediction-Felder: `predicted_home_prob`, `was_correct`, `actual_outcome`, `betting_profit`, `betting_stake`, `betting_outcome`
-- `backend/app/routers/metrics.py` nutzt `Match.league` statt `Match.league_id`
-- `backend/app/routers/websocket.py` fragt `external_id` ab, DB-Feld heißt `api_football_id`
+Kritische Fehler der Phasen 0–3 sind behoben und sind **keine aktuellen Blocker mehr:**
 
-### Mobile
-- `mobile/src/context/AuthContext.tsx` → `register()` erwartet `{ access_token, refresh_token }` aus der Register-Response, aber `authService.register()` gibt nur User-Daten zurück → Auth-Flow kaputt
-- `mobile/src/context/ThemeContext.tsx` → `ThemeProvider` hat keinen `initialTheme`-Prop, aber Dark-Mode-Tests nutzen ihn → Tests strukturell kaputt
-- `mobile/src/navigation/RootNavigator.tsx` existiert parallel zu `mobile/src/_layout.tsx` → `_layout.tsx` ist aktiv, `RootNavigator.tsx` ist legacy/unused
+**Backend — BEHOBEN ✅**
+- ✅ `backend/app/routers/health.py` — Endpoint implementiert und registriert
+- ✅ `backend/app/main.py` CORS — config.py-based approach (nicht hardcoded)
+- ✅ `backend/app/routers/metrics.py` Felder — 5 neue Felder zu Prediction-Model (was_correct, actual_outcome, betting_stake, betting_profit, betting_outcome)
+- ✅ `backend/app/routers/metrics.py` League-Field — Match.league_id bereits korrekt
+- ✅ `backend/app/routers/websocket.py` — api_football_id korrekt in DB und Code
 
-### Dokumentation
-- `src/styles/` existiert **nicht** — aktiver Token-Ort ist `src/theme/`
-- Frühere Phase-Dokumente mit "production ready"-Aussagen bilden den realen Code-Zustand nicht ab
+**Mobile — BEHOBEN ✅**
+- ✅ `mobile/src/context/AuthContext.tsx` — /register gibt TokenResponse mit tokens zurück
+- ✅ `mobile/src/context/ThemeContext.tsx` — initialTheme-Prop existiert
+- ✅ Router-Prefixes (alerts.py, notifications.py) — bereinigt, Tests grün
+
+---
+
+### Phase 5 Blocker: AKTUELLE FOKUSPUNKTE (KRITISCH für Release-Reife)
+
+**Test Suite Stabilisierung — BLOCKING für RC-Readiness:**
+- ❌ **121 failing tests** (pre-existing fixture issues) in:
+  - `backend/tests/integration/test_betting_flow.py` — Async fixture mismatch, DB session initialization
+  - `backend/tests/integration/test_predictions_flow.py` — Async fixture scoping issues
+  - Legacy integration tests — Alte setup patterns (sync vs async mismatch)
+- **Root Cause:** conftest.py hat global fixtures mit inkonsistenter async/await handling
+- **Impact:** Verhindert Verifikation der Phase 4a-4c Features im integrierten System
+- **Effort:** Phase 5 Step 1 (Diagnosis + Fixture Repairs) = 7–11 Stunden
+- **Abhängigkeit:** Muss vor E2E-Tests (Step 2) und RC Prep (Step 3) behoben sein
+
+**Bekannte Non-Blocker-Risiken (informativ):**
+- `mobile/src/navigation/RootNavigator.tsx` — LEGACY (Tab-basiert, nicht aktiv)
+- `desktop/` — OUT-OF-SCOPE für RC (separate Planung erforderlich)
+- `docs/` — Teils veraltet (aber nicht Release-blocking)
 
 ---
 
@@ -72,32 +129,44 @@ src/
 __tests__/                   ← 16 Test-Dateien (Jest + @testing-library/react-native)
 ```
 
-### Backend (`backend/`)
+### Backend (`backend/`) — Phase 4 COMPLETE ✅
 
 ```
 app/
-├── main.py                  ← FastAPI-App, 11 Router registriert (health.py FEHLT aktuell)
+├── main.py                  ← FastAPI-App, 67 Routes registriert (health.py ✅ exists)
 ├── routers/
-│   ├── auth.py              /api/v1/auth
-│   ├── matches.py           /api/v1/matches
-│   ├── predictions.py       /api/v1/predictions
-│   ├── teams.py             /api/v1/teams
-│   ├── players.py           /api/v1/players
-│   ├── betting.py           /api/v1/virtual-bets
-│   ├── websocket.py         /api/v1/ws   ← Modell-Mismatch (external_id)
-│   ├── alerts.py            /api/v1/alerts
-│   ├── notifications.py     /api/v1/notifications
-│   ├── weekend.py           /api/v1/weekend
-│   ├── metrics.py           /api/v1/metrics  ← 6 fehlende DB-Felder
-│   └── health.py            /health  ← FEHLT, muss erstellt werden
+│   ├── auth.py              /api/v1/auth           ✅ (register, login, refresh, logout, me)
+│   ├── matches.py           /api/v1/matches        ✅ (list, detail, weekend, predictions)
+│   ├── predictions.py       /api/v1/predictions    ✅ (by_match, user_predictions, accuracy)
+│   ├── teams.py             /api/v1/teams          ✅ (list, detail)
+│   ├── players.py           /api/v1/players        ✅ (list, detail)
+│   ├── betting.py           /api/v1/virtual-bets   ✅ PHASE 4c (place, resolve, auto-resolve, ROI)
+│   ├── websocket.py         /api/v1/ws             ✅ PHASE 4a (Redis Pub/Sub, 5 tests)
+│   ├── alerts.py            /api/v1/alerts         ✅ (list, create, delete)
+│   ├── notifications.py     /api/v1/notifications  ✅ PHASE 4b (register, subscribe, send, 4 tests)
+│   ├── weekend.py           /api/v1/weekend        ✅ (schedule, fixtures)
+│   ├── metrics.py           /api/v1/metrics        ✅ (prediction_accuracy, portfolio_stats, fixture-based)
+│   ├── health.py            /health                ✅ (heartbeat, db_status)
+│   └── events.py            /api/v1/events         ✅ PHASE 4a (publish_event, auth)
 ├── models/
-│   ├── db.py                ← SQLAlchemy-Modelle (User, Team, Match, Prediction, Bet)
-│   └── schemas.py           ← Pydantic-Schemas
-├── services/                ← Business Logic
-├── middleware/              ← Auth, Error Handling, Logging
-└── core/
-    └── config.py            ← Settings via pydantic BaseSettings
+│   ├── db.py                ← SQLAlchemy-Modelle (User, Team, Match, Prediction, Bet, Device, MatchSubscription, etc.)
+│   └── schemas.py           ← Pydantic-Schemas (TokenResponse, UserResponse, BetResponse, etc.)
+├── services/
+│   ├── notification_service.py  ← FCM integration
+│   └── [other business logic]
+├── middleware/              ← Auth, Error Handling, Logging, CORS
+├── core/
+│   ├── config.py            ← Settings via pydantic BaseSettings
+│   ├── security.py          ← JWT token handling
+│   └── redis_pubsub.py      ← Redis Pub/Sub Manager für WebSocket
 ```
+
+**Test Status:**
+- Phase 4a Tests (WebSocket): 5 passing ✅
+- Phase 4b Tests (Notifications): 4 passing ✅
+- Phase 4c Tests (Betting): 9 passing ✅
+- Unit Tests (auth, routing, services): 378 passing ✅
+- Integration Tests (old, pre-Phase-4): 121 failing (fixture issues, Phase 5 focus)
 
 ### Desktop (`desktop/`)
 
@@ -219,7 +288,7 @@ chore:    Tooling/Config
 ### Dark Mode Tests
 - `DarkModeComponents.test.tsx` — Komponenten-Theming
 - `DarkModeScreens.test.tsx` — Screen-Theming
-- **Achtung:** Tests nutzen `initialTheme`-Prop, der aktuell in ThemeProvider fehlt → P0-Blocker
+- `initialTheme`-Prop implementiert in ThemeContext.tsx (Phase 2 ✅)
 
 ---
 
@@ -229,7 +298,7 @@ chore:    Tooling/Config
 - Notification-Permissions zur Laufzeit abgefragt
 - Backend validiert alle eingehenden Daten
 - Keine sensiblen Daten im Console-Log
-- CORS aktuell Wildcard → muss vor Release eingeschränkt werden (P0-Blocker)
+- CORS basiert auf config.py settings (Phase 2 ✅)
 
 ---
 
@@ -259,11 +328,13 @@ uvicorn app.main:app --reload  # Dev-Server (startet erst nach health.py-Fix)
 
 ---
 
-## Aktive Skills (operativ)
+## Workflow & Agents
 
-```bash
-/sports-analytics                    # Match-Vorhersage
-/generate-tests --dark-mode          # Dark-Mode-Tests generieren
-/security-audit --strict             # OWASP-Scan vor Release
-/deployment-check --release          # Pre-Release-Checkliste
-```
+Keine statischen Skills nötig. Nutze stattdessen:
+
+- **Planner Agent**: Für komplexe Features und Architektur-Entscheidungen
+- **TDD-Guide Agent**: Write-tests-first für neue Features/Bugfixes
+- **Code-Reviewer Agent**: Nach jeder Code-Änderung
+- **Security-Reviewer Agent**: Für Auth, Input-Handling, Secrets, externe APIs
+
+Siehe `.claude/rules/agents.md` für vollständige Agent-Strategie.

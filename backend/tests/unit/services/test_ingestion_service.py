@@ -14,7 +14,13 @@ from app.models.events import EventType
 @pytest.fixture
 def ingestion_service():
     """Erstelle einen Ingestion-Service für Tests"""
-    return BundesligaDataIngestion(api_key="test_api_key", polling_interval=10)
+    from unittest.mock import MagicMock
+    mock_redis = MagicMock()
+    return BundesligaDataIngestion(
+        api_key="test_api_key",
+        redis_client=mock_redis,
+        poll_interval=10
+    )
 
 
 @pytest.mark.asyncio

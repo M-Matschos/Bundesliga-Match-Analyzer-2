@@ -3,8 +3,9 @@
 from typing import Optional, List
 from uuid import UUID
 from datetime import datetime
+import logging
 
-from fastapi import APIRouter, HTTPException, Query, Depends, Header
+from fastapi import APIRouter, HTTPException, Query, Depends, Header, status
 from sqlalchemy import select, and_
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -13,6 +14,7 @@ from app.models.db import Bet, Match, User
 from app.core.security import verify_token, get_user_id_from_token, get_current_user
 
 router = APIRouter(tags=["virtual-betting"])
+logger = logging.getLogger(__name__)
 
 
 @router.post("")
@@ -300,3 +302,198 @@ async def cancel_bet(
         "status": "void",
         "message": "Bet cancelled successfully",
     }
+
+
+@router.post("/{bet_id}/resolve")
+async def resolve_bet(
+    bet_id: UUID,
+    outcome: str = Query(..., description="won, lost, or void"),
+    db: AsyncSession = Depends(get_db),
+    current_user = Depends(get_current_user),
+) -> dict:
+    """Resolve a pending bet (won, lost, or void).
+
+    **Path Parameters:**
+    - `bet_id`: Bet UUID
+
+    **Query Parameters:**
+    - `outcome`: "won", "lost", or "void"
+
+    **Example:**
+    ```
+    POST /virtual-bets/550e8400-e29b-41d4-a716-446655440000/resolve?outcome=won
+    ```
+    """
+    # Validate outcome
+    if outcome not in ["won", "lost", "void"]:
+        raise HTTPException(status_code=400, detail="Invalid outcome. Must be 'won', 'lost', or 'void'")
+
+    # Get bet
+    query = select(Bet).where(
+        and_(
+            Bet.id == bet_id,
+            Bet.user_id == UUID(current_user.sub),
+        )
+    )
+    result = await db.execute(query)
+    bet = result.scalar_one_or_none()
+
+    if not bet:
+        raise HTTPException(status_code=404, detail="Bet not found")
+
+    # Check if bet is still pending
+    if bet.status != "pending":
+        raise HTTPException(status_code=400, detail="Bet is already resolved")
+
+    # Calculate win_amount
+    if outcome == "won":
+        win_amount = bet.amount * bet.odds
+    elif outcome == "lost":
+        win_amount = 0.0
+    else:  # void
+        win_amount = 0.0
+
+    # Update bet
+    bet.status = outcome
+    bet.win_amount = win_amount
+    await db.commit()
+
+    logger.info(f"Bet {bet_id} resolved as {outcome} with win_amount={win_amount}")
+
+    return {
+        "bet_id": str(bet.id),
+        "status": outcome,
+        "win_amount": float(win_amount),
+        "message": f"Bet resolved as {outcome}",
+    }
+
+
+@router.post("/auto-resolve")
+async def auto_resolve_bets(
+    authorization: str = Header(None),
+    db: AsyncSession = Depends(get_db),
+) -> dict:
+    """Auto-resolve pending bets for completed matches (Admin-only).
+
+    Finds all matches with status="completed" that have pending bets,
+    determines the winning outcome based on match result,
+    and automatically resolves all related bets.
+
+    **Example:**
+    ```
+    POST /virtual-bets/auto-resolve
+    Authorization: Bearer <token>
+    ```
+    """
+    # Check authorization header
+    if not authorization:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Missing authorization header",
+        )
+
+    # Extract and verify token
+    try:
+        scheme, token = authorization.split()
+        if scheme.lower() != "bearer":
+            raise ValueError("Invalid scheme")
+        user_id = get_user_id_from_token(token)
+    except (ValueError, AttributeError):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid authorization header",
+        )
+
+    # Get user and check admin status
+    try:
+        from sqlalchemy import select
+        stmt = select(User).where(User.id == UUID(user_id))
+        result = await db.execute(stmt)
+        current_user = result.scalar_one_or_none()
+
+        if not current_user:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="User not found",
+            )
+
+        if not current_user.is_superuser:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Admin access required",
+            )
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Auth error: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid token",
+        )
+
+    try:
+        # Find all completed matches with pending bets
+        completed_matches_query = select(Match).where(Match.status == "completed")
+        matches_result = await db.execute(completed_matches_query)
+        completed_matches = matches_result.scalars().all()
+
+        if not completed_matches:
+            logger.info("No completed matches found for auto-resolution")
+            return {
+                "resolved_bets": 0,
+                "message": "No completed matches found",
+            }
+
+        resolved_count = 0
+
+        for match in completed_matches:
+            # Get all pending bets for this match
+            pending_bets_query = select(Bet).where(
+                and_(
+                    Bet.match_id == match.id,
+                    Bet.status == "pending",
+                )
+            )
+            bets_result = await db.execute(pending_bets_query)
+            pending_bets = bets_result.scalars().all()
+
+            if not pending_bets:
+                continue
+
+            # Determine winning outcome based on match result
+            home_score = match.home_score or 0
+            away_score = match.away_score or 0
+
+            if home_score > away_score:
+                winning_bet_type = "home_win"
+            elif away_score > home_score:
+                winning_bet_type = "away_win"
+            else:
+                winning_bet_type = "draw"
+
+            # Resolve each bet
+            for bet in pending_bets:
+                if bet.bet_type == winning_bet_type:
+                    bet.status = "won"
+                    bet.win_amount = bet.amount * bet.odds
+                else:
+                    bet.status = "lost"
+                    bet.win_amount = 0.0
+
+                resolved_count += 1
+                logger.info(f"Auto-resolved bet {bet.id}: {bet.status}, win_amount={bet.win_amount}")
+
+            await db.commit()
+
+        return {
+            "resolved_bets": resolved_count,
+            "message": f"Auto-resolved {resolved_count} bets for {len(completed_matches)} completed matches",
+        }
+
+    except Exception as e:
+        logger.error(f"Error in auto-resolve: {str(e)}")
+        await db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Error during auto-resolution",
+        )

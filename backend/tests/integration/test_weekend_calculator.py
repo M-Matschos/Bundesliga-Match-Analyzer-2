@@ -8,22 +8,6 @@ from datetime import datetime, timedelta
 from app.main import app
 
 
-@pytest.fixture
-def client():
-    return TestClient(app)
-
-
-@pytest.fixture
-def auth_headers(client, db_user):
-    """Get JWT auth headers."""
-    response = client.post(
-        "/api/v1/auth/login",
-        json={"email": db_user.email, "password": "test_password_123"},
-    )
-    token = response.json()["access_token"]
-    return {"Authorization": f"Bearer {token}"}
-
-
 class TestWeekendCalculator:
     """Integration tests for weekend calculation flow."""
 

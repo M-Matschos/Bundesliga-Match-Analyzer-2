@@ -18,19 +18,6 @@ from app.models.db import Base, User, Match, Team, Prediction, VirtualBet
 from app.core.config import settings
 
 
-@pytest.fixture
-def client():
-    """FastAPI test client."""
-    return TestClient(app)
-
-
-@pytest.fixture
-async def async_client():
-    """Async HTTP client for testing."""
-    async with AsyncClient(app=app, base_url="http://test") as client:
-        yield client
-
-
 class TestAuthRouter:
     """Test Auth Router: /api/v1/auth/*"""
 
@@ -46,9 +33,9 @@ class TestAuthRouter:
         )
         assert response.status_code == 201
         data = response.json()
-        assert data["email"] == "newuser@example.com"
-        assert data["username"] == "newuser"
-        assert "id" in data
+        assert "access_token" in data
+        assert "refresh_token" in data
+        assert data["token_type"] == "bearer"
 
     def test_register_duplicate_email(self, client, test_user_data):
         """❌ Register: Duplicate email should return 400"""
@@ -72,7 +59,7 @@ class TestAuthRouter:
             },
         )
         assert response.status_code == 400
-        assert "already exists" in response.json()["detail"].lower()
+        assert "already registered" in response.json()["detail"].lower()
 
     def test_register_invalid_email(self, client):
         """❌ Register: Invalid email format"""
@@ -144,7 +131,7 @@ class TestAuthRouter:
             },
         )
         assert response.status_code == 401
-        assert "Invalid credentials" in response.json()["detail"]
+        assert "invalid email or password" in response.json()["detail"].lower()
 
     def test_login_nonexistent_user(self, client):
         """❌ Login: User does not exist"""

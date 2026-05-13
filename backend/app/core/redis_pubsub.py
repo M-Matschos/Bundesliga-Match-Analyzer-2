@@ -120,10 +120,12 @@ class RedisPubSubManager:
             raise RuntimeError("Redis not connected")
 
         channel = self.get_match_events_channel(match_id)
+        event_data = event.dict()
+        event_data["timestamp"] = event.timestamp.isoformat()
         message = json.dumps(
             {
                 "type": "event",
-                "data": event.dict(),
+                "data": event_data,
                 "timestamp": event.timestamp.isoformat(),
             }
         )

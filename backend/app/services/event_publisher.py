@@ -478,6 +478,64 @@ class EventPublisher:
             logger.error(f"Failed to publish system alert: {str(e)}")
             raise
 
+    @staticmethod
+    async def publish_event(event: BaseEvent) -> int:
+        """
+        Publish any event type to Redis Pub/Sub.
+
+        Args:
+            event: BaseEvent instance (Goal, Card, Substitution, etc.)
+
+        Returns:
+            Number of subscribers who received the event
+        """
+        try:
+            # Route to specific publisher based on event type
+            if isinstance(event, GoalEvent):
+                return await EventPublisher.publish_goal(
+                    match_id=event.match_id,
+                    minute=event.minute,
+                    team=event.team,
+                    player_name=event.player_name,
+                    player_id=event.player_id,
+                    assist_player_name=event.assist_player_name,
+                    score_before=event.score_before,
+                    score_after=event.score_after,
+                    xg_value=event.xg_value,
+                )
+            elif isinstance(event, CardEvent):
+                return await EventPublisher.publish_card(
+                    match_id=event.match_id,
+                    minute=event.minute,
+                    team=event.team,
+                    player_name=event.player_name,
+                    player_id=event.player_id,
+                    card_type=event.card_type,
+                )
+            elif isinstance(event, SubstitutionEvent):
+                return await EventPublisher.publish_substitution(
+                    match_id=event.match_id,
+                    minute=event.minute,
+                    team=event.team,
+                    player_in=event.player_in,
+                    player_out=event.player_out,
+                )
+            else:
+                # Generic event publish to Redis
+                channel = f"events:{event.match_id}"
+                num_subscribers = await pubsub_manager.publish_message(
+                    channel, event.model_dump_json()
+                )
+                logger.info(
+                    f"Event published: {event.event_type.value}",
+                    extra={"match_id": event.match_id, "subscribers": num_subscribers},
+                )
+                return num_subscribers
+
+        except Exception as e:
+            logger.error(f"Failed to publish event: {str(e)}")
+            raise
+
 
 # Singleton instance for convenience
 event_publisher = EventPublisher()

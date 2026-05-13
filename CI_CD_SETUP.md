@@ -1,22 +1,34 @@
 # CI/CD Pipeline Setup & Configuration Guide
 
 **Version:** 1.0.0  
-**Last Updated:** 2026-05-04  
-**Status:** Production Ready
+**Last Updated:** 2026-05-12  
+**Status:** Phase 5 — Test Stabilisierung (Pipeline funktionsfähig ✅, Backend-Tests stabilisieren)  
+**Reife-Einschätzung:** MVP + Production-Ready-Ansatz (siehe unten)
 
 ## Overview
 
-This guide documents the complete CI/CD pipeline setup for Bundesliga Match Analyzer, including GitHub Actions workflows, environment configuration, secret management, and troubleshooting procedures.
+Dieses Dokument dokumentiert die komplette CI/CD-Pipeline für das Bundesliga-Match-Analyzer-Projekt, einschließlich GitHub Actions Workflows, Umgebungskonfiguration, Secret Management und Troubleshooting.
+
+**Phase 5 Status (2026-05-12):**
+- ✅ Alle 4 CI/CD Jobs funktionieren (test.yml, lint.yml, build.yml, deploy-staging.yml)
+- ✅ Pipeline auf `main` branch funktionsfähig (Workflow #16, Commit `2746f4d`)
+- 📋 Backend-Test-Stabilisierung in Planung (121 pre-existing Fixture-Fehler)
+- ⚠️ MVP-Limitationen dokumentiert (Docker Hub Publishing deaktiviert, siehe [MVP Limitations & Pipeline Decisions](#mvp-limitations--pipeline-decisions))
+
+**Dokumentation:**
+- Englische Abschnitte: Ausführliche Pipeline-Dokumentation (Setup, Workflows, Troubleshooting)
+- Deutsche Abschnitte: MVP-Limitationen, Fix-History und aktuelle Status (2026-05-12)
 
 ## Table of Contents
 
 1. [Architecture Overview](#architecture-overview)
-2. [Workflow Structure](#workflow-structure)
-3. [Setup Instructions](#setup-instructions)
-4. [Environment Variables & Secrets](#environment-variables--secrets)
-5. [Workflow Details](#workflow-details)
-6. [Troubleshooting](#troubleshooting)
-7. [Monitoring & Alerts](#monitoring--alerts)
+2. [MVP Limitations & Pipeline Decisions](#mvp-limitations--pipeline-decisions)
+3. [Workflow Structure](#workflow-structure)
+4. [Setup Instructions](#setup-instructions)
+5. [Environment Variables & Secrets](#environment-variables--secrets)
+6. [Workflow Details](#workflow-details)
+7. [Troubleshooting](#troubleshooting)
+8. [Monitoring & Alerts](#monitoring--alerts)
 
 ---
 
@@ -63,6 +75,20 @@ publish-release.yml (on tag or manual trigger)
   ├── publish-artifacts
   └── notify-release
 ```
+
+---
+
+## MVP Limitations & Pipeline Decisions
+
+Die folgenden bewussten Entscheidungen sind für die aktuelle Phase (MVP / Phase 5) getroffen worden und beeinflussen die Pipeline-Verhalten:
+
+| Limitation | Grund | Impact | Phase 5 Status |
+|-----------|-------|--------|---|
+| **Docker Hub Publishing:** Deaktiviert | Secrets `DOCKER_USERNAME`/`DOCKER_PASSWORD` nicht konfiguriert | Build-Step mit `continue-on-error: true` — Fehler blockieren nicht | Zur Production: Secrets aktivieren + falsche Tags reparieren |
+| **Mobile Test Failures:** `continue-on-error` | Pre-existing Fixture-Fehler (121 Tests) blockierten Pipeline | Jest-Tests können fehlschlagen, ohne Stage zu blockieren | Phase 5 Option A Step 1: Fixture-Reparatur plant systematische Behebung |
+| **CodeQL v2 Deprecated:** Warning | GitHub Action empfiehlt Upgrade auf v3 | Nur Warnung, Scan funktioniert | Nach Phase 5: auf v3 aktualisieren |
+
+**Konsequenz für CI/CD:** Pipeline ist **funktionsfähig für MVP** (Test-Execution, Linting, Staging-Deploy). Für Production-Ready müssen Docker Hub Secrets und Test-Stabilisierung (Phase 5) abgeschlossen sein.
 
 ---
 
@@ -173,123 +199,123 @@ publish-release.yml (on tag or manual trigger)
 
 ---
 
-## Setup Instructions
+## Installationsanleitung
 
-### Prerequisites
+### Voraussetzungen
 
-- GitHub repository with Actions enabled
-- Node.js 18+ (for mobile tests)
-- Python 3.11+ (for backend tests)
-- Git with tags support
+- GitHub-Repository mit aktivierten Actions
+- Node.js 18+ (für Mobile-Tests)
+- Python 3.11+ (für Backend-Tests)
+- Git mit Tags-Unterstützung
 
-### 1. Initial Repository Setup
+### 1. Initiales Repository-Setup
 
 ```bash
-# Clone the repository
+# Repository klonen
 git clone <repository-url>
 cd bundesliga-analyzer
 
-# Create .github/workflows directory (if not exists)
+# .github/workflows Verzeichnis erstellen (falls nicht vorhanden)
 mkdir -p .github/workflows
 
-# Copy workflow files
+# Workflow-Dateien kopieren
 cp ci-cd/workflows/*.yml .github/workflows/
 ```
 
-### 2. Configure GitHub Environments
+### 2. GitHub-Umgebungen konfigurieren
 
-Create three environments for deployment protection:
+Erstelle drei Umgebungen zum Schutz der Bereitstellung:
 
 **Settings → Environments → New Environment**
 
-#### Staging Environment
+#### Staging-Umgebung
 - Name: `staging`
-- Deployment branches: `main`
+- Deployment-Branches: `main`
 - URL: `https://staging.bundesliga-analyzer.dev`
-- Protection rules: Optional
+- Schutzregeln: Optional
 - Secrets:
   - `STAGING_DEPLOY_KEY`
   - `DEPLOY_HOST`
   - `DEPLOY_USER`
 
-#### Production Environment
+#### Production-Umgebung
 - Name: `production`
-- Deployment branches: `main` (tag-based)
+- Deployment-Branches: `main` (tag-basiert)
 - URL: `https://production.bundesliga-analyzer.dev`
-- Protection rules: **REQUIRED**
-  - Require reviews before deployment: Yes (select 2+ reviewers)
-  - Restrict deployments to specific branches: main
-  - Deployment branches and environments: Dismiss stale deployment reviews
+- Schutzregeln: **ERFORDERLICH**
+  - Überprüfung vor Bereitstellung erforderlich: Ja (2+ Reviewer auswählen)
+  - Bereitstellungen auf bestimmte Branches beschränken: main
+  - Deployment-Branches und -Umgebungen: Veraltete Bereitstellungsbewertungen ablehnen
 - Secrets:
   - `PROD_DEPLOY_KEY`
   - `PROD_HOST`
   - `PROD_USER`
-  - `SLACK_WEBHOOK` (recommended)
+  - `SLACK_WEBHOOK` (empfohlen)
 
-### 3. Repository Secrets Configuration
+### 3. Repository-Secrets konfigurieren
 
-Go to **Settings → Secrets and variables → Actions**
+Gehe zu **Settings → Secrets and variables → Actions**
 
-#### Required Secrets
+#### Erforderliche Secrets
 
 ```yaml
 # Deployment
-STAGING_DEPLOY_KEY: "SSH private key for staging server"
-PROD_DEPLOY_KEY: "SSH private key for production server"
+STAGING_DEPLOY_KEY: "SSH privater Schlüssel für Staging-Server"
+PROD_DEPLOY_KEY: "SSH privater Schlüssel für Produktions-Server"
 
 # Services
 API_URL: "https://api.example.com"
-SONAR_TOKEN: "SonarCloud token for code analysis"
+SONAR_TOKEN: "SonarCloud Token für Code-Analyse"
 
-# Notifications
+# Benachrichtigungen
 SLACK_WEBHOOK: "https://hooks.slack.com/services/..." (optional)
 
 # Docker Hub (optional)
-DOCKER_USERNAME: "your-docker-username"
-DOCKER_PASSWORD: "your-docker-password"
+DOCKER_USERNAME: "dein-docker-benutzername"
+DOCKER_PASSWORD: "dein-docker-passwort"
 
 # Render (optional)
-RENDER_API_KEY: "your-render-api-key"
-RENDER_SERVICE_ID: "your-render-service-id"
+RENDER_API_KEY: "dein-render-api-key"
+RENDER_SERVICE_ID: "dein-render-service-id"
 
 # Railway (optional)
-RAILWAY_TOKEN: "your-railway-token"
-RAILWAY_PROJECT_ID: "your-railway-project-id"
+RAILWAY_TOKEN: "dein-railway-token"
+RAILWAY_PROJECT_ID: "dein-railway-project-id"
 ```
 
-#### Setting Secrets via CLI
+#### Secrets über CLI setzen
 
 ```bash
-# Using GitHub CLI
+# Mit GitHub CLI
 gh secret set STAGING_DEPLOY_KEY < staging-key.pem
 gh secret set PROD_DEPLOY_KEY < prod-key.pem
-gh secret set SONAR_TOKEN --body "your-sonar-token"
-gh secret set SLACK_WEBHOOK --body "your-slack-webhook-url"
+gh secret set SONAR_TOKEN --body "dein-sonar-token"
+gh secret set SLACK_WEBHOOK --body "dein-slack-webhook-url"
 ```
 
-### 4. Branch Protection Rules
+### 4. Branch-Schutzregeln
 
 **Settings → Branches → main**
 
-Enable:
-- Require a pull request before merging (1+ approvals)
-- Require status checks to pass before merging:
+Aktiviere:
+- Pull Request vor dem Mergen erforderlich (1+ Genehmigungen)
+- Status Checks müssen vor dem Mergen bestanden sein:
   - `test.yml` (backend-tests, mobile-tests, security-scan)
   - `lint.yml` (lint-mobile, lint-backend, check-types)
   - `build.yml` (build-mobile, build-backend)
 
-### 5. Workflow Permissions
+### 5. Workflow-Berechtigungen
 
 **Settings → Actions → General → Workflow Permissions**
 
-- Select: "Read and write permissions"
-- Enable: "Allow GitHub Actions to create and approve pull requests"
+- Wähle: "Read and write permissions"
+- Aktiviere: "Allow GitHub Actions to create and approve pull requests"
 
 ---
 
-## Environment Variables & Secrets
+## Umgebungsvariablen & Geheimnisse
 
-### Environment Variables (in workflows)
+### Umgebungsvariablen (in Workflows)
 
 ```yaml
 # Mobile Build
@@ -304,162 +330,164 @@ REDIS_URL: "redis://localhost:6379/0"
 TESTING: "true"
 ```
 
-### Secret Types & Rotation
+### Geheimnistypen & Rotation
 
-| Secret | Type | Rotation | Notes |
-|--------|------|----------|-------|
-| STAGING_DEPLOY_KEY | SSH Key | 90 days | Rotate before expiry |
-| PROD_DEPLOY_KEY | SSH Key | 90 days | Critical: rotate regularly |
-| SONAR_TOKEN | API Token | 365 days | SonarCloud dashboard |
-| SLACK_WEBHOOK | Webhook URL | N/A | Regenerate if compromised |
-| DOCKER credentials | Basic Auth | 365 days | Docker Hub settings |
+| Geheimnis | Typ | Rotation | Anmerkung |
+|-----------|-----|----------|-----------|
+| STAGING_DEPLOY_KEY | SSH-Schlüssel | 90 Tage | Vor Ablauf rotieren |
+| PROD_DEPLOY_KEY | SSH-Schlüssel | 90 Tage | Kritisch: regelmäßig rotieren |
+| SONAR_TOKEN | API-Token | 365 Tage | SonarCloud-Dashboard |
+| SLACK_WEBHOOK | Webhook-URL | N/A | Bei Kompromittierung neu erstellen |
+| DOCKER-Anmeldedaten | Basic Auth | 365 Tage | Docker Hub-Einstellungen |
 
-### Managing Secrets Securely
+### Geheimnisse sicher verwalten
 
-1. **Never commit secrets to git**
-2. Use GitHub's encrypted secrets only
-3. Rotate production keys every 90 days
-4. Use branch protection for main
-5. Enable audit logging
-6. Use separate secrets for staging vs. production
+1. **Geheimnisse niemals in git committen**
+2. Nur GitHubs verschlüsselte Geheimnisse verwenden
+3. Produktionsschlüssel alle 90 Tage rotieren
+4. Branch-Schutz für main aktivieren
+5. Audit-Logging aktivieren
+6. Separate Geheimnisse für Staging und Produktion verwenden
 
 ---
 
-## Workflow Details
+## Workflow-Details
 
-### Test Coverage Thresholds
+### Test-Abdeckungs-Schwellwerte
 
-- **Backend (pytest):** Minimum 80% coverage
-- **Mobile (Jest):** Minimum 80% coverage
-- **Bundle Size:** Warning at > 15 MB, error at > 20 MB
+- **Backend (pytest):** Mindestabdeckung von 80%
+  - **Phase 5 Status:** 378 Tests bestanden ✅, 121 Pre-Existing Fixture-Fehler (konftest.py, async/await Mismatches)
+  - Phase 5 Ziel: 400+ Tests bestanden nach Fixture-Reparatur (Step 1 aus Phase 5 Option A)
+- **Mobile (Jest):** Mindestabdeckung von 80%
+- **Bundle-Größe:** Warnung bei > 15 MB, Fehler bei > 20 MB
 
-### Performance Targets
+### Performance-Ziele
 
-- **Bundle Size:** < 15 MB (optimized, < 8 MB ideal)
-- **Build Time:** < 5 minutes per workflow
-- **Test Execution:** < 3 minutes backend, < 2 minutes mobile
-- **Lint Check:** < 1 minute
-- **Staging Deploy:** < 2 minutes
-- **Production Deploy:** < 5 minutes (with health checks)
+- **Bundle-Größe:** < 15 MB (optimiert, < 8 MB ideal)
+- **Build-Zeit:** < 5 Minuten pro Workflow
+- **Test-Ausführung:** < 3 Minuten Backend, < 2 Minuten Mobile
+- **Lint-Überprüfung:** < 1 Minute
+- **Staging-Bereitstellung:** < 2 Minuten
+- **Production-Bereitstellung:** < 5 Minuten (mit Health Checks)
 
-### Health Check Endpoints
+### Health-Check-Endpunkte
 
-Production deployment requires successful health checks:
+Die Production-Bereitstellung erfordert erfolgreiche Health Checks:
 
 ```bash
 # API Health
 GET https://api.production.bundesliga-analyzer.dev/health
-Expected: HTTP 200, JSON: {"status": "healthy"}
+Erwartet: HTTP 200, JSON: {"status": "healthy"}
 
-# Database
+# Datenbank
 GET https://api.production.bundesliga-analyzer.dev/health/db
-Expected: HTTP 200, JSON: {"db": "connected"}
+Erwartet: HTTP 200, JSON: {"db": "connected"}
 
-# Auth
+# Authentifizierung
 GET https://api.production.bundesliga-analyzer.dev/auth/health
-Expected: HTTP 200, JSON: {"auth": "operational"}
+Erwartet: HTTP 200, JSON: {"auth": "operational"}
 
 # Web
 GET https://production.bundesliga-analyzer.dev
-Expected: HTTP 200 with HTML content
+Erwartet: HTTP 200 mit HTML-Inhalt
 ```
 
 ---
 
-## Troubleshooting
+## Fehlerbehebung
 
-### Common Issues & Solutions
+### Häufige Probleme & Lösungen
 
-#### Test Failures
+#### Test-Fehler
 
-**Issue:** "Jest tests failing with AsyncStorage errors"
+**Problem:** "Jest-Tests schlagen mit AsyncStorage-Fehlern fehl"
 
-**Solution:**
-1. Check jest.setup.js mock configuration
-2. Ensure test environment is isolated
-3. Clear jest cache: `npm test -- --clearCache`
+**Lösung:**
+1. jest.setup.js Mock-Konfiguration prüfen
+2. Test-Umgebung ist isoliert
+3. Jest-Cache löschen: `npm test -- --clearCache`
 
 ```bash
-# Run with verbose output
+# Mit ausführlicher Ausgabe ausführen
 npm test -- --verbose --no-coverage
 
-# Run single test file
+# Einzelne Test-Datei ausführen
 npm test -- NotificationHistoryScreen.test.tsx
 ```
 
-#### Lint Errors
+#### Lint-Fehler
 
-**Issue:** "ESLint or TypeScript type errors blocking PR"
+**Problem:** "ESLint oder TypeScript-Fehler blockieren PR"
 
-**Solution:**
-1. Run locally: `npm run lint` and `npm run format`
-2. Fix manually or use auto-fix: `eslint src/ --fix`
-3. For TypeScript: Check `tsconfig.json` strict settings
+**Lösung:**
+1. Lokal ausführen: `npm run lint` und `npm run format`
+2. Manuell beheben oder Auto-Fix verwenden: `eslint src/ --fix`
+3. Für TypeScript: `tsconfig.json` strict-Einstellungen prüfen
 
 ```bash
-# Check TypeScript errors locally
+# TypeScript-Fehler lokal prüfen
 npx tsc --noEmit --listFiles
 
-# Auto-fix ESLint
+# ESLint Auto-Fix
 npm run lint -- --fix
 ```
 
-#### Build Failures
+#### Build-Fehler
 
-**Issue:** "Bundle size exceeds 15 MB threshold"
+**Problem:** "Bundle-Größe übersteigt 15-MB-Schwelle"
 
-**Solution:**
-1. Analyze bundle: `npm run build:analyze`
-2. Identify large dependencies: `npm ls --depth=0`
-3. Use code splitting or lazy loading
-4. Remove unused dependencies
+**Lösung:**
+1. Bundle analysieren: `npm run build:analyze`
+2. Große Abhängigkeiten identifizieren: `npm ls --depth=0`
+3. Code Splitting oder Lazy Loading verwenden
+4. Ungenutzte Abhängigkeiten entfernen
 
 ```bash
-# Detailed bundle analysis
+# Detaillierte Bundle-Analyse
 npx webpack-bundle-analyzer <bundle-path>
 
-# Check for duplicates
+# Auf Duplikate prüfen
 npm audit
 npm dedupe
 ```
 
-#### Deployment Issues
+#### Deployment-Probleme
 
-**Issue:** "Staging/production deployment fails"
+**Problem:** "Staging/Produktion-Deployment schlägt fehl"
 
-**Solution:**
-1. Check deployment credentials:
+**Lösung:**
+1. Deployment-Anmeldedaten prüfen:
    ```bash
-   # Verify SSH key
+   # SSH-Schlüssel verifizieren
    ssh -i deploy-key.pem deployment@staging.host 'echo OK'
    ```
 
-2. Check target server status:
+2. Zielserver-Status prüfen:
    ```bash
-   # Health check
+   # Health Check
    curl -v https://staging.bundesliga-analyzer.dev/health
    ```
 
-3. Review deployment logs in GitHub Actions
+3. Deployment-Logs in GitHub Actions überprüfen
 
-**Issue:** "Health checks fail after deployment"
+**Problem:** "Health Checks schlagen nach Deployment fehl"
 
-**Solution:**
-1. Wait for application startup (slow startup times)
-2. Check database connection: `curl https://api.prod.dev/health/db`
-3. Verify auth system: `curl https://api.prod.dev/auth/health`
-4. Review application logs on server
-5. Automatic rollback should trigger after 3 failed checks
+**Lösung:**
+1. Auf Application Startup warten (langsame Startzeiten)
+2. Datenbankverbindung prüfen: `curl https://api.prod.dev/health/db`
+3. Auth-System verifizieren: `curl https://api.prod.dev/auth/health`
+4. Application-Logs auf dem Server überprüfen
+5. Automatisches Rollback sollte nach 3 fehlgeschlagenen Checks ausgelöst werden
 
-#### Workflow Timeout Issues
+#### Workflow-Timeout-Probleme
 
-**Default timeout:** 360 minutes (6 hours)
+**Standard-Timeout:** 360 Minuten (6 Stunden)
 
-**Solution:**
-1. Optimize slow tests (profile with `--detectOpenHandles`)
-2. Use build matrix for parallel jobs
-3. Cache dependencies properly
-4. Increase timeout if necessary:
+**Lösung:**
+1. Langsame Tests optimieren (Profile mit `--detectOpenHandles`)
+2. Build-Matrix für parallele Jobs verwenden
+3. Abhängigkeiten korrekt cachen
+4. Timeout bei Bedarf erhöhen:
 
 ```yaml
 jobs:
@@ -468,160 +496,162 @@ jobs:
     timeout-minutes: 60
 ```
 
-### Debug Mode
+### Debug-Modus
 
-Enable debug logging in workflows:
+Debug-Logging in Workflows aktivieren:
 
 ```bash
-# Set secret in repository
+# Geheimnis im Repository setzen
 gh secret set ACTIONS_STEP_DEBUG --body "true"
 
-# This enables step debug logging
-# View in workflow run logs: "Run with debug output"
+# Dies aktiviert Step-Debug-Logging
+# In Workflow-Logs anzeigen: "Run with debug output"
 ```
 
 ---
 
-## Monitoring & Alerts
+## Überwachung & Benachrichtigungen
 
-### GitHub Notifications
+### GitHub-Benachrichtigungen
 
-- **Branch notifications:** Main branch push → Test/Lint/Build
-- **PR notifications:** New PR → Test/Lint/Build, review required
-- **Deployment notifications:** Manual dispatch → Approval → Deploy
-- **Release notifications:** Tag push → Create Release
+- **Branch-Benachrichtigungen:** Main-Branch Push → Test/Lint/Build
+- **PR-Benachrichtigungen:** Neue PR → Test/Lint/Build, Review erforderlich
+- **Deployment-Benachrichtigungen:** Manuelles Dispatch → Genehmigung → Deploy
+- **Release-Benachrichtigungen:** Tag Push → Release erstellen
 
-### Slack Notifications (if configured)
+### Slack-Benachrichtigungen (falls konfiguriert)
 
-Workflows send Slack notifications for:
-- Deployment status (success/failure)
-- Release publication
-- Critical test failures
+Workflows senden Slack-Benachrichtigungen für:
+- Deployment-Status (Erfolg/Fehler)
+- Release-Veröffentlichung
+- Kritische Test-Fehler
 
-Configure webhook:
+Webhook konfigurieren:
 ```bash
 gh secret set SLACK_WEBHOOK --body "https://hooks.slack.com/services/..."
 ```
 
-### Monitoring Commands
+### Überwachungsbefehle
 
 ```bash
-# Check recent workflow runs
+# Aktuelle Workflow-Runs prüfen
 gh run list --branch main --limit 10
 
-# Get run details
+# Run-Details abrufen
 gh run view <run-id>
 
-# View logs
+# Logs anzeigen
 gh run view <run-id> --log
 
-# Cancel running workflow
+# Laufenden Workflow abbrechen
 gh run cancel <run-id>
 
-# Check deployment status
+# Deployment-Status prüfen
 gh deployment-status list --environment production
 ```
 
-### Performance Tracking
+### Leistungsverfolgung
 
-- **Build time trends:** GitHub Actions dashboard → Insights
-- **Test coverage:** Codecov dashboard
-- **Bundle size:** Lighthouse CI reports (stored as artifacts)
-- **Performance metrics:** Deploy logs contain timing information
+- **Build-Zeit-Trends:** GitHub Actions-Dashboard → Insights
+- **Test-Coverage:** Codecov-Dashboard
+- **Bundle-Größe:** Lighthouse CI-Berichte (als Artefakte gespeichert)
+- **Leistungsmetriken:** Deploy-Logs enthalten Timing-Informationen
 
 ---
 
-## Rollback Procedures
+## Rollback-Verfahren
 
-### Automatic Rollback (Production)
+### Automatisches Rollback (Produktion)
 
-The production deployment workflow automatically rolls back if health checks fail:
+Der Production Deployment-Workflow führt automatisch einen Rollback durch, wenn Health Checks fehlschlagen:
 
 ```yaml
-- Run health checks post-deployment
-- If any critical check fails (API, DB, Auth)
-- Automatic rollback to previous stable version
-- Slack notification sent
+- Health Checks nach dem Deployment ausführen
+- Falls kritischer Check fehlschlägt (API, DB, Auth)
+- Automatisches Rollback zur vorherigen stabilen Version
+- Slack-Benachrichtigung wird gesendet
 ```
 
-### Manual Rollback
+### Manuelles Rollback
 
-If automatic rollback fails or is needed:
+Falls automatisches Rollback fehlschlägt oder notwendig ist:
 
 ```bash
-# 1. Identify previous stable version
+# 1. Vorherige stabile Version identifizieren
 git tag -l | sort -V | tail -5
 
-# 2. Trigger production deployment with previous version
+# 2. Production Deployment mit vorheriger Version auslösen
 gh workflow run deploy-production.yml \
   -f version=v1.2.3 \
   -f rollback=true
 
-# 3. Monitor deployment
+# 3. Deployment überwachen
 gh run view <new-run-id> --log
 
-# 4. Verify health
+# 4. Health verifizieren
 curl https://api.production.bundesliga-analyzer.dev/health
 ```
 
-### Rollback Checklist
+### Rollback-Checkliste
 
-- [ ] Identify root cause of deployment failure
-- [ ] Determine rollback target version
-- [ ] Trigger rollback workflow
-- [ ] Monitor health checks
-- [ ] Verify all services operational
-- [ ] Document incident
-- [ ] Notify team via Slack
-
----
-
-## Workflow Maintenance
-
-### Monthly Tasks
-
-- [ ] Review workflow logs for failures
-- [ ] Update GitHub Actions to latest versions
-- [ ] Rotate deployment secrets
-- [ ] Check for new security vulnerabilities
-- [ ] Validate health check endpoints
-
-### Quarterly Tasks
-
-- [ ] Audit workflow permissions
-- [ ] Review cost (if using paid runners)
-- [ ] Update dependencies
-- [ ] Benchmark performance targets
-- [ ] Update documentation
-
-### Annual Tasks
-
-- [ ] Security audit of CI/CD pipeline
-- [ ] Disaster recovery test
-- [ ] Performance optimization review
-- [ ] Update rollback procedures
+- [ ] Root Cause des Deployment-Fehlers identifizieren
+- [ ] Rollback-Zielversion bestimmen
+- [ ] Rollback-Workflow auslösen
+- [ ] Health Checks überwachen
+- [ ] Alle Services betriebsfähig verifizieren
+- [ ] Incident dokumentieren
+- [ ] Team via Slack benachrichtigen
 
 ---
 
-## References
+## Workflow-Wartung
 
-- [GitHub Actions Documentation](https://docs.github.com/en/actions)
-- [GitHub Environments](https://docs.github.com/en/actions/deployment/targeting-different-environments/using-environments-for-deployment)
-- [GitHub Secrets Management](https://docs.github.com/en/actions/security-guides/encrypted-secrets)
-- [Jest Testing Documentation](https://jestjs.io/)
-- [Pytest Documentation](https://docs.pytest.org/)
-- [ESLint Configuration](https://eslint.org/docs/rules/)
+### Monatliche Aufgaben
+
+- [ ] Workflow-Logs auf Fehler überprüfen
+- [ ] GitHub Actions auf neueste Versionen aktualisieren
+- [ ] Deployment-Geheimnisse rotieren
+- [ ] Auf neue Sicherheitslücken überprüfen
+- [ ] Health-Check-Endpunkte validieren
+
+### Vierteljährliche Aufgaben
+
+- [ ] Workflow-Berechtigungen prüfen
+- [ ] Kosten überprüfen (bei Verwendung von bezahlten Runnern)
+- [ ] Abhängigkeiten aktualisieren
+- [ ] Performance-Ziele testen
+- [ ] Dokumentation aktualisieren
+
+### Jährliche Aufgaben
+
+- [ ] Sicherheitsprüfung der CI/CD-Pipeline
+- [ ] Disaster-Recovery-Test
+- [ ] Performance-Optimierungsprüfung
+- [ ] Rollback-Verfahren aktualisieren
+
+---
+
+## Referenzen
+
+- [GitHub Actions Dokumentation](https://docs.github.com/en/actions)
+- [GitHub Umgebungen](https://docs.github.com/en/actions/deployment/targeting-different-environments/using-environments-for-deployment)
+- [GitHub Geheimnisse-Verwaltung](https://docs.github.com/en/actions/security-guides/encrypted-secrets)
+- [Jest Test-Dokumentation](https://jestjs.io/)
+- [Pytest Dokumentation](https://docs.pytest.org/)
+- [ESLint Konfiguration](https://eslint.org/docs/rules/)
 
 ---
 
 ---
 
-## Pipeline-Fixes & Aktueller Status (2026-05-08)
+## Pipeline-Fixes & Aktueller Status (2026-05-12)
 
-### Aktueller Status: ✅ Alle Jobs funktionsfähig
+### Aktueller Status: ✅ Pipeline funktionsfähig — Phase 5 Testabilisierung in Ausführung
 
-**Letzter erfolgreicher Run:** Workflow #16, Commit `2746f4d`  
+**Letzter erfolgreicher Run:** Workflow #16, Commit `2746f4d` (2026-05-08)  
 **Gesamtlaufzeit:** 1 Minute 32 Sekunden
+
+**Phase 5 Kontext:** Backend-Test-Suite mit 378 Tests bestanden ✅, 121 Pre-Existing Fixture-Fehler in älteren Integrationstests (nicht durch Pipeline blockiert — siehe MVP-Limitations). Diese Tests sind nicht P0-Blocker und werden in Phase 5 Option A systematisch repariert.
 
 | Job | Status | Dauer | Anmerkung |
 |-----|--------|-------|-----------|

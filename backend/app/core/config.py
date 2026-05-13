@@ -49,8 +49,8 @@ class Settings(BaseSettings):
         env="CORS_ORIGINS",
     )
     cors_allow_credentials: bool = Field(default=True, env="CORS_ALLOW_CREDENTIALS")
-    cors_allow_methods: str = Field(default="*", env="CORS_ALLOW_METHODS")
-    cors_allow_headers: str = Field(default="*", env="CORS_ALLOW_HEADERS")
+    cors_allow_methods: str = Field(default="GET,POST,PUT,DELETE,OPTIONS,PATCH", env="CORS_ALLOW_METHODS")
+    cors_allow_headers: str = Field(default="Content-Type,Authorization,X-Requested-With,Accept,Accept-Language", env="CORS_ALLOW_HEADERS")
 
     # --- API KEYS (External Services) ---
     api_football_key: str = Field(..., env="API_FOOTBALL_KEY")
@@ -138,9 +138,9 @@ class Settings(BaseSettings):
     @field_validator("cors_allow_methods", mode="before")
     @classmethod
     def parse_cors_methods(cls, v):
-        """Parse CORS methods from comma-separated string."""
-        if isinstance(v, str) and v != "*":
-            return [method.strip() for method in v.split(",")]
+        """Keep CORS methods as string — main.py._cors_list() handles parsing."""
+        # Keep as string — don't convert to list
+        # main.py._cors_list() will parse comma-separated values for FastAPI
         return v
 
     @property
