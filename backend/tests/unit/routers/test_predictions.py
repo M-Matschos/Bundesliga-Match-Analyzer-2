@@ -37,14 +37,16 @@ class TestPredictionsRouter:
         assert response.status_code == 401
 
     def test_get_value_bets_success(self, client, auth_headers):
-        """Test value bets endpoint returns array."""
+        """Test value bets endpoint returns dict with value_bets key."""
         response = client.get(
             "/api/v1/predictions/value-bets",
             headers=auth_headers,
         )
         assert response.status_code == 200
         data = response.json()
-        assert isinstance(data, list)
+        assert isinstance(data, dict)
+        assert "value_bets" in data
+        assert isinstance(data["value_bets"], list)
 
     def test_get_value_bets_with_min_edge_filter(self, client, auth_headers):
         """Test value bets with minimum edge filter."""
@@ -54,7 +56,9 @@ class TestPredictionsRouter:
         )
         assert response.status_code == 200
         data = response.json()
-        assert isinstance(data, list)
+        assert isinstance(data, dict)
+        assert "value_bets" in data
+        assert isinstance(data["value_bets"], list)
 
     def test_simulate_prediction_success(self, client, auth_headers, db_team):
         """Test prediction simulation."""
@@ -62,8 +66,8 @@ class TestPredictionsRouter:
             "/api/v1/predictions/simulate",
             headers=auth_headers,
             json={
-                "home_team_id": str(db_team.id),
-                "away_team_id": str(db_team.id),
+                "home_team": str(db_team.id),
+                "away_team": str(db_team.id),
             },
         )
         assert response.status_code == 200
@@ -78,8 +82,8 @@ class TestPredictionsRouter:
             "/api/v1/predictions/simulate",
             headers=auth_headers,
             json={
-                "home_team_id": "invalid-id",
-                "away_team_id": "invalid-id",
+                "home_team": "invalid-id",
+                "away_team": "invalid-id",
             },
         )
         assert response.status_code == 404
@@ -94,15 +98,17 @@ class TestPredictionsRouter:
         data = response.json()
         assert "strength_index" in data or "strength" in data
 
-    def test_get_model_comparison_success(self, client, auth_headers):
+    def test_get_model_comparison_success(self, client, auth_headers, db_match):
         """Test model comparison endpoint."""
         response = client.get(
-            "/api/v1/predictions/models/comparison",
+            f"/api/v1/predictions/match-comparison/{db_match.id}",
             headers=auth_headers,
         )
         assert response.status_code == 200
         data = response.json()
-        assert isinstance(data, dict) or isinstance(data, list)
+        assert isinstance(data, dict)
+        assert "match_id" in data
+        assert "individual_models" in data
 
     def test_prediction_probabilities_sum_to_one(self, client, auth_headers, db_match):
         """Test that prediction probabilities sum to 1."""

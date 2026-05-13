@@ -9,6 +9,7 @@ import uuid
 from datetime import datetime, timedelta
 from typing import List, Optional
 from fastapi import APIRouter, BackgroundTasks, HTTPException
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
 from ..core.cache import cache
@@ -86,7 +87,8 @@ async def run_weekend_calculation(job_id: str, request: WeekendRequest):
     """
     try:
         # Status: läuft
-        await cache.set(f"weekend_job:{job_id}", {"status": "calculating", "progress": 0})
+        if cache:
+            await cache.set(f"weekend_job:{job_id}", {"status": "calculating", "progress": 0})
 
         all_matches = []
         for league in request.leagues:
@@ -103,12 +105,13 @@ async def run_weekend_calculation(job_id: str, request: WeekendRequest):
         results = []
         for i, match in enumerate(all_matches):
             # Fortschritt updaten
-            progress = int((i / len(all_matches)) * 100)
-            await cache.set(f"weekend_job:{job_id}", {
-                "status": "calculating",
-                "progress": progress,
-                "current_match": f"{match['home_team']['name']} vs {match['away_team']['name']}"
-            })
+            if cache and len(all_matches) > 0:
+                progress = int((i / len(all_matches)) * 100)
+                await cache.set(f"weekend_job:{job_id}", {
+                    "status": "calculating",
+                    "progress": progress,
+                    "current_match": f"{match['home_team']['name']} vs {match['away_team']['name']}"
+                })
 
             # Features bauen + Prognose berechnen
             features = await build_features(match)
@@ -126,17 +129,19 @@ async def run_weekend_calculation(job_id: str, request: WeekendRequest):
             results.append({**match, "prediction": prediction})
 
         # Fertig → in Redis speichern (24h)
-        final_result = {
-            "status": "completed",
-            "calculated_at": datetime.utcnow().isoformat() + "Z",
-            "matches": results,
-            "summary": build_summary(results)
-        }
-        await cache.set(f"weekend_result:{job_id}", final_result, ttl=86400)
-        await cache.set(f"weekend_job:{job_id}", {"status": "completed", "progress": 100})
+        if cache:
+            final_result = {
+                "status": "completed",
+                "calculated_at": datetime.utcnow().isoformat() + "Z",
+                "matches": results,
+                "summary": build_summary(results)
+            }
+            await cache.set(f"weekend_result:{job_id}", final_result, ttl=86400)
+            await cache.set(f"weekend_job:{job_id}", {"status": "completed", "progress": 100})
 
     except Exception as e:
-        await cache.set(f"weekend_job:{job_id}", {"status": "error", "error": str(e)})
+        if cache:
+            await cache.set(f"weekend_job:{job_id}", {"status": "error", "error": str(e)})
         raise
 
 
@@ -183,35 +188,44 @@ async def calculate_weekend(request: WeekendRequest, background_tasks: Backgroun
 
     # Cache prüfen — schon berechnet?
     cache_key = f"weekend_cache:{'_'.join(sorted(request.leagues))}:{request.date_from}"
-    cached = await cache.get(cache_key)
+    cached = None
+    if cache:
+        cached = await cache.get(cache_key)
     if cached:
         return {**cached, "from_cache": True}
 
     job_id = f"wknd_{datetime.now().strftime('%Y%m%d')}_{uuid.uuid4().hex[:6]}"
 
     # Anzahl Spiele für Zeitschätzung
-    total_matches = sum(
-        len(await football_api.get_fixtures(LEAGUE_IDS[l], request.date_from, request.date_to))
-        for l in request.leagues if l in LEAGUE_IDS
-    )
+    total_matches = 0
+    for league in request.leagues:
+        if league in LEAGUE_IDS:
+            fixtures = await football_api.get_fixtures(LEAGUE_IDS[league], request.date_from, request.date_to)
+            total_matches += len(fixtures)
 
     # Berechnung im Hintergrund starten
     background_tasks.add_task(run_weekend_calculation, job_id, request)
 
-    return {
-        "job_id": job_id,
-        "status": "calculating",
-        "total_matches": total_matches,
-        "estimated_seconds": total_matches * 0.8,
-        "date_from": request.date_from,
-        "date_to": request.date_to,
-        "poll_url": f"/api/v1/weekend/results/{job_id}"
-    }
+    return JSONResponse(
+        status_code=202,
+        content={
+            "job_id": job_id,
+            "status": "calculating",
+            "total_matches": total_matches,
+            "estimated_seconds": total_matches * 0.8,
+            "date_from": request.date_from,
+            "date_to": request.date_to,
+            "poll_url": f"/api/v1/weekend/results/{job_id}"
+        }
+    )
 
 
 @router.get("/results/{job_id}")
 async def get_results(job_id: str):
     """Fragt den Status / das Ergebnis einer Berechnung ab."""
+    if not cache:
+        raise HTTPException(status_code=503, detail="Cache nicht verfügbar")
+
     result = await cache.get(f"weekend_result:{job_id}")
     if result:
         return result

@@ -52,6 +52,39 @@ async def close_redis_client() -> None:
         logger.info("✅ Redis connection closed")
 
 
+class _InMemoryCache:
+    """Simple in-memory cache fallback when Redis is unavailable."""
+
+    def __init__(self):
+        self.store = {}
+
+    async def get(self, key: str) -> Optional[Any]:
+        """Get value from in-memory cache."""
+        return self.store.get(key)
+
+    async def set(self, key: str, value: Any, ttl: Optional[int] = None) -> bool:
+        """Set value in in-memory cache."""
+        self.store[key] = value
+        return True
+
+    async def delete(self, key: str) -> int:
+        """Delete key from in-memory cache."""
+        if key in self.store:
+            del self.store[key]
+            return 1
+        return 0
+
+    async def clear_pattern(self, pattern: str) -> int:
+        """Delete all keys matching pattern."""
+        import fnmatch
+        count = 0
+        keys_to_delete = [k for k in self.store.keys() if fnmatch.fnmatch(k, pattern)]
+        for key in keys_to_delete:
+            del self.store[key]
+            count += 1
+        return count
+
+
 class CacheManager:
     """Manage cache operations with TTL and serialization."""
 
@@ -293,8 +326,8 @@ def cache_decorator(
     return decorator
 
 
-# Convenience instance for direct use
-cache: Optional[CacheManager] = None
+# Convenience instance for direct use - initialize with fallback
+cache: Optional[CacheManager] = _InMemoryCache()
 
 
 async def init_cache() -> CacheManager:

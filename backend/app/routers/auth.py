@@ -1,11 +1,13 @@
 """Authentication router with JWT token management."""
 
 import logging
-from datetime import datetime
+from datetime import datetime, timezone
 from uuid import UUID
-from fastapi import APIRouter, HTTPException, Depends, status, Header
+from fastapi import APIRouter, HTTPException, Depends, status, Header, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
+from slowapi import Limiter
+from slowapi.util import get_remote_address
 
 from app.models.db import User, get_db
 from app.models.schemas import (
@@ -27,6 +29,7 @@ from app.core.config import get_settings
 router = APIRouter(tags=["auth"])
 logger = logging.getLogger(__name__)
 settings = get_settings()
+limiter = Limiter(key_func=get_remote_address)
 
 
 async def get_current_user(
@@ -79,7 +82,9 @@ async def get_current_user(
 
 
 @router.post("/register", status_code=status.HTTP_201_CREATED, response_model=TokenResponse)
+@limiter.limit("3/minute")
 async def register(
+    request: Request,
     user_data: UserRegister,
     db: AsyncSession = Depends(get_db),
 ) -> TokenResponse:
@@ -142,7 +147,9 @@ async def register(
 
 
 @router.post("/login", response_model=TokenResponse)
+@limiter.limit("5/minute")
 async def login(
+    request: Request,
     credentials: UserLogin,
     db: AsyncSession = Depends(get_db),
 ) -> TokenResponse:
@@ -189,7 +196,7 @@ async def login(
     )
 
     # Update last login
-    user.last_login = datetime.utcnow()
+    user.last_login = datetime.now(timezone.utc)
     await db.commit()
 
     logger.info(f"User logged in: {user.email}")

@@ -4,6 +4,10 @@ Match Oracle — FastAPI Backend Entry Point
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
+from slowapi import Limiter
+from slowapi.errors import RateLimitExceeded
+from slowapi.middleware import SlowAPIMiddleware
+from slowapi.util import get_remote_address
 import asyncio
 import json
 import logging
@@ -11,15 +15,21 @@ import logging
 from app.routers import matches, predictions, teams, players, betting, auth, websocket, health, alerts, notifications, weekend, metrics, events
 from app.core.config import settings
 from app.core.redis_pubsub import pubsub_manager
+from app.core.cache import init_cache, close_cache, _InMemoryCache
 from app.models.db import Base, engine
+from app.core import cache as cache_module
 
 logger = logging.getLogger(__name__)
+
+limiter = Limiter(key_func=get_remote_address)
 
 app = FastAPI(
     title="Match Oracle API",
     description="Bundesliga Match Predictor & Wettanalyse",
     version="1.0.0",
 )
+app.state.limiter = limiter
+app.add_middleware(SlowAPIMiddleware)
 
 def _cors_list(value) -> list:
     """Parse CORS setting — handles both str and list from config validators."""
@@ -61,7 +71,16 @@ async def startup():
             await conn.run_sync(Base.metadata.create_all)
         logger.info("[OK] Database tables initialized")
 
-        # 2. Connect to Redis Pub/Sub
+        # 2. Initialize cache
+        if cache_module.cache is None:
+            try:
+                await init_cache()
+                logger.info("[OK] Cache initialized (Redis)")
+            except Exception as e:
+                logger.warning(f"[WARN] Cache init failed ({type(e).__name__}), using in-memory fallback")
+                cache_module.cache = _InMemoryCache()
+
+        # 3. Connect to Redis Pub/Sub
         await pubsub_manager.connect()
         is_connected = await pubsub_manager.is_connected()
         if is_connected:
@@ -77,6 +96,10 @@ async def startup():
 async def shutdown():
     """Cleanup connections on shutdown."""
     try:
+        # Close cache
+        await close_cache()
+        logger.info("[OK] Cache closed")
+
         # Disconnect from Redis
         await pubsub_manager.disconnect()
         logger.info("[OK] Redis Pub/Sub disconnected")

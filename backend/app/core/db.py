@@ -12,3 +12,6 @@ from app.models.db import (  # noqa: F401
     close_db,
     Base,
 )
+
+# Alias for backward compatibility with tests
+async_session = async_session_maker

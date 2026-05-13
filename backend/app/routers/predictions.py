@@ -38,8 +38,8 @@ async def verify_auth(authorization: Optional[str] = Header(None)) -> str:
 
 class SimulateRequest(BaseModel):
     """Request body for simulate prediction endpoint."""
-    home_team_id: str
-    away_team_id: str
+    home_team: str
+    away_team: str
     market_odds: Optional[str] = None
 
 
@@ -54,18 +54,18 @@ async def simulate_prediction(
     Doesn't require match to exist in database.
 
     **Request Body:**
-    - `home_team_id`: Home team ID
-    - `away_team_id`: Away team ID
+    - `home_team`: Home team name/ID
+    - `away_team`: Away team name/ID
     - `market_odds`: Optional JSON with decimal odds
 
     **Example:**
     ```
     POST /predictions/simulate
-    {"home_team_id": "FCB", "away_team_id": "BVB", "market_odds": null}
+    {"home_team": "Bayern Munich", "away_team": "Borussia Dortmund", "market_odds": null}
     ```
     """
-    home_team_id = body.home_team_id
-    away_team_id = body.away_team_id
+    home_team_id = body.home_team
+    away_team_id = body.away_team
     market_odds = body.market_odds
 
     # Parse market odds if provided
@@ -99,7 +99,7 @@ async def get_value_bets(
     league: Optional[str] = Query(None, description="League filter"),
     db: AsyncSession = Depends(get_db),
     authorization: str = Depends(verify_auth),
-) -> List[dict]:
+) -> dict:
     """Get identified value bets (misprice odds).
 
     Returns upcoming matches where our prediction differs
@@ -150,22 +150,21 @@ async def get_value_bets(
             "home_team": match.home_team_id,
             "away_team": match.away_team_id,
             "league": match.league_id,
-            "value_bets": pred["value_bets"],
+            "selection": pred["value_bets"].get("selection", ""),
+            "edge_percent": pred["value_bets"].get("edge", 0),
             "confidence": pred["confidence"],
         }
 
         # Apply min_edge filter if provided
-        if "edge" in value_bet["value_bets"] and value_bet["value_bets"].get("edge", 0) >= min_edge:
-            value_bets.append(value_bet)
-        elif "edge" not in value_bet["value_bets"]:
+        if value_bet["edge_percent"] >= min_edge:
             value_bets.append(value_bet)
 
-    return value_bets
+    return {"value_bets": value_bets}
 
 
-@router.get("/models/comparison")
-async def get_model_comparison(
-    match_id: Optional[UUID] = Query(None, description="Match UUID"),
+@router.get("/match-comparison/{match_id}")
+async def get_match_comparison(
+    match_id: UUID,
     db: AsyncSession = Depends(get_db),
     authorization: str = Depends(verify_auth),
 ) -> dict:
@@ -173,82 +172,60 @@ async def get_model_comparison(
 
     Shows output from each model separately for transparency.
 
-    **Query Parameters:**
-    - `match_id`: Optional Match UUID
+    **Path Parameters:**
+    - `match_id`: Match UUID
 
     **Example:**
     ```
-    GET /predictions/models/comparison?match_id=550e8400-e29b-41d4-a716-446655440000
+    GET /predictions/match-comparison/550e8400-e29b-41d4-a716-446655440000
     ```
     """
-    # Get match (if match_id provided)
-    match = None
-    if match_id:
-        query = select(Match).where(Match.id == match_id)
-        result = await db.execute(query)
-        match = result.scalar_one_or_none()
+    # Get match
+    query = select(Match).where(Match.id == match_id)
+    result = await db.execute(query)
+    match = result.scalar_one_or_none()
 
-        if not match:
-            raise HTTPException(status_code=404, detail="Match not found")
+    if not match:
+        raise HTTPException(status_code=404, detail="Match not found")
 
-    # Default response structure
+    # Get predictions from all models
     predictor = get_predictor()
     predictions = {}
 
-    # Only get predictions if match provided
-    if match:
-        if predictor.poisson.is_fitted:
-            predictions["poisson"] = predictor.poisson.predict(
-                match.home_team_id, match.away_team_id
-            )
+    if predictor.poisson.is_fitted:
+        predictions["poisson"] = predictor.poisson.predict(
+            match.home_team_id, match.away_team_id
+        )
 
-        if predictor.dixon_coles.is_fitted:
-            predictions["dixon_coles"] = predictor.dixon_coles.predict(
-                match.home_team_id, match.away_team_id
-            )
+    if predictor.dixon_coles.is_fitted:
+        predictions["dixon_coles"] = predictor.dixon_coles.predict(
+            match.home_team_id, match.away_team_id
+        )
 
-        if predictor.elo.team_ratings:
-            predictions["elo"] = predictor.elo.predict(
-                match.home_team_id, match.away_team_id
-            )
+    if predictor.elo.team_ratings:
+        predictions["elo"] = predictor.elo.predict(
+            match.home_team_id, match.away_team_id
+        )
 
-        # Get ensemble
-        ensemble = predictor.predict(match.home_team_id, match.away_team_id)
+    # Get ensemble
+    ensemble = predictor.predict(match.home_team_id, match.away_team_id)
 
-        return {
-            "match_id": str(match_id) if match_id else None,
-            "home_team": match.home_team_id,
-            "away_team": match.away_team_id,
-            "kickoff": match.kickoff.isoformat(),
-            "individual_models": predictions,
-            "ensemble": {
-                "home_win_prob": ensemble["home_win_prob"],
-                "draw_prob": ensemble["draw_prob"],
-                "away_win_prob": ensemble["away_win_prob"],
-                "confidence": ensemble["confidence"],
-                "expected_goals_home": ensemble["expected_goals_home"],
-                "expected_goals_away": ensemble["expected_goals_away"],
-            },
-            "model_weights": ensemble["model_weights"],
-        }
-    else:
-        # Return empty structure when no match provided
-        return {
-            "match_id": None,
-            "home_team": None,
-            "away_team": None,
-            "kickoff": None,
-            "individual_models": predictions,
-            "ensemble": {
-                "home_win_prob": 0.33,
-                "draw_prob": 0.34,
-                "away_win_prob": 0.33,
-                "confidence": 0.0,
-                "expected_goals_home": 0.0,
-                "expected_goals_away": 0.0,
-            },
-            "model_weights": {},
-        }
+    return {
+        "match_id": str(match_id),
+        "home_team": match.home_team_id,
+        "away_team": match.away_team_id,
+        "kickoff": match.kickoff.isoformat(),
+        "individual_models": predictions,
+        "ensemble": {
+            "home_win_prob": ensemble["home_win_prob"],
+            "draw_prob": ensemble["draw_prob"],
+            "away_win_prob": ensemble["away_win_prob"],
+            "confidence": ensemble["confidence"],
+            "expected_goals_home": ensemble["expected_goals_home"],
+            "expected_goals_away": ensemble["expected_goals_away"],
+        },
+        "model_weights": ensemble["model_weights"],
+    }
 
 
 @router.get("/team/{team_id}/strength")
