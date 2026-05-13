@@ -98,11 +98,14 @@ class TestCacheDecorator:
             call_count += 1
             return x * 2
 
-        # Mock the cache
-        with patch('app.core.cache.cache_manager') as mock_cache_mgr:
-            mock_cache_mgr.get_or_set = AsyncMock(return_value=20)
+        # Mock the cache with proper async methods
+        mock_cache_mgr = AsyncMock()
+        mock_cache_mgr.get = AsyncMock(return_value=None)  # First call: not cached
+        mock_cache_mgr.set = AsyncMock(return_value=True)
+        with patch('app.core.cache.cache_manager', mock_cache_mgr):
             result = await expensive_function(10)
             assert result == 20
+            mock_cache_mgr.set.assert_called_once()
 
     async def test_decorator_uses_function_name(self):
         """Test that decorator uses function name for cache key."""
@@ -110,10 +113,12 @@ class TestCacheDecorator:
         async def my_function(x):
             return x * 2
 
-        with patch('app.core.cache.cache_manager') as mock_cache_mgr:
-            mock_cache_mgr.get_or_set = AsyncMock(return_value=20)
+        mock_cache_mgr = AsyncMock()
+        mock_cache_mgr.get = AsyncMock(return_value=None)
+        mock_cache_mgr.set = AsyncMock(return_value=True)
+        with patch('app.core.cache.cache_manager', mock_cache_mgr):
             await my_function(10)
-            call_args = mock_cache_mgr.get_or_set.call_args
+            call_args = mock_cache_mgr.set.call_args
             assert "my_function" in call_args[0][0]
 
     async def test_decorator_with_multiple_args(self):
@@ -122,10 +127,13 @@ class TestCacheDecorator:
         async def add(a, b):
             return a + b
 
-        with patch('app.core.cache.cache_manager') as mock_cache_mgr:
-            mock_cache_mgr.get_or_set = AsyncMock(return_value=15)
+        mock_cache_mgr = AsyncMock()
+        mock_cache_mgr.get = AsyncMock(return_value=None)
+        mock_cache_mgr.set = AsyncMock(return_value=True)
+        with patch('app.core.cache.cache_manager', mock_cache_mgr):
             result = await add(10, 5)
             assert result == 15
+            mock_cache_mgr.set.assert_called_once()
 
 
 class TestCacheKeyFormatting:

@@ -69,7 +69,7 @@ def sample_card_event():
 @pytest.mark.asyncio
 async def test_connect_success(pubsub_manager):
     """Test successful Redis connection."""
-    with patch("aioredis.from_url") as mock_redis:
+    with patch("redis.asyncio.from_url") as mock_redis:
         mock_redis_instance = AsyncMock()
         mock_redis.return_value = mock_redis_instance
 
@@ -82,7 +82,7 @@ async def test_connect_success(pubsub_manager):
 @pytest.mark.asyncio
 async def test_connect_failure(pubsub_manager):
     """Test Redis connection failure."""
-    with patch("aioredis.from_url") as mock_redis:
+    with patch("redis.asyncio.from_url") as mock_redis:
         mock_redis.side_effect = Exception("Connection refused")
 
         with pytest.raises(Exception):

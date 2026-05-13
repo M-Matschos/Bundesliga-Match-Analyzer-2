@@ -79,7 +79,7 @@ class CacheManager:
 
             # Deserialize JSON
             return json.loads(value)
-        except (RedisError, json.JSONDecodeError) as e:
+        except Exception as e:
             logger.warning(f"Cache get error for {key}: {e}")
             return None
 
@@ -104,7 +104,7 @@ class CacheManager:
             serialized = json.dumps(value, default=str)
             await self.client.setex(key, ttl, serialized)
             return True
-        except (RedisError, TypeError) as e:
+        except Exception as e:
             logger.warning(f"Cache set error for {key}: {e}")
             return False
 
@@ -119,7 +119,7 @@ class CacheManager:
         """
         try:
             return await self.client.delete(key)
-        except RedisError as e:
+        except Exception as e:
             logger.warning(f"Cache delete error for {key}: {e}")
             return 0
 
@@ -137,7 +137,7 @@ class CacheManager:
             if not keys:
                 return 0
             return await self.client.delete(*keys)
-        except RedisError as e:
+        except Exception as e:
             logger.warning(f"Cache clear pattern error: {e}")
             return 0
 
