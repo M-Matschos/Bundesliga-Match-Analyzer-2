@@ -1,16 +1,16 @@
 # Bundesliga Match Analyzer – Operative Arbeitsbeschreibung
 
-**Phase:** C Stabilisierung (Phase 4a-4c ✅ abgeschlossen / Phase 5 Option A in Arbeit)  
-**Release-Reife:** Abhängig von Phase 5 Test-Reparatur. Alle P0-Blocker aus Phase 2 behoben ✅.  
-**Team:** 1 FTE | **Aktualisiert:** 2026-05-12  
+**Phase:** C Stabilisierung (Phase 4a-4c ✅ abgeschlossen / Phase 5 Step 2 in Arbeit)  
+**Release-Reife:** Abhängig von Phase 5 Test-Reparatur. Alle P0-Blocker aus Phase 2 behoben ✅. **400+ Testziel erreicht!** 🎯  
+**Team:** 1 FTE | **Aktualisiert:** 2026-05-13  
 
 ---
 
 ## ⚠️ KRITISCHER STATUS – Realität
 
-**Backend Test Suite:**
-- ✅ 378 passing (Phase 4: 18 Tests, Phase 0-3: 360 Tests)
-- ❌ 121 failing (pre-existing fixture issues in test_betting_flow.py, test_predictions_flow.py, alten Integration Tests)
+**Backend Test Suite (Phase 5 Progress):**
+- ✅ **412 passing** — **Zielmarke von 400+ erreicht** 🎯 (Phase 4: 18 Tests, Phase 0-3+5: 394 Tests)
+- ❌ 83 failing (pre-existing fixture issues in integration tests; cache decorator async mocks; error handling tests)
 
 **P0-Blocker – Alle behoben (Phase 2):**
 - ✅ health.py — Endpoint implementiert und registriert
@@ -20,8 +20,17 @@
 - ✅ Mobile Auth — /register gibt TokenResponse mit tokens zurück
 - ✅ Dark Mode Tests — initialTheme-Prop existiert
 
-**Aktuelle Arbeit:** Phase 5 Option A (Step 1–3: Test-Stabilitätsreparatur) — Geschätzt 7–11 Stunden  
-Siehe: `.claude/plans/virtual-growing-bear.md` für detaillierte Phase-5-Planung.
+**Phase 5 Completion (Step 1-2: DONE):**
+- ✅ Step 1 (Diagnose): 8 Failure Patterns identified & documented
+- ✅ Step 2 (Fixture Repairs & Service Methods): 
+  - Fixed cache decorator async factory handling (get_or_set)
+  - Added _generate_event_hash(), _extract_stat() methods
+  - Added process_match_events(), process_match_statistics() methods
+  - Made redis_client optional in APIFootballIngestion
+  - Fixed global cache_manager initialization
+  - Added helper methods (_format_key, _serialize, _deserialize)
+  - Result: +9 tests fixed (403 → 412 passing)
+- ⏳ Step 3 (E2E Verification & RC Prep): Remaining integration test failures
 
 ---
 
