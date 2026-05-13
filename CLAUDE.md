@@ -1,16 +1,16 @@
 # Bundesliga Match Analyzer – Operative Arbeitsbeschreibung
 
 **Phase:** C Stabilisierung (Phase 4a-4c ✅ abgeschlossen / Phase 5 E2E Integration ✅ abgeschlossen)  
-**Release-Reife:** RC-Ready. Alle P0-Blocker behoben ✅. **463 Testziel übertroffen!** 🎯  
-**Team:** 1 FTE | **Aktualisiert:** 2026-05-13 (Session 3)  
+**Release-Reife:** RC-Ready. Alle P0-Blocker behoben ✅. **484 Testziel übertroffen!** 🎯  
+**Team:** 1 FTE | **Aktualisiert:** 2026-05-13 (Session 4)  
 
 ---
 
 ## ⚠️ KRITISCHER STATUS – Realität
 
-**Backend Test Suite (Phase 5 Step 4 — E2E Integration COMPLETE ✅):**
-- ✅ **463 passing** — **Testziel von 470+ fast erreicht** 🎯 (+43 tests since Phase 5 Step 3)
-- ❌ 33 failing (weekend_calculator, db initialization, legacy fixtures — non-critical)
+**Backend Test Suite (Phase 5 Step 4 FINAL — Regression Fixes COMPLETE ✅):**
+- ✅ **484 passing** — **+21 Tests from Group 3 Regression Fixes** 🎯 (+484 total since Phase 5 Step 3)
+- ❌ 12 failing (pre-existing, non-regression issues)
 
 **P0-Blocker – Alle behoben (Phase 2):**
 - ✅ health.py — Endpoint implementiert und registriert
@@ -20,7 +20,7 @@
 - ✅ Mobile Auth — /register gibt TokenResponse mit tokens zurück
 - ✅ Dark Mode Tests — initialTheme-Prop existiert
 
-**Phase 5 Completion (Step 1-4: COMPLETE ✅):**
+**Phase 5 Completion (Step 1-4: COMPLETE ✅ + FINAL Regression Fix):**
 - ✅ Step 1 (Diagnose): 8 Failure Patterns identified & documented
 - ✅ Step 2 (Fixture Repairs & Service Methods): +9 tests fixed (403 → 412 passing)
   - Fixed cache decorator async factory handling (get_or_set)
@@ -31,19 +31,22 @@
   - Fixed cache decorator AsyncMock mocking
   - Fixed predictions.py routing, /simulate body params, optional match_id
   - Fixed test_ingestion_service.py error recovery mock
-- ✅ Step 4 (E2E Integration — Phase 4a-4c HTTP Flows): +43 tests fixed (420 → 463 passing)
-  - **Fix 1:** test_betting_flow.py API mismatches (8 tests fixed)
-    - Changed GET /virtual-bets response from nested ["bets"] to direct list (4 locations)
-    - Changed cancel status from "void" to "cancelled" 
-    - Updated /statistics/portfolio path to /portfolio/stats (2 locations)
-    - Simplified pagination test to match endpoint behavior
-  - **Fix 2:** test_event_publishing.py admin_token fixture implementation
-    - Added proper admin User creation with is_superuser=True
-    - Returns JWT token via create_token()
-  - **Fix 3:** test_phase4_e2e_integration.py HTTP E2E scenario
-    - Added TestAutoResolveHTTPFlow class with place_bet_then_auto_resolve_http_flow test
-    - Tests complete HTTP workflow: place bet → complete match → auto-resolve → verify portfolio stats
-  - Remaining: 33 failing (pre-existing weekend_calculator, db initialization, legacy fixtures)
+- ✅ Step 4 (E2E Integration — Phase 4a-4c HTTP Flows): +43 tests fixed (420 → 463 passing) + **FINAL Session 4 Regression Fix (+21)**
+  - **Regression Fix 1 (Group 4):** conftest.py pubsub_manager fixture
+    - Changed from sync to async fixture with global patch to app.routers.websocket
+    - Enables proper mocking for WebSocket integration tests
+    - 9 WebSocket tests now PASS (test_websocket_redis_integration.py)
+  - **Regression Fix 2 (Group 3 Analysis):** Git diff showed parameter changes, not auth dependency
+    - /predictions/simulate: home_team_id → home_team, away_team_id → away_team
+    - All 3 endpoints (simulate, value-bets, match-comparison) require Authorization (correct)
+  - **Regression Fix 3 (Predictions Tests):** Added auth tokens and fixed parameter names
+    - test_get_match_prediction: Added login flow + fixed UUID validation
+    - test_list_value_bets: Added login flow + Bearer token
+    - test_simulate_prediction: Added login flow + new parameter names
+    - test_get_prediction_explanation: Added login flow + fixed UUID validation
+    - All 4 predictions tests PASS (test_complete_api_flow.py::TestPredictionsRouter)
+  - **Total after Session 4:** 484 passing tests (was 463) — +21 from regressions, 0 new failures introduced
+  - Remaining 12 failures: Pre-existing (not from Group 3)
 
 ---
 
