@@ -37,7 +37,18 @@ class TestEventPublishingEndpoint:
     @pytest.fixture
     def admin_token(self, db_session):
         """Create admin user and return JWT token."""
-        pass
+        from app.core.security import hash_password, create_token
+        admin = User(
+            id=uuid4(),
+            email="admin@test.com",
+            username="testadmin",
+            password_hash=hash_password("admin_password"),
+            is_active=True,
+            is_superuser=True,
+        )
+        db_session.add(admin)
+        db_session.commit()
+        return create_token(data={"sub": str(admin.id)}, token_type="access")
 
     @pytest.fixture
     def test_match(self, db_session):
