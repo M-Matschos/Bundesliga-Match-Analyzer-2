@@ -163,12 +163,56 @@ class CacheManager:
             return cached
 
         # Compute value
-        value = await factory() if hasattr(factory, "__await__") else factory()
+        import inspect
+        result = factory()
+        if inspect.iscoroutine(result):
+            value = await result
+        else:
+            value = result
 
         # Store in cache
         await self.set(key, value, ttl)
 
         return value
+
+    def _format_key(self, key: str, prefix: Optional[str] = None) -> str:
+        """Format cache key with optional prefix.
+
+        Args:
+            key: Cache key
+            prefix: Optional key prefix
+
+        Returns:
+            Formatted key
+        """
+        import re
+        # Sanitize special characters
+        sanitized = re.sub(r'[^a-zA-Z0-9_\-:]', '', key)
+        if prefix:
+            return f"{prefix}:{sanitized}"
+        return sanitized
+
+    def _serialize(self, value: Any) -> str:
+        """Serialize value to JSON string.
+
+        Args:
+            value: Value to serialize
+
+        Returns:
+            JSON string
+        """
+        return json.dumps(value, default=str)
+
+    def _deserialize(self, data: str) -> Any:
+        """Deserialize JSON string to value.
+
+        Args:
+            data: JSON string to deserialize
+
+        Returns:
+            Deserialized value
+        """
+        return json.loads(data)
 
 
 def cache_decorator(
@@ -223,9 +267,11 @@ def cache_decorator(
                 logger.debug(f"Cache key pattern mismatch for {func.__name__}")
                 return await func(*args, **kwargs)
 
-            # Get Redis client
-            redis_client = await get_redis_client()
-            cache_manager = CacheManager(redis_client)
+            # Use global cache manager or create new one if not initialized
+            global cache_manager
+            if cache_manager is None:
+                redis_client = await get_redis_client()
+                cache_manager = CacheManager(redis_client)
 
             # Try cache first
             cached = await cache_manager.get(cache_key)
@@ -272,3 +318,7 @@ async def close_cache() -> None:
 
     await close_redis_client()
     cache = None
+
+
+# Alias for backward compatibility with tests
+cache_manager: Optional[CacheManager] = None
