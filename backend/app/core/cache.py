@@ -172,14 +172,15 @@ class CacheManager:
 
 
 def cache_decorator(
-    key_pattern: str,
+    key_pattern: Optional[str] = None,
     ttl: Optional[int] = None,
     key_params: Optional[list[str]] = None,
 ):
     """Decorator for caching async function results.
 
     Args:
-        key_pattern: Cache key pattern (e.g., 'prediction:{match_id}')
+        key_pattern: Cache key pattern (e.g., 'prediction:{match_id}').
+                    Defaults to function name if not provided.
         ttl: Time-to-live in seconds
         key_params: Parameter names to include in key (uses all if None)
 
@@ -189,11 +190,19 @@ def cache_decorator(
             return await models.get_prediction(match_id)
 
         # Cache key: 'prediction:uuid-123'
+
+        # Or without pattern (uses function name):
+        @cache_decorator(ttl=3600)
+        async def expensive_function(x):
+            return x * 2
     """
 
     def decorator(func: Callable[..., Any]) -> Callable[..., Any]:
         @wraps(func)
         async def wrapper(*args, **kwargs) -> Any:
+            # Use function name as default cache key pattern
+            pattern = key_pattern or func.__name__
+
             # Build cache key from pattern and function args
             try:
                 # Extract parameters for key
@@ -203,8 +212,12 @@ def cache_decorator(
                         if param in kwargs:
                             params[param] = kwargs[param]
 
-                # Format key pattern
-                cache_key = key_pattern.format(**params)
+                # Format key pattern (if it has placeholders)
+                if '{' in pattern and '}' in pattern:
+                    cache_key = pattern.format(**params)
+                else:
+                    # Simple pattern without placeholders
+                    cache_key = pattern
             except KeyError:
                 # If pattern doesn't match params, skip caching
                 logger.debug(f"Cache key pattern mismatch for {func.__name__}")
