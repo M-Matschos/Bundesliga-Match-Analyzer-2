@@ -278,6 +278,41 @@ def admin_token(db_admin_user: User) -> str:
 
 
 @pytest.fixture
+def mock_cache():
+    """Mock cache for testing without Redis.
+
+    Returns a simple in-memory cache implementation.
+    """
+    class InMemoryCache:
+        def __init__(self):
+            self.store = {}
+
+        async def get(self, key: str):
+            return self.store.get(key)
+
+        async def set(self, key: str, value, ttl=None):
+            self.store[key] = value
+            return True
+
+        async def delete(self, key: str):
+            if key in self.store:
+                del self.store[key]
+                return 1
+            return 0
+
+        async def clear_pattern(self, pattern: str):
+            import fnmatch
+            count = 0
+            keys_to_delete = [k for k in self.store.keys() if fnmatch.fnmatch(k, pattern)]
+            for key in keys_to_delete:
+                del self.store[key]
+                count += 1
+            return count
+
+    return InMemoryCache()
+
+
+@pytest.fixture
 def client(db_session: Session) -> TestClient:
     """Create FastAPI TestClient with async database session override.
 
@@ -286,6 +321,12 @@ def client(db_session: Session) -> TestClient:
     """
     import asyncio
     from sqlalchemy import create_engine as sync_create_engine
+    from unittest.mock import patch
+
+    # Setup in-memory cache BEFORE importing app
+    from app.core.cache import _InMemoryCache
+    import app.core.cache as cache_module
+    cache_module.cache = _InMemoryCache()
 
     # Use the same test database file as db_session
     # Get the database URL from the sync engine
@@ -522,13 +563,20 @@ def test_prediction_data() -> dict:
 # ============================================================================
 
 @pytest.fixture
-def pubsub_manager() -> RedisPubSubManager:
-    """Create a RedisPubSubManager instance with mocked Redis for testing."""
+async def pubsub_manager(mocker) -> RedisPubSubManager:
+    """Create a RedisPubSubManager instance with mocked Redis for testing.
+
+    Uses global patch to ensure websocket.py has access to mocked manager.
+    """
     from unittest.mock import AsyncMock
+    from app.routers.websocket import pubsub_manager as global_manager
 
     manager = RedisPubSubManager()
     manager.redis = AsyncMock()
     manager.is_connected = AsyncMock(return_value=True)
+
+    # Patch global pubsub_manager in websocket module
+    mocker.patch("app.routers.websocket.pubsub_manager", manager)
 
     return manager
 

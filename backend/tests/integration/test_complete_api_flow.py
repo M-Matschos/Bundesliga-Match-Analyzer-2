@@ -310,7 +310,32 @@ class TestPredictionsRouter:
 
     def test_get_match_prediction(self, client):
         """✅ Prediction: GET /predictions/{match_id}"""
-        response = client.get("/api/v1/predictions/match-123")
+        from uuid import uuid4
+
+        # Login to get auth token
+        client.post(
+            "/api/v1/auth/register",
+            json={
+                "email": "pred@example.com",
+                "password": "SecurePass123!",
+                "username": "preduser",
+            },
+        )
+        login_response = client.post(
+            "/api/v1/auth/login",
+            json={
+                "email": "pred@example.com",
+                "password": "SecurePass123!",
+            },
+        )
+        token = login_response.json()["access_token"]
+
+        # Use valid UUID for match_id
+        match_id = str(uuid4())
+        response = client.get(
+            f"/api/v1/predictions/{match_id}",
+            headers={"Authorization": f"Bearer {token}"},
+        )
         assert response.status_code in [200, 404]
         if response.status_code == 200:
             data = response.json()
@@ -321,25 +346,88 @@ class TestPredictionsRouter:
 
     def test_list_value_bets(self, client):
         """✅ Value Bets: GET /predictions/value-bets"""
-        response = client.get("/api/v1/predictions/value-bets")
+        # Login to get auth token
+        client.post(
+            "/api/v1/auth/register",
+            json={
+                "email": "valuebets@example.com",
+                "password": "SecurePass123!",
+                "username": "valueuser",
+            },
+        )
+        login_response = client.post(
+            "/api/v1/auth/login",
+            json={
+                "email": "valuebets@example.com",
+                "password": "SecurePass123!",
+            },
+        )
+        token = login_response.json()["access_token"]
+
+        response = client.get(
+            "/api/v1/predictions/value-bets",
+            headers={"Authorization": f"Bearer {token}"},
+        )
         assert response.status_code in [200, 404]
 
     def test_simulate_prediction(self, client):
         """✅ Simulate: POST /predictions/simulate"""
+        # Login to get auth token
+        client.post(
+            "/api/v1/auth/register",
+            json={
+                "email": "simuser@example.com",
+                "password": "SecurePass123!",
+                "username": "simuser",
+            },
+        )
+        login_response = client.post(
+            "/api/v1/auth/login",
+            json={
+                "email": "simuser@example.com",
+                "password": "SecurePass123!",
+            },
+        )
+        token = login_response.json()["access_token"]
+
         response = client.post(
             "/api/v1/predictions/simulate",
+            headers={"Authorization": f"Bearer {token}"},
             json={
-                "home_team_id": "fcb",
-                "away_team_id": "bvb",
-                "custom_home_strength": 0.5,
-                "custom_away_strength": 0.3,
+                "home_team": "Bayern Munich",
+                "away_team": "Borussia Dortmund",
             },
         )
         assert response.status_code in [200, 400, 404]
 
     def test_get_prediction_explanation(self, client):
         """✅ Explanation: GET /predictions/{match_id}/explain (SHAP)"""
-        response = client.get("/api/v1/predictions/match-123/explain")
+        from uuid import uuid4
+
+        # Login to get auth token
+        client.post(
+            "/api/v1/auth/register",
+            json={
+                "email": "explain@example.com",
+                "password": "SecurePass123!",
+                "username": "explainuser",
+            },
+        )
+        login_response = client.post(
+            "/api/v1/auth/login",
+            json={
+                "email": "explain@example.com",
+                "password": "SecurePass123!",
+            },
+        )
+        token = login_response.json()["access_token"]
+
+        # Use valid UUID for match_id
+        match_id = str(uuid4())
+        response = client.get(
+            f"/api/v1/predictions/{match_id}/explain",
+            headers={"Authorization": f"Bearer {token}"},
+        )
         assert response.status_code in [200, 404]
 
 
