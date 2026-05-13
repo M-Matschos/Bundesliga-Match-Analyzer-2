@@ -81,17 +81,16 @@ POST /api/v1/auth/login         Response: 200, ~50-100ms ✅
 
 ---
 
-## Mobile App Performance (Pre-Build Baseline)
+## Mobile App Performance (EAS Build — Measured)
 
-### Bundle Size Estimate
+### Build Metrics (Android APK — Preview Profile)
 
-- React Native ~55.0.17: ~12-15 MB (typical)
-- Firebase Messaging (~19.0.0): ~2-3 MB
-- Navigation (Expo Router): ~1 MB
-- **Total Estimate:** 15-20 MB (target: < 20 MB)
+| Metric | Value | Target | Status |
+|---|---|---|---|
+| **EAS Build Duration** | 6m 47s | < 15 min | ✅ Pass |
+| **APK Size** | not measured | < 50 MB | — |
 
-### Target Metrics (from EAS Build)
-- [ ] APK Size: < 50 MB
+### Runtime Target Metrics (post-install, not yet measured)
 - [ ] First Launch: < 3 seconds
 - [ ] Memory Footprint: < 100 MB (steady state)
 - [ ] Frame Rate: 60 FPS (verified in dev)
@@ -123,7 +122,7 @@ POST /api/v1/auth/login         Response: 200, ~50-100ms ✅
 - [x] Health endpoint responds < 50ms
 - [x] API response times acceptable (auth: ~100ms, queries: ~500ms target)
 - [x] Cache fallback working (Redis → InMemory)
-- [ ] Expo APK build metrics (pending build completion)
+- [x] Expo APK build successful — 6m 47s (2026-05-14) ✅
 - [ ] Production database load testing (defer to post-RC)
 
 ---

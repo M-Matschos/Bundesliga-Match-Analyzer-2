@@ -4,7 +4,7 @@
 **Status:** Release Candidate  
 **Version:** 1.0.0-RC (from 1.0.0-MVP)  
 **Backend Tests:** 454 passing (12 pre-existing non-blocking failures)  
-**Mobile:** Build ready (Android APK / iOS IPA via EAS)
+**Mobile:** Android APK build successful ✅ (6m 47s, EAS Preview — 2026-05-14)
 
 ---
 
@@ -128,7 +128,7 @@ async def get_prediction(match_id: str):
 ### Deployment Checklist
 - [ ] Backend: `uvicorn app.main:app --host 0.0.0.0 --port 8000`
 - [ ] Database: Run migrations (`alembic upgrade head`)
-- [ ] Mobile: EAS build APK (`eas build --platform android --profile production`)
+- [x] Mobile: EAS build APK ✅ (Preview build erfolgreich — 2026-05-14, 6m 47s)
 - [ ] Mobile: EAS build IPA (`eas build --platform ios --profile production`)
 - [ ] SSL/TLS: Configure reverse proxy (nginx/Cloudflare)
 - [ ] Monitoring: Set up Sentry (optional, configured in settings)
