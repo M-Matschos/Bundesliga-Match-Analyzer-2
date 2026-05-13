@@ -196,7 +196,7 @@ class APIFootballIngestion:
     def __init__(
         self,
         api_key: str,
-        redis_client: Redis,
+        redis_client: Optional[Redis] = None,
         poll_interval: int = 30,
         cache_ttl: int = 3600,
     ):
@@ -205,7 +205,7 @@ class APIFootballIngestion:
 
         Args:
             api_key: API-Football API key
-            redis_client: Redis client for caching and pub/sub
+            redis_client: Redis client for caching and pub/sub (optional for testing)
             poll_interval: Seconds between API polls (default: 30s)
             cache_ttl: Cache time-to-live in seconds (default: 1h)
         """
@@ -220,6 +220,8 @@ class APIFootballIngestion:
         }
         self.converter = MatchEventConverter()
         self._last_events: Dict[str, Dict[str, bool]] = {}
+        self.event_cache: Dict[int, List[str]] = {}
+        self.last_statistics: Dict[int, Dict[str, Any]] = {}
 
     async def poll_live_matches(self) -> List[Dict[str, Any]]:
         """
@@ -454,6 +456,127 @@ class APIFootballIngestion:
             # Wait before next poll
             await asyncio.sleep(self.poll_interval)
 
+    async def process_match_events(
+        self,
+        match_id: int,
+        home_team_id: int,
+        events: List[Dict[str, Any]],
+    ) -> None:
+        """
+        Process match events and publish to Redis.
+
+        Args:
+            match_id: Match identifier
+            home_team_id: Home team ID
+            events: List of event dicts from API
+        """
+        if not self.redis or not events:
+            return
+
+        for event in events:
+            event_type = event.get("type", "").upper()
+            if event_type == "GOAL":
+                converted = self.converter.convert_goal_event(
+                    event, str(match_id), home_team_id
+                )
+                if converted:
+                    await event_publisher.publish_event(converted)
+            elif event_type == "CARD":
+                converted = self.converter.convert_card_event(
+                    event, str(match_id), home_team_id
+                )
+                if converted:
+                    await event_publisher.publish_event(converted)
+            elif event_type in ("SUBST", "SUBSTITUTION"):
+                converted = self.converter.convert_substitution_event(
+                    event, str(match_id), home_team_id
+                )
+                if converted:
+                    await event_publisher.publish_event(converted)
+
+    async def process_match_statistics(
+        self,
+        match_id: int,
+        statistics: Dict[str, Any],
+    ) -> None:
+        """
+        Process match statistics and cache them.
+
+        Args:
+            match_id: Match identifier
+            statistics: Statistics dict with team1 and team2 data
+        """
+        self.last_statistics[match_id] = statistics
+
+        if not self.redis:
+            return
+
+        stats_data = {
+            "match_id": match_id,
+            "team1": statistics.get("team1", {}),
+            "team2": statistics.get("team2", {}),
+        }
+
+        try:
+            import json
+            await self.redis.publish(
+                f"stats:{match_id}",
+                json.dumps(stats_data),
+            )
+        except Exception as e:
+            logger.warning(f"Failed to publish stats for match {match_id}: {e}")
+
+    def _generate_event_hash(
+        self,
+        event_type: str,
+        match_id: int,
+        event_data: Dict[str, Any],
+    ) -> str:
+        """
+        Generate unique hash for event deduplication.
+
+        Args:
+            event_type: Type of event (e.g., "goal", "card", "substitution")
+            match_id: Match identifier
+            event_data: Event data dict
+
+        Returns:
+            Hash string
+        """
+        import hashlib
+        import json
+
+        event_key = json.dumps({
+            "type": event_type,
+            "match_id": match_id,
+            "minute": event_data.get("minute"),
+            "player_id": event_data.get("player_id"),
+        }, sort_keys=True)
+
+        return hashlib.md5(event_key.encode()).hexdigest()
+
+    @staticmethod
+    def _extract_stat(stats_dict: Dict[str, Any], stat_name: str) -> int:
+        """
+        Extract a stat value from API statistics dict.
+
+        Args:
+            stats_dict: Dict containing 'statistics' key with list of stat dicts
+            stat_name: Name of stat to extract (e.g., "Shots on Goal")
+
+        Returns:
+            Integer value of stat, or 0 if not found
+        """
+        stats_list = stats_dict.get("statistics", [])
+        for stat in stats_list:
+            if stat.get("type") == stat_name:
+                try:
+                    value = stat.get("value", 0)
+                    return int(float(value)) if value else 0
+                except (ValueError, TypeError):
+                    return 0
+        return 0
+
     @staticmethod
     def _hash_event(event: Dict[str, Any]) -> str:
         """
@@ -478,27 +601,29 @@ class APIFootballIngestion:
         return hashlib.md5(event_key.encode()).hexdigest()
 
 
+def get_redis_manager():
+    """
+    Get Redis manager instance for cache operations.
+
+    Used by tests and background tasks to access Redis client.
+    """
+    from redis.asyncio import from_url as redis_from_url
+    from app.core.config import settings
+
+    return redis_from_url(settings.redis_url, decode_responses=True)
+
+
 # Singleton instance
 _ingestion_service: Optional[APIFootballIngestion] = None
 
 
-async def get_ingestion_service(
-    api_key: str,
-    redis_client: Redis,
-) -> APIFootballIngestion:
+def get_ingestion_service() -> Optional[APIFootballIngestion]:
     """
-    Get or create ingestion service singleton.
-
-    Args:
-        api_key: API-Football API key
-        redis_client: Redis client
+    Get the ingestion service singleton.
 
     Returns:
-        APIFootballIngestion instance
+        APIFootballIngestion instance or None if not yet initialized
     """
-    global _ingestion_service
-    if _ingestion_service is None:
-        _ingestion_service = APIFootballIngestion(api_key, redis_client)
     return _ingestion_service
 
 
@@ -507,12 +632,14 @@ BundesligaDataIngestion = APIFootballIngestion
 
 
 async def init_ingestion(api_key: str) -> APIFootballIngestion:
-    """Create and return an APIFootballIngestion instance.
+    """Create and initialize the APIFootballIngestion singleton.
 
     Convenience factory used by tests and startup scripts.
     """
+    global _ingestion_service
     from redis.asyncio import from_url as redis_from_url
     from app.core.config import settings
 
     redis_client = redis_from_url(settings.redis_url, decode_responses=True)
-    return APIFootballIngestion(api_key, redis_client)
+    _ingestion_service = APIFootballIngestion(api_key, redis_client)
+    return _ingestion_service
