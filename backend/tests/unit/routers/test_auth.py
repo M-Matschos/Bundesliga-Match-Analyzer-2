@@ -6,6 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.main import app
 from app.models.db import User
 from app.core.security import hash_password
+from app.core.config import settings
 
 
 class TestRegisterEndpoint:
@@ -348,7 +349,7 @@ class TestTokenSecurity:
         )
         assert response.status_code == 200
         data = response.json()
-        assert data["expires_in"] == 7 * 86400  # 7 days in seconds
+        assert data["expires_in"] == settings.jwt_expire_minutes * 60
 
     async def test_password_not_in_response(
         self,
