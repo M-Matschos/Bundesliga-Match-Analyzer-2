@@ -622,12 +622,11 @@ async def pubsub_manager(mocker) -> RedisPubSubManager:
 # CACHE INITIALIZATION FIXTURES
 # ============================================================================
 
-@pytest.fixture(scope="session", loop_scope="session")
+@pytest.fixture(scope="session")
 async def init_cache_fixture():
     """Initialize global cache manager once per test session.
 
     Ensures Redis cache is initialized for integration tests that depend on caching.
-    Session-scoped with loop_scope="session" for pytest-asyncio 0.23.x compatibility.
     """
     from app.core.cache import init_cache, close_cache
 
