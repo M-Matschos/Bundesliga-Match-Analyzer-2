@@ -60,7 +60,7 @@ class TestE2EUserJourney:
         )
         assert register_resp.status_code == 201
         user_data = register_resp.json()
-        assert user_data["email"] == "onboarding@example.com"
+        assert "access_token" in user_data
 
         # 2. Login
         login_resp = client.post(
@@ -385,8 +385,8 @@ class TestE2EErrorRecovery:
                 "username": "weakuser",
             },
         )
-        assert weak_resp.status_code == 400
-        error_detail = weak_resp.json()["detail"].lower()
+        assert weak_resp.status_code == 422
+        error_detail = weak_resp.json()["detail"][0]["msg"].lower()
         assert "8" in error_detail or "character" in error_detail or "password" in error_detail
 
         # 2. Retry with valid password

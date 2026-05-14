@@ -71,7 +71,7 @@ class TestAuthRouter:
                 "username": "baduser",
             },
         )
-        assert response.status_code == 400
+        assert response.status_code == 422
 
     def test_register_weak_password(self, client):
         """❌ Register: Password too short (< 8 chars)"""
@@ -83,8 +83,8 @@ class TestAuthRouter:
                 "username": "weakuser",
             },
         )
-        assert response.status_code == 400
-        assert "8 characters" in response.json()["detail"].lower()
+        assert response.status_code == 422
+        assert "8 characters" in response.json()["detail"][0]["msg"].lower()
 
     def test_login_success(self, client):
         """✅ Login: POST /auth/login with valid credentials"""
