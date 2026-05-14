@@ -11,6 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sess
 from sqlalchemy.orm import Session, sessionmaker
 from sqlalchemy.pool import NullPool, StaticPool
 from fastapi.testclient import TestClient
+from unittest.mock import MagicMock
 
 # Set testing environment
 os.environ["ENVIRONMENT"] = "testing"
@@ -25,6 +26,7 @@ from app.core.security import hash_password, create_token
 from app.core.redis_pubsub import RedisPubSubManager
 from app.models.db import Base, User, Team, Match, Bet, Device, MatchSubscription, Prediction
 from app.main import app
+
 
 
 @pytest.fixture
@@ -312,16 +314,49 @@ def mock_cache():
     return InMemoryCache()
 
 
+@pytest.fixture(autouse=True)
+def clear_rate_limit_state():
+    """Auto-use fixture that clears rate limit state before each test.
+
+    This ensures tests don't interfere with each other via slowapi rate limiting.
+    """
+    # Clear before test
+    try:
+        from app.routers import auth
+        if hasattr(auth, 'limiter') and hasattr(auth.limiter, '_storage'):
+            auth.limiter._storage.clear()
+    except Exception:
+        pass
+
+    try:
+        from app.main import app
+        if hasattr(app.state, 'limiter') and hasattr(app.state.limiter, '_storage'):
+            app.state.limiter._storage.clear()
+    except Exception:
+        pass
+
+    yield
+
+    # Optionally clear after test
+    try:
+        from app.routers import auth
+        if hasattr(auth, 'limiter') and hasattr(auth.limiter, '_storage'):
+            auth.limiter._storage.clear()
+    except Exception:
+        pass
+
+
 @pytest.fixture
 def client(db_session: Session) -> TestClient:
     """Create FastAPI TestClient with async database session override.
 
     Uses the same database as db_session (sync SQLite) but with async override.
     This ensures that data fixtures (db_match, db_user, etc.) are visible to client requests.
+    Also disables rate limiting for tests.
     """
     import asyncio
     from sqlalchemy import create_engine as sync_create_engine
-    from unittest.mock import patch
+    from unittest.mock import patch, MagicMock
 
     # Setup in-memory cache BEFORE importing app
     from app.core.cache import _InMemoryCache
