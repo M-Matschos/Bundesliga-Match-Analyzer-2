@@ -571,7 +571,7 @@ class APIFootballIngestion:
             "player_id": event_data.get("player_id"),
         }, sort_keys=True)
 
-        return hashlib.md5(event_key.encode()).hexdigest()
+        return hashlib.md5(event_key.encode(), usedforsecurity=False).hexdigest()
 
     @staticmethod
     def _extract_stat(stats_dict: Dict[str, Any], stat_name: str) -> int:
@@ -616,7 +616,7 @@ class APIFootballIngestion:
             "player": event.get("player", {}).get("id"),
         }, sort_keys=True)
 
-        return hashlib.md5(event_key.encode()).hexdigest()
+        return hashlib.md5(event_key.encode(), usedforsecurity=False).hexdigest()
 
 
 def get_redis_manager():
