@@ -324,15 +324,17 @@ def clear_rate_limit_state():
     try:
         from app.routers import auth
         if hasattr(auth, 'limiter') and hasattr(auth.limiter, '_storage'):
-            auth.limiter._storage.clear()
-    except Exception:
+            auth.limiter._storage.reset()
+    except TypeError as e:
+        # clear() requires key argument in slowapi, use reset() instead
         pass
 
     try:
         from app.main import app
         if hasattr(app.state, 'limiter') and hasattr(app.state.limiter, '_storage'):
-            app.state.limiter._storage.clear()
-    except Exception:
+            app.state.limiter._storage.reset()
+    except TypeError as e:
+        # reset() properly clears slowapi storage without arguments
         pass
 
     yield
@@ -341,8 +343,8 @@ def clear_rate_limit_state():
     try:
         from app.routers import auth
         if hasattr(auth, 'limiter') and hasattr(auth.limiter, '_storage'):
-            auth.limiter._storage.clear()
-    except Exception:
+            auth.limiter._storage.reset()
+    except TypeError as e:
         pass
 
 
@@ -620,12 +622,12 @@ async def pubsub_manager(mocker) -> RedisPubSubManager:
 # CACHE INITIALIZATION FIXTURES
 # ============================================================================
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="session", loop_scope="session")
 async def init_cache_fixture():
     """Initialize global cache manager once per test session.
 
     Ensures Redis cache is initialized for integration tests that depend on caching.
-    Session-scoped so it runs once for the entire test suite.
+    Session-scoped with loop_scope="session" for pytest-asyncio 0.23.x compatibility.
     """
     from app.core.cache import init_cache, close_cache
 
@@ -655,9 +657,6 @@ async def clear_cache(init_cache_fixture):
 # PYTEST HOOKS
 # ============================================================================
 
-def pytest_collection_modifyitems(items):
-    """Mark individual async test functions (not files) with asyncio marker."""
-    import asyncio
-    for item in items:
-        if asyncio.iscoroutinefunction(item.function):
-            item.add_marker(pytest.mark.asyncio)
+# pytest_collection_modifyitems removed: asyncio_mode = auto in pytest.ini
+# automatically marks all async tests with @pytest.mark.asyncio.
+# The redundant marking caused PytestUnraisableExceptionWarning with --strict-markers.
