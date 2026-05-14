@@ -1,8 +1,8 @@
 # Bundesliga Match Analyzer – Operative Arbeitsbeschreibung
 
 **Phase:** C Stabilisierung (Phase 4a-4c ✅ abgeschlossen / Phase 5 E2E Integration ✅ abgeschlossen)  
-**Release-Reife:** RC-Ready. Alle P0-Blocker behoben ✅. **484 Testziel übertroffen!** 🎯  
-**Team:** 1 FTE | **Aktualisiert:** 2026-05-13 (Session 4)  
+**Release-Reife:** RC-Ready. Alle P0-Blocker behoben ✅. **454 passing tests (war 484)** — Rate-Limiting Fix ✅  
+**Team:** 1 FTE | **Aktualisiert:** 2026-05-14 (Session 5)  
 
 ---
 
@@ -84,14 +84,45 @@
 - Virtual Betting System (Phase 4c): 9 Tests ✅ — Bet Resolution, ROI Portfolio, Auto-Resolve
 - **Total Phase 4 Tests:** 18 passing in 15.07s
 
-**Backend Test Suite Stabilisierung (Phase 5 Option A - in Planung):**
-- Current: 378 passing ✅ (up from 361), 121 failing (pre-existing fixture issues)
-- Target: 400+ passing (88 failing tests to fix in test_betting_flow.py, test_predictions_flow.py, conftest.py)
-- Effort: 7-11 hours (3 sequential steps: diagnosis → fixture repairs → E2E verification → RC prep)
+**Backend Test Suite Status (Phase 5 - Session 5 Reality Check):**
+- Current: 454 passing ✅, 38 failing (documented 484 was optimistic/stale)
+- Rate-Limiting Isolation: FIXED ✅ (autouse clear_rate_limit_state fixture)
+- Remaining Issues: Test-execution-order dependencies (individual tests pass, fail in suite)
+- Effort: TBD — needs deeper fixture/state isolation analysis
 
 **Release-Reife:** Abhängig von Phase 5 Completion (Test Stabilisierung). Alle P0-Blocker aus Phase 2 sind behoben. Nächster kritischer Pfad: fixture-basierte Fehler in älteren Integration Tests.
 
 Aktive Arbeitsgrundlagen: `.claude/plans/virtual-growing-bear.md` (Phase 5 Plan) und Memory-Files (phase_4_progress.md, 2026-05-12.md).
+
+---
+
+## Session 5 (2026-05-14) — Rate-Limiting Fix & Test Reality Check
+
+**Achievements:**
+- ✅ Fixed rate-limiting test isolation (conftest.py autouse fixture)
+- ✅ Diagnosed 454 passing tests as realistic baseline (484 was optimistic docs)
+- ✅ Committed fix: a82577f "Add rate-limiting isolation fixture"
+
+**Key Learnings:**
+1. **Rate-Limiting Problem (SOLVED):** slowapi state persisted across tests → "3 per 1 minute exceeded"
+   - Solution: `clear_rate_limit_state()` autouse fixture clears auth.limiter._storage before each test
+   - Result: test_concurrent_logins and all rate-limited tests now pass
+
+2. **Test Suite Reality Check:** 484 documented tests were optimistic
+   - Old conftest.py (from 484 commit) also yields 454 passing (verified)
+   - Tests fail even when run independently per file
+   - NOT just test-execution-order; deeper fixture/state issues
+   
+3. **Failure Pattern:** 38 failing across 3 files (even when isolated)
+   - test_auth.py: 8 failures (unit tests)
+   - test_complete_api_flow.py: 15 failures (integration)
+   - test_e2e_journeys.py: 4 failures + 2 errors
+
+**Next Session Should:**
+- [ ] Deep-dive into test_auth.py failures (8 unit test failures)
+- [ ] Trace shared state: DB session cleanup, fixture scope, mock pollution
+- [ ] Consider splitting conftest.py fixtures by test type (unit vs integration)
+- [ ] Target: 454 passing → 454+ (realistic, achievable)
 
 ---
 
