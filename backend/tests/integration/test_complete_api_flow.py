@@ -490,7 +490,7 @@ class TestBettingRouter:
         token = login_response.json()["access_token"]
 
         response = client.get(
-            "/api/v1/betting/bets",
+            "/api/v1/virtual-bets",
             headers={"Authorization": f"Bearer {token}"},
         )
         assert response.status_code == 200
