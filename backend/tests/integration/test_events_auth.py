@@ -121,20 +121,21 @@ class TestEventsAuthorization:
         assert response.status_code == 403
         assert "admin" in response.json().get("detail", "").lower()
 
-    @pytest.mark.asyncio
-    @pytest.mark.skip(reason="Known issue: Admin token returns 401 (CHANGELOG_RC.md Issue 2)")
-    async def test_get_current_admin_user_accepts_admin(
+    def test_get_current_admin_user_accepts_admin(
         self,
         client: TestClient,
-        async_db_session: AsyncSession,
+        db_session,
         setup_matches,
+        mocker,
     ):
         """Test: Admin user token is accepted and publishes event.
 
-        NOTE: This test is skipped due to a pre-existing bug where the admin
-        authorization check fails even with a valid admin token. This is
-        documented in CHANGELOG_RC.md (Issue 2) and will be fixed in Phase 5.
+        Admin user with is_superuser=True can successfully publish events
+        and receive 200 or 201 response.
         """
+        from unittest.mock import AsyncMock
+        from app.core.redis_pubsub import RedisPubSubManager
+
         match = setup_matches
 
         # Create admin user (is_superuser=True)
@@ -146,21 +147,33 @@ class TestEventsAuthorization:
             is_active=True,
             is_superuser=True,  # IS admin
         )
-        async_db_session.add(admin_user)
-        await async_db_session.commit()
+        # Persist admin user to database (sync)
+        db_session.add(admin_user)
+        db_session.commit()
+
+        # Mock pubsub_manager for events router
+        manager = RedisPubSubManager()
+        manager.redis = AsyncMock()
+        manager.is_connected = AsyncMock(return_value=True)
+        manager.publish_event = AsyncMock(return_value=1)  # 1 subscriber
+        mocker.patch("app.routers.events.pubsub_manager", manager)
 
         # Generate valid access token for admin user
         token = create_token(data={"sub": str(admin_user.id)}, token_type="access")
         headers = {"Authorization": f"Bearer {token}"}
 
-        # Publish event as admin
+        # Publish event as admin using proper GoalEvent schema
         response = client.post(
-            f"/api/v1/events/publish/{match.id}",
+            f"/api/v1/events/publish/{match.api_football_id}",
             json={
                 "event_type": "goal",
-                "player_name": "Robert Lewandowski",
+                "match_id": str(match.api_football_id),
+                "timestamp": datetime.utcnow().isoformat(),
+                "minute": 45,
                 "team": "home",
-                "score": {"home": 1, "away": 0},
+                "player_name": "Robert Lewandowski",
+                "score_before": {"home": 0, "away": 0},
+                "score_after": {"home": 1, "away": 0},
             },
             headers=headers,
         )
@@ -169,4 +182,4 @@ class TestEventsAuthorization:
         assert response.status_code in [200, 201]
         data = response.json()
         assert data.get("status") == "published"
-        assert data.get("match_id") == str(match.id)
+        assert data.get("event_type") == "goal"
