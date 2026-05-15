@@ -41,6 +41,7 @@ class Settings(BaseSettings):
     jwt_refresh_expire_days: int = Field(
         default=30, env="JWT_REFRESH_EXPIRE_DAYS"
     )
+    bcrypt_rounds: int = Field(default=12, env="BCRYPT_ROUNDS")
 
     # --- CORS ---
     cors_origins: str = Field(

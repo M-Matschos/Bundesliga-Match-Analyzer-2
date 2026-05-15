@@ -19,15 +19,15 @@ aiohttp==3.9.3
 
 # Machine Learning
 xgboost==2.0.3
-scikit-learn==1.4.2
-numpy==1.26.4
-scipy==1.12.0
-shap==0.44.1
-pandas==2.2.1
+scikit-learn==1.3.2
+numpy==1.24.3
+scipy==1.11.4
+shap==0.43.0
+pandas==2.1.4
 
 # NLP
-transformers==4.38.2
-torch==2.2.1
+transformers==4.35.2
+torch==2.1.2
 
 # Auth & Security
 python-jose[cryptography]==3.3.0
