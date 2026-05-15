@@ -32,6 +32,17 @@ jobs:
           echo "version=$VERSION" >> $GITHUB_OUTPUT
           echo "Version: $VERSION"
 
+      - name: Detect prerelease
+        id: prerelease
+        run: |
+          VERSION=${{ steps.version.outputs.version }}
+          if [[ "$VERSION" =~ -rc|-beta|-alpha|-dev ]]; then
+            echo "is_prerelease=true" >> $GITHUB_OUTPUT
+          else
+            echo "is_prerelease=false" >> $GITHUB_OUTPUT
+          fi
+          echo "Is Prerelease: ${{ steps.prerelease.outputs.is_prerelease }}"
+
       - name: Get previous version
         id: previous
         run: |
@@ -114,7 +125,7 @@ jobs:
           tag_name: ${{ steps.version.outputs.version }}
           body_path: CHANGELOG_RELEASE.md
           draft: false
-          prerelease: false
+          prerelease: ${{ steps.prerelease.outputs.is_prerelease }}
           files: |
             CHANGELOG_RELEASE.md
         env:
