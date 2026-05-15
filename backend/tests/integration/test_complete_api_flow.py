@@ -455,12 +455,14 @@ class TestBettingRouter:
         )
         token = login_response.json()["access_token"]
 
-        # Create bet
+        # Create bet (using query parameters, not JSON body)
+        from uuid import uuid4
+        match_id = str(uuid4())
         response = client.post(
-            "/api/v1/betting/bets",
+            "/api/v1/virtual-bets",
             headers={"Authorization": f"Bearer {token}"},
-            json={
-                "match_id": "match-123",
+            params={
+                "match_id": match_id,
                 "bet_type": "home_win",
                 "amount": 10.0,
                 "odds": 1.85,
@@ -518,14 +520,14 @@ class TestBettingRouter:
         token = login_response.json()["access_token"]
 
         response = client.get(
-            "/api/v1/betting/portfolio",
+            "/api/v1/virtual-bets/portfolio/stats",
             headers={"Authorization": f"Bearer {token}"},
         )
         assert response.status_code == 200
         data = response.json()
         assert "total_balance" in data
         assert "roi_percent" in data
-        assert "win_rate" in data
+        assert "win_rate_percent" in data
 
     def test_close_bet(self, client):
         """✅ Close Bet: POST /betting/bets/{bet_id}/close (requires auth)"""
@@ -549,7 +551,7 @@ class TestBettingRouter:
         token = login_response.json()["access_token"]
 
         response = client.post(
-            "/api/v1/betting/bets/bet-123/close",
+            "/api/v1/virtual-bets/bet-123/cancel",
             headers={"Authorization": f"Bearer {token}"},
             json={"result_profit": 5.0},
         )
