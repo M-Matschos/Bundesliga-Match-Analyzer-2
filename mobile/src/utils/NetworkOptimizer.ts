@@ -198,8 +198,8 @@ export class NetworkOptimizer {
       compressedSize,
       savingsKB,
       savingsPercent,
-      recommended: true,
-      algorithm: dataSize > 200 ? 'brotli' : 'gzip', // Brotli for larger payloads
+      recommended: dataSize >= 50, // Recommend compression only if >= 50KB
+      algorithm: dataSize >= 200 ? 'brotli' : 'gzip', // Brotli for 200KB+
     };
   }
 

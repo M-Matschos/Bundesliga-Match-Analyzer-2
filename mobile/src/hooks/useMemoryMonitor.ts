@@ -173,11 +173,13 @@ export const useMemoryMonitor = (
    * Setup polling interval on mount, cleanup on unmount
    */
   useEffect(() => {
-    // Initial poll
+    // Initial poll (async)
     pollMemory();
 
     // Setup interval (every 5 seconds)
-    intervalIdRef.current = setInterval(pollMemory, 5000);
+    intervalIdRef.current = setInterval(() => {
+      pollMemory();
+    }, 5000);
 
     // Cleanup on unmount
     return () => {
@@ -186,7 +188,7 @@ export const useMemoryMonitor = (
         intervalIdRef.current = null;
       }
     };
-  }, []);
+  }, [warningThreshold, errorThreshold]);
 
   return {
     memoryUsage,
