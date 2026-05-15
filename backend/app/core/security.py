@@ -3,6 +3,7 @@
 import logging
 from datetime import datetime, timedelta, timezone
 from typing import Optional, Any, Dict
+from uuid import uuid4
 import jwt
 from argon2 import PasswordHasher
 from argon2.exceptions import VerifyMismatchError
@@ -100,6 +101,7 @@ def create_token(
             "exp": expire,
             "iat": datetime.now(timezone.utc),
             "type": token_type,
+            "jti": str(uuid4()),
         }
     )
 
