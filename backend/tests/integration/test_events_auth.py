@@ -21,7 +21,7 @@ class TestEventsAuthorization:
     """Tests for event publishing authorization."""
 
     @pytest.fixture
-    def setup_matches(self, db_session):
+    def setup_matches(self, db_session: Session):
         """Create test match for event publishing."""
         home_team = Team(
             id=uuid4(),
@@ -97,7 +97,6 @@ class TestEventsAuthorization:
             is_active=True,
             is_superuser=False,  # NOT admin
         )
-        # Persist user to database
         db_session.add(regular_user)
         db_session.commit()
 
