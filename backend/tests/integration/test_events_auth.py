@@ -79,10 +79,10 @@ class TestEventsAuthorization:
         assert response.status_code == 401
         assert "authorization" in response.json().get("detail", "").lower()
 
-    @pytest.mark.skip(reason="Phase 5: Fixture repair in progress")
     def test_get_current_admin_user_rejects_non_admin(
         self,
         client: TestClient,
+        db_session,
         setup_matches,
     ):
         """Test: Regular (non-admin) user token returns 403 Forbidden."""
@@ -97,7 +97,9 @@ class TestEventsAuthorization:
             is_active=True,
             is_superuser=False,  # NOT admin
         )
-        # Note: User will be created through API in real test or passed as fixture
+        # Persist user to database
+        db_session.add(regular_user)
+        db_session.commit()
 
         # Generate valid access token for regular user
         token = create_token(data={"sub": str(regular_user.id)}, token_type="access")
