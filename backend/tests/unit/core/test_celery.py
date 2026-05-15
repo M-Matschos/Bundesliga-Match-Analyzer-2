@@ -104,7 +104,7 @@ class TestDebugTask:
         """Test debug_task is callable."""
         assert callable(debug_task)
 
-    @patch('celery.current_app')
+    @patch("celery.current_app")
     def test_debug_task_sends_ping(self, mock_app):
         """Test debug_task sends ping message."""
         # This test would require mocking the Celery event system
@@ -167,7 +167,7 @@ class TestCeleryLogging:
     def test_celery_app_autodiscover_tasks(self):
         """Test task autodiscovery is configured."""
         # Tasks should be autodiscovered from app modules
-        assert hasattr(celery_app, 'autodiscover_tasks')
+        assert hasattr(celery_app, "autodiscover_tasks")
 
 
 class TestCeleryIntegration:
@@ -175,15 +175,16 @@ class TestCeleryIntegration:
 
     def test_celery_app_has_send_task(self):
         """Test Celery app can send tasks."""
-        assert hasattr(celery_app, 'send_task')
+        assert hasattr(celery_app, "send_task")
 
     def test_celery_app_has_group_chord(self):
         """Test Celery primitives are available via the celery module."""
         # group/chord are module-level imports, not app-instance attributes
         import celery
-        assert hasattr(celery, 'group')
-        assert hasattr(celery, 'chord')
+
+        assert hasattr(celery, "group")
+        assert hasattr(celery, "chord")
 
     def test_celery_app_signature_available(self):
         """Test task signatures are available."""
-        assert hasattr(celery_app, 'signature')
+        assert hasattr(celery_app, "signature")

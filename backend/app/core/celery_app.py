@@ -21,10 +21,10 @@ celery_app.conf.update(
     enable_utc=True,
     # Task configuration
     task_track_started=True,
-    task_acks_late=True,              # Prevent task loss on worker crash
+    task_acks_late=True,  # Prevent task loss on worker crash
     task_reject_on_worker_lost=True,  # Reject (requeue) if worker is lost
-    task_time_limit=30 * 60,          # 30 minutes hard limit
-    task_soft_time_limit=25 * 60,     # 25 minutes soft limit
+    task_time_limit=30 * 60,  # 30 minutes hard limit
+    task_soft_time_limit=25 * 60,  # 25 minutes soft limit
     # Result backend configuration
     result_expires=3600,  # Results expire after 1 hour
     # Worker configuration

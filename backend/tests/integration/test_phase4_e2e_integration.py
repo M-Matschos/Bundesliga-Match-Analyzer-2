@@ -23,7 +23,16 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi.testclient import TestClient
 
 from app.main import app
-from app.models.db import User, Team, Match, Bet, Device, MatchSubscription, NotificationHistory, Prediction
+from app.models.db import (
+    User,
+    Team,
+    Match,
+    Bet,
+    Device,
+    MatchSubscription,
+    NotificationHistory,
+    Prediction,
+)
 
 
 class TestPhase4E2EMatchCompletionFlow:
@@ -125,7 +134,9 @@ class TestPhase4E2EMatchCompletionFlow:
         }
 
     @pytest.mark.asyncio
-    async def test_match_completion_auto_resolves_bets(self, async_db_session: AsyncSession, setup_match_and_bets):
+    async def test_match_completion_auto_resolves_bets(
+        self, async_db_session: AsyncSession, setup_match_and_bets
+    ):
         """Test: Complete match → Auto-resolve bets → ROI calculated correctly."""
         data = setup_match_and_bets
         match = data["match"]
@@ -217,7 +228,9 @@ class TestPhase4E2EWebSocketBroadcast:
         return match
 
     @pytest.mark.asyncio
-    async def test_goal_event_broadcasts_to_websocket_clients(self, async_db_session: AsyncSession, setup_match_with_websocket):
+    async def test_goal_event_broadcasts_to_websocket_clients(
+        self, async_db_session: AsyncSession, setup_match_with_websocket
+    ):
         """Test: Goal event published → Redis receives → WebSocket clients notified."""
         match = setup_match_with_websocket
 
@@ -320,7 +333,9 @@ class TestPhase4E2ENotificationFlow:
         }
 
     @pytest.mark.asyncio
-    async def test_goal_event_sends_fcm_notification(self, async_db_session: AsyncSession, setup_notifications):
+    async def test_goal_event_sends_fcm_notification(
+        self, async_db_session: AsyncSession, setup_notifications
+    ):
         """Test: Goal event → Query subscribers → Send FCM → Record history."""
         data = setup_notifications
         user = data["user"]
@@ -364,7 +379,9 @@ class TestPhase4E2EConcurrentWebSocketClients:
     """
 
     @pytest.mark.asyncio
-    async def test_concurrent_clients_receive_broadcast(self, async_db_session: AsyncSession):
+    async def test_concurrent_clients_receive_broadcast(
+        self, async_db_session: AsyncSession
+    ):
         """Test: 10 concurrent clients all receive the same broadcast event."""
         # Create match
         home_team = Team(
@@ -422,7 +439,9 @@ class TestPhase4E2ELoadStress:
     """
 
     @pytest.mark.asyncio
-    async def test_auto_resolve_100_bets_under_load(self, async_db_session: AsyncSession):
+    async def test_auto_resolve_100_bets_under_load(
+        self, async_db_session: AsyncSession
+    ):
         """Test: Auto-resolve 100 bets across 5 matches in parallel."""
         # Create user
         user = User(
@@ -572,7 +591,9 @@ class TestAutoResolveHTTPFlow:
         db_session.commit()
 
         # Step 4: Call auto-resolve as admin
-        admin_token = create_token(data={"sub": str(db_admin_user.id)}, token_type="access")
+        admin_token = create_token(
+            data={"sub": str(db_admin_user.id)}, token_type="access"
+        )
         admin_headers = {"Authorization": f"Bearer {admin_token}"}
 
         resolve_response = client.post(

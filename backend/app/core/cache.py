@@ -77,6 +77,7 @@ class _InMemoryCache:
     async def clear_pattern(self, pattern: str) -> int:
         """Delete all keys matching pattern."""
         import fnmatch
+
         count = 0
         keys_to_delete = [k for k in self.store.keys() if fnmatch.fnmatch(k, pattern)]
         for key in keys_to_delete:
@@ -116,9 +117,7 @@ class CacheManager:
             logger.warning(f"Cache get error for {key}: {e}")
             return None
 
-    async def set(
-        self, key: str, value: Any, ttl: Optional[int] = None
-    ) -> bool:
+    async def set(self, key: str, value: Any, ttl: Optional[int] = None) -> bool:
         """Set value in cache.
 
         Args:
@@ -197,6 +196,7 @@ class CacheManager:
 
         # Compute value
         import inspect
+
         result = factory()
         if inspect.iscoroutine(result):
             value = await result
@@ -219,8 +219,9 @@ class CacheManager:
             Formatted key
         """
         import re
+
         # Sanitize special characters
-        sanitized = re.sub(r'[^a-zA-Z0-9_\-:]', '', key)
+        sanitized = re.sub(r"[^a-zA-Z0-9_\-:]", "", key)
         if prefix:
             return f"{prefix}:{sanitized}"
         return sanitized
@@ -290,7 +291,7 @@ def cache_decorator(
                             params[param] = kwargs[param]
 
                 # Format key pattern (if it has placeholders)
-                if '{' in pattern and '}' in pattern:
+                if "{" in pattern and "}" in pattern:
                     cache_key = pattern.format(**params)
                 else:
                     # Simple pattern without placeholders

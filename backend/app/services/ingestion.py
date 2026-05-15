@@ -37,6 +37,7 @@ logger = logging.getLogger(__name__)
 
 class MatchStatus(str, Enum):
     """API-Football match status enum."""
+
     NOT_STARTED = "Not Started"
     FIRST_HALF = "First Half"
     HALFTIME = "Half Time"
@@ -48,6 +49,7 @@ class MatchStatus(str, Enum):
 
 class APIFootballError(Exception):
     """Raised when API-Football call fails."""
+
     pass
 
 
@@ -125,15 +127,15 @@ class MatchEventConverter:
                 return None
 
             card_type_str = api_event.get("card_type", "").upper()
-            card_type = (
-                CardType.RED if "RED" in card_type_str else CardType.YELLOW
-            )
+            card_type = CardType.RED if "RED" in card_type_str else CardType.YELLOW
             team = Team.HOME if api_event.get("team_id") == home_team_id else Team.AWAY
             minute = api_event.get("time", 0)
             player = api_event.get("player", {})
 
             return CardEvent(
-                event_type=EventType.RED_CARD if card_type == CardType.RED else EventType.YELLOW_CARD,
+                event_type=EventType.RED_CARD
+                if card_type == CardType.RED
+                else EventType.YELLOW_CARD,
                 match_id=match_id,
                 timestamp=datetime.utcnow(),
                 minute=minute,
@@ -294,6 +296,7 @@ class APIFootballIngestion:
         if cached:
             logger.debug(f"Using cached events for match {match_id}")
             import json
+
             return json.loads(cached)
 
         try:
@@ -314,6 +317,7 @@ class APIFootballIngestion:
 
                 # Cache events
                 import json
+
                 self.redis.setex(
                     cache_key,
                     self.cache_ttl,
@@ -359,8 +363,10 @@ class APIFootballIngestion:
                 event_hash_set.add(event_hash)
 
                 # Skip if we've already published this event
-                if (match_id in self._last_events and
-                    event_hash in self._last_events[match_id]):
+                if (
+                    match_id in self._last_events
+                    and event_hash in self._last_events[match_id]
+                ):
                     continue
 
                 # Try to convert to domain event
@@ -430,9 +436,12 @@ class APIFootballIngestion:
 
         Polls API-Football every `poll_interval` seconds and processes events.
         """
-        logger.info("Starting API-Football ingestion loop", extra={
-            "poll_interval": self.poll_interval,
-        })
+        logger.info(
+            "Starting API-Football ingestion loop",
+            extra={
+                "poll_interval": self.poll_interval,
+            },
+        )
 
         while True:
             try:
@@ -533,6 +542,7 @@ class APIFootballIngestion:
 
         try:
             import json
+
             # Handle both sync and async redis clients
             publish_result = self.redis.publish(
                 f"stats:{match_id}",
@@ -564,12 +574,15 @@ class APIFootballIngestion:
         import hashlib
         import json
 
-        event_key = json.dumps({
-            "type": event_type,
-            "match_id": match_id,
-            "minute": event_data.get("minute"),
-            "player_id": event_data.get("player_id"),
-        }, sort_keys=True)
+        event_key = json.dumps(
+            {
+                "type": event_type,
+                "match_id": match_id,
+                "minute": event_data.get("minute"),
+                "player_id": event_data.get("player_id"),
+            },
+            sort_keys=True,
+        )
 
         return hashlib.md5(event_key.encode(), usedforsecurity=False).hexdigest()
 
@@ -609,12 +622,15 @@ class APIFootballIngestion:
         import hashlib
         import json
 
-        event_key = json.dumps({
-            "type": event.get("type"),
-            "time": event.get("time"),
-            "team_id": event.get("team_id"),
-            "player": event.get("player", {}).get("id"),
-        }, sort_keys=True)
+        event_key = json.dumps(
+            {
+                "type": event.get("type"),
+                "time": event.get("time"),
+                "team_id": event.get("team_id"),
+                "player": event.get("player", {}).get("id"),
+            },
+            sort_keys=True,
+        )
 
         return hashlib.md5(event_key.encode(), usedforsecurity=False).hexdigest()
 

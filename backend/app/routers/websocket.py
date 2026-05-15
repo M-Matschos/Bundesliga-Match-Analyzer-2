@@ -201,7 +201,9 @@ class ConnectionManager:
             match_id: Match ID to listen for
         """
         if not await pubsub_manager.is_connected():
-            logger.warning(f"Redis not connected, skipping listener for match {match_id}")
+            logger.warning(
+                f"Redis not connected, skipping listener for match {match_id}"
+            )
             return
 
         # Define callback to broadcast to all WebSocket clients
@@ -239,7 +241,9 @@ class ConnectionManager:
                 },
             )
         except Exception as e:
-            logger.error(f"Failed to subscribe to Redis channels for match {match_id}: {str(e)}")
+            logger.error(
+                f"Failed to subscribe to Redis channels for match {match_id}: {str(e)}"
+            )
 
     async def stop_listening_for_match(self, match_id: str) -> None:
         """
@@ -481,9 +485,7 @@ async def get_websocket_stats(
     except Exception:
         return {"error": "Invalid token", "status_code": 401}
 
-    total_connections = sum(
-        len(conns) for conns in manager.active_connections.values()
-    )
+    total_connections = sum(len(conns) for conns in manager.active_connections.values())
     active_matches = len(manager.active_connections)
 
     return {

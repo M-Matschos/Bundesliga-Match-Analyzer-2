@@ -271,9 +271,7 @@ class EventPublisher:
                 **kwargs,  # xG, passes, tackles, etc.
             }
 
-            num_subscribers = await pubsub_manager.publish_stats_update(
-                match_id, stats
-            )
+            num_subscribers = await pubsub_manager.publish_stats_update(match_id, stats)
 
             logger.info(
                 "stats_update_published",

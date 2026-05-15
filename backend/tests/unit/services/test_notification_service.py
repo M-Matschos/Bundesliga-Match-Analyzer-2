@@ -226,9 +226,7 @@ class TestNotificationServicePushNotifications:
     """Tests für Push-Benachrichtigungen"""
 
     @pytest.mark.asyncio
-    async def test_send_push_notification_without_firebase(
-        self, notification_service
-    ):
+    async def test_send_push_notification_without_firebase(self, notification_service):
         """Test Push-Benachrichtigung ohne Firebase (Test-Mode)"""
         device_token = "test_token"
         title = "⚽ GOAL"
@@ -278,7 +276,9 @@ class TestNotificationServicePushNotifications:
 
         assert mock_db.fetch.called
         # Mit Circuit-Breaker: Firebase-Fehler → Fallback zu Queue → 2 queued
-        assert result == 2  # 2 Abonnenten, beide in Queue (Firebase nicht initialisiert)
+        assert (
+            result == 2
+        )  # 2 Abonnenten, beide in Queue (Firebase nicht initialisiert)
 
 
 class TestNotificationServiceEventFormatting:

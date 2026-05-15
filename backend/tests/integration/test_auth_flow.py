@@ -184,9 +184,15 @@ class TestAuthFlow:
         token2 = login2.json()["access_token"]
 
         # Both tokens should be valid
-        assert client.get(
-            "/api/v1/auth/me", headers={"Authorization": f"Bearer {token1}"}
-        ).status_code == 200
-        assert client.get(
-            "/api/v1/auth/me", headers={"Authorization": f"Bearer {token2}"}
-        ).status_code == 200
+        assert (
+            client.get(
+                "/api/v1/auth/me", headers={"Authorization": f"Bearer {token1}"}
+            ).status_code
+            == 200
+        )
+        assert (
+            client.get(
+                "/api/v1/auth/me", headers={"Authorization": f"Bearer {token2}"}
+            ).status_code
+            == 200
+        )

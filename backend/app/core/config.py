@@ -38,9 +38,7 @@ class Settings(BaseSettings):
     jwt_secret: str = Field(..., env="JWT_SECRET")
     jwt_algorithm: str = Field(default="HS256", env="JWT_ALGORITHM")
     jwt_expire_minutes: int = Field(default=10080, env="JWT_EXPIRE_MINUTES")  # 7 days
-    jwt_refresh_expire_days: int = Field(
-        default=30, env="JWT_REFRESH_EXPIRE_DAYS"
-    )
+    jwt_refresh_expire_days: int = Field(default=30, env="JWT_REFRESH_EXPIRE_DAYS")
     bcrypt_rounds: int = Field(default=12, env="BCRYPT_ROUNDS")
 
     # --- CORS ---
@@ -49,8 +47,13 @@ class Settings(BaseSettings):
         env="CORS_ORIGINS",
     )
     cors_allow_credentials: bool = Field(default=True, env="CORS_ALLOW_CREDENTIALS")
-    cors_allow_methods: str = Field(default="GET,POST,PUT,DELETE,OPTIONS,PATCH", env="CORS_ALLOW_METHODS")
-    cors_allow_headers: str = Field(default="Content-Type,Authorization,X-Requested-With,Accept,Accept-Language", env="CORS_ALLOW_HEADERS")
+    cors_allow_methods: str = Field(
+        default="GET,POST,PUT,DELETE,OPTIONS,PATCH", env="CORS_ALLOW_METHODS"
+    )
+    cors_allow_headers: str = Field(
+        default="Content-Type,Authorization,X-Requested-With,Accept,Accept-Language",
+        env="CORS_ALLOW_HEADERS",
+    )
 
     # --- API KEYS (External Services) ---
     api_football_key: str = Field(..., env="API_FOOTBALL_KEY")
@@ -74,9 +77,7 @@ class Settings(BaseSettings):
         env="OPENWEATHER_BASE_URL",
     )
 
-    tipico_affiliate_id: Optional[str] = Field(
-        default=None, env="TIPICO_AFFILIATE_ID"
-    )
+    tipico_affiliate_id: Optional[str] = Field(default=None, env="TIPICO_AFFILIATE_ID")
 
     # --- CELERY (Background Tasks) ---
     celery_broker_url: str = Field(
@@ -86,9 +87,7 @@ class Settings(BaseSettings):
         default="redis://localhost:6379", env="CELERY_RESULT_BACKEND"
     )
     celery_task_serializer: str = Field(default="json", env="CELERY_TASK_SERIALIZER")
-    celery_accept_content: str = Field(
-        default="json", env="CELERY_ACCEPT_CONTENT"
-    )
+    celery_accept_content: str = Field(default="json", env="CELERY_ACCEPT_CONTENT")
 
     # --- ML MODELS ---
     ml_model_dir: str = Field(default="backend/ml/models/trained", env="ML_MODEL_DIR")
@@ -99,22 +98,16 @@ class Settings(BaseSettings):
 
     # --- LOGGING ---
     log_level: str = Field(default="INFO", env="LOG_LEVEL")
-    log_format: str = Field(
-        default="json", env="LOG_FORMAT"
-    )  # json or text
+    log_format: str = Field(default="json", env="LOG_FORMAT")  # json or text
     sentry_dsn: Optional[str] = Field(default=None, env="SENTRY_DSN")
 
     # --- RATE LIMITING ---
     rate_limit_enabled: bool = Field(default=True, env="RATE_LIMIT_ENABLED")
     rate_limit_requests: int = Field(default=100, env="RATE_LIMIT_REQUESTS")
-    rate_limit_window_seconds: int = Field(
-        default=60, env="RATE_LIMIT_WINDOW_SECONDS"
-    )
+    rate_limit_window_seconds: int = Field(default=60, env="RATE_LIMIT_WINDOW_SECONDS")
 
     # --- FEATURE FLAGS ---
-    feature_virtual_betting: bool = Field(
-        default=True, env="FEATURE_VIRTUAL_BETTING"
-    )
+    feature_virtual_betting: bool = Field(default=True, env="FEATURE_VIRTUAL_BETTING")
     feature_value_bets: bool = Field(default=True, env="FEATURE_VALUE_BETS")
     feature_live_ticker: bool = Field(default=False, env="FEATURE_LIVE_TICKER")
     feature_webhooks: bool = Field(default=False, env="FEATURE_WEBHOOKS")
@@ -133,7 +126,6 @@ class Settings(BaseSettings):
         if len(v) < 32:
             raise ValueError("JWT_SECRET must be at least 32 characters")
         return v
-
 
     @field_validator("cors_allow_methods", mode="before")
     @classmethod

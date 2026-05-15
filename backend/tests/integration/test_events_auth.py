@@ -56,10 +56,7 @@ class TestEventsAuthorization:
 
     @pytest.mark.asyncio
     async def test_get_current_admin_user_requires_valid_token(
-        self,
-        client: TestClient,
-        async_db_session: AsyncSession,
-        setup_matches
+        self, client: TestClient, async_db_session: AsyncSession, setup_matches
     ):
         """Test: Missing authorization header returns 401 Unauthorized."""
         match = setup_matches
@@ -120,7 +117,9 @@ class TestEventsAuthorization:
         assert response.status_code == 403
         assert "admin" in response.json().get("detail", "").lower()
 
-    @pytest.mark.xfail(reason="Async/sync session mismatch in TestClient + async router", run=True)
+    @pytest.mark.xfail(
+        reason="Async/sync session mismatch in TestClient + async router", run=True
+    )
     def test_get_current_admin_user_accepts_admin(
         self,
         client: TestClient,

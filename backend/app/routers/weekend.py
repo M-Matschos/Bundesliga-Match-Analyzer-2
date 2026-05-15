@@ -26,10 +26,11 @@ odds_api = OddsCollector()
 
 # ─── Pydantic Schemas ────────────────────────────────────────
 
+
 class WeekendRequest(BaseModel):
     leagues: List[str] = ["bundesliga", "bundesliga2"]
-    date_from: Optional[str] = None   # ISO Format: "2025-03-29"
-    date_to:   Optional[str] = None   # ISO Format: "2025-03-30"
+    date_from: Optional[str] = None  # ISO Format: "2025-03-29"
+    date_to: Optional[str] = None  # ISO Format: "2025-03-30"
     simulations: int = 100_000
 
     class Config:
@@ -38,7 +39,7 @@ class WeekendRequest(BaseModel):
                 "leagues": ["bundesliga", "bundesliga2"],
                 "date_from": "2025-03-29",
                 "date_to": "2025-03-30",
-                "simulations": 100000
+                "simulations": 100000,
             }
         }
 
@@ -46,13 +47,14 @@ class WeekendRequest(BaseModel):
 # ─── Helper ──────────────────────────────────────────────────
 
 LEAGUE_IDS = {
-    "bundesliga":     78,
-    "bundesliga2":    79,
+    "bundesliga": 78,
+    "bundesliga2": 79,
     "premier-league": 39,
-    "championship":   40,
+    "championship": 40,
     "champions-league": 2,
-    "dfb-pokal":      81,
+    "dfb-pokal": 81,
 }
+
 
 def get_next_weekend() -> tuple[str, str]:
     """Ermittelt das nächste Spielwochenende (Fr–So)."""
@@ -64,21 +66,35 @@ def get_next_weekend() -> tuple[str, str]:
     sunday = friday + timedelta(days=2)
     return friday.strftime("%Y-%m-%d"), sunday.strftime("%Y-%m-%d")
 
+
 def build_summary(matches: list) -> dict:
-    high = sum(1 for m in matches if m.get("prediction", {}).get("confidence_label") == "HOCH")
-    medium = sum(1 for m in matches if m.get("prediction", {}).get("confidence_label") == "MITTEL")
-    low = sum(1 for m in matches if m.get("prediction", {}).get("confidence_label") == "NIEDRIG")
-    value_bets = sum(1 for m in matches if m.get("prediction", {}).get("value_bet", {}).get("exists"))
+    high = sum(
+        1 for m in matches if m.get("prediction", {}).get("confidence_label") == "HOCH"
+    )
+    medium = sum(
+        1
+        for m in matches
+        if m.get("prediction", {}).get("confidence_label") == "MITTEL"
+    )
+    low = sum(
+        1
+        for m in matches
+        if m.get("prediction", {}).get("confidence_label") == "NIEDRIG"
+    )
+    value_bets = sum(
+        1 for m in matches if m.get("prediction", {}).get("value_bet", {}).get("exists")
+    )
     return {
-        "total_matches":    len(matches),
-        "high_confidence":  high,
+        "total_matches": len(matches),
+        "high_confidence": high,
         "medium_confidence": medium,
-        "low_confidence":   low,
-        "value_bets_found": value_bets
+        "low_confidence": low,
+        "value_bets_found": value_bets,
     }
 
 
 # ─── Hintergrund-Task ────────────────────────────────────────
+
 
 async def run_weekend_calculation(job_id: str, request: WeekendRequest):
     """
@@ -88,7 +104,9 @@ async def run_weekend_calculation(job_id: str, request: WeekendRequest):
     try:
         # Status: läuft
         if cache:
-            await cache.set(f"weekend_job:{job_id}", {"status": "calculating", "progress": 0})
+            await cache.set(
+                f"weekend_job:{job_id}", {"status": "calculating", "progress": 0}
+            )
 
         all_matches = []
         for league in request.leagues:
@@ -98,7 +116,7 @@ async def run_weekend_calculation(job_id: str, request: WeekendRequest):
             matches = await football_api.get_fixtures(
                 league_id=league_id,
                 date_from=request.date_from,
-                date_to=request.date_to
+                date_to=request.date_to,
             )
             all_matches.extend(matches)
 
@@ -107,17 +125,19 @@ async def run_weekend_calculation(job_id: str, request: WeekendRequest):
             # Fortschritt updaten
             if cache and len(all_matches) > 0:
                 progress = int((i / len(all_matches)) * 100)
-                await cache.set(f"weekend_job:{job_id}", {
-                    "status": "calculating",
-                    "progress": progress,
-                    "current_match": f"{match['home_team']['name']} vs {match['away_team']['name']}"
-                })
+                await cache.set(
+                    f"weekend_job:{job_id}",
+                    {
+                        "status": "calculating",
+                        "progress": progress,
+                        "current_match": f"{match['home_team']['name']} vs {match['away_team']['name']}",
+                    },
+                )
 
             # Features bauen + Prognose berechnen
             features = await build_features(match)
             prediction = simulator.simulate(
-                lambda_home=features["lambda_home"],
-                lambda_away=features["lambda_away"]
+                lambda_home=features["lambda_home"], lambda_away=features["lambda_away"]
             )
             prediction["shap_top3"] = features.get("shap_top3", [])
 
@@ -134,14 +154,18 @@ async def run_weekend_calculation(job_id: str, request: WeekendRequest):
                 "status": "completed",
                 "calculated_at": datetime.utcnow().isoformat() + "Z",
                 "matches": results,
-                "summary": build_summary(results)
+                "summary": build_summary(results),
             }
             await cache.set(f"weekend_result:{job_id}", final_result, ttl=86400)
-            await cache.set(f"weekend_job:{job_id}", {"status": "completed", "progress": 100})
+            await cache.set(
+                f"weekend_job:{job_id}", {"status": "completed", "progress": 100}
+            )
 
     except Exception as e:
         if cache:
-            await cache.set(f"weekend_job:{job_id}", {"status": "error", "error": str(e)})
+            await cache.set(
+                f"weekend_job:{job_id}", {"status": "error", "error": str(e)}
+            )
         raise
 
 
@@ -149,8 +173,8 @@ def check_value_bet(prediction: dict, odds: dict) -> dict:
     """Prüft ob ein Value Bet vorhanden ist (unsere Wk > implizite Bookmaker-Wk)."""
     selections = {
         "home_win": prediction["home_win"],
-        "draw":     prediction["draw"],
-        "away_win": prediction["away_win"]
+        "draw": prediction["draw"],
+        "away_win": prediction["away_win"],
     }
     best_value = {"exists": False}
 
@@ -169,12 +193,13 @@ def check_value_bet(prediction: dict, odds: dict) -> dict:
                     "edge": round(edge, 3),
                     "edge_percent": round(edge * 100, 1),
                     "best_odds": odds[selection]["best_odds"],
-                    "best_bookmaker": odds[selection]["bookmaker"]
+                    "best_bookmaker": odds[selection]["bookmaker"],
                 }
     return best_value
 
 
 # ─── API Endpunkte ───────────────────────────────────────────
+
 
 @router.post("/calculate")
 async def calculate_weekend(request: WeekendRequest, background_tasks: BackgroundTasks):
@@ -200,7 +225,9 @@ async def calculate_weekend(request: WeekendRequest, background_tasks: Backgroun
     total_matches = 0
     for league in request.leagues:
         if league in LEAGUE_IDS:
-            fixtures = await football_api.get_fixtures(LEAGUE_IDS[league], request.date_from, request.date_to)
+            fixtures = await football_api.get_fixtures(
+                LEAGUE_IDS[league], request.date_from, request.date_to
+            )
             total_matches += len(fixtures)
 
     # Berechnung im Hintergrund starten
@@ -215,8 +242,8 @@ async def calculate_weekend(request: WeekendRequest, background_tasks: Backgroun
             "estimated_seconds": total_matches * 0.8,
             "date_from": request.date_from,
             "date_to": request.date_to,
-            "poll_url": f"/api/v1/weekend/results/{job_id}"
-        }
+            "poll_url": f"/api/v1/weekend/results/{job_id}",
+        },
     )
 
 
@@ -252,10 +279,10 @@ async def get_next_weekend_matches(leagues: str = "bundesliga,bundesliga2"):
 
     return {
         "date_from": date_from,
-        "date_to":   date_to,
-        "leagues":   league_list,
-        "total":     len(all_matches),
-        "matches":   all_matches
+        "date_to": date_to,
+        "leagues": league_list,
+        "total": len(all_matches),
+        "matches": all_matches,
     }
 
 
@@ -276,8 +303,7 @@ async def get_matchday(league: str, matchday: int):
     for match in matches:
         features = await build_features(match)
         prediction = simulator.simulate(
-            lambda_home=features["lambda_home"],
-            lambda_away=features["lambda_away"]
+            lambda_home=features["lambda_home"], lambda_away=features["lambda_away"]
         )
 
         result_entry = {**match, "prediction": prediction}
@@ -285,19 +311,20 @@ async def get_matchday(league: str, matchday: int):
         # Wenn Spiel schon gespielt: Backtest-Vergleich
         if match.get("home_goals") is not None:
             actual_outcome = (
-                "home_win" if match["home_goals"] > match["away_goals"]
-                else "draw" if match["home_goals"] == match["away_goals"]
+                "home_win"
+                if match["home_goals"] > match["away_goals"]
+                else "draw"
+                if match["home_goals"] == match["away_goals"]
                 else "away_win"
             )
             predicted_outcome = max(
-                ["home_win", "draw", "away_win"],
-                key=lambda x: prediction[x]
+                ["home_win", "draw", "away_win"], key=lambda x: prediction[x]
             )
             result_entry["backtest"] = {
-                "actual_outcome":    actual_outcome,
+                "actual_outcome": actual_outcome,
                 "predicted_outcome": predicted_outcome,
-                "correct":           actual_outcome == predicted_outcome,
-                "actual_score":      f"{match['home_goals']}:{match['away_goals']}"
+                "correct": actual_outcome == predicted_outcome,
+                "actual_score": f"{match['home_goals']}:{match['away_goals']}",
             }
 
         results.append(result_entry)
@@ -306,8 +333,8 @@ async def get_matchday(league: str, matchday: int):
     total_finished = sum(1 for r in results if "backtest" in r)
 
     return {
-        "league":   league,
+        "league": league,
         "matchday": matchday,
-        "matches":  results,
-        "accuracy": round(correct / total_finished, 3) if total_finished > 0 else None
+        "matches": results,
+        "accuracy": round(correct / total_finished, 3) if total_finished > 0 else None,
     }

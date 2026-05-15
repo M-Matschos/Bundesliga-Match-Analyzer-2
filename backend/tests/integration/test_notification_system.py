@@ -24,7 +24,9 @@ class TestDeviceRegistration:
     """Tests for POST /api/v1/notifications/register-device"""
 
     @pytest.mark.asyncio
-    async def test_device_registration_creates_entry(self, async_db_session: AsyncSession):
+    async def test_device_registration_creates_entry(
+        self, async_db_session: AsyncSession
+    ):
         """Test: Device registration creates database entry."""
         # Arrange
         user = User(
@@ -52,6 +54,7 @@ class TestDeviceRegistration:
 
         # Assert
         from sqlalchemy import select
+
         stmt = select(Device).where(Device.user_id == user.id)
         result = await async_db_session.execute(stmt)
         devices = result.scalars().all()
@@ -66,7 +69,9 @@ class TestMatchSubscription:
     """Tests for POST /api/v1/notifications/subscribe-match"""
 
     @pytest.mark.asyncio
-    async def test_subscribe_match_creates_subscription(self, async_db_session: AsyncSession):
+    async def test_subscribe_match_creates_subscription(
+        self, async_db_session: AsyncSession
+    ):
         """Test: Subscribe to match creates database entry."""
         # Arrange
         user = User(
@@ -101,6 +106,7 @@ class TestMatchSubscription:
 
         # Assert
         from sqlalchemy import select
+
         stmt = select(MatchSubscription).where(MatchSubscription.user_id == user.id)
         result = await async_db_session.execute(stmt)
         subscriptions = result.scalars().all()
@@ -113,7 +119,9 @@ class TestEventToNotification:
     """Tests for Event → Notification integration"""
 
     @pytest.mark.asyncio
-    async def test_goal_event_sends_fcm_to_subscribers(self, async_db_session: AsyncSession):
+    async def test_goal_event_sends_fcm_to_subscribers(
+        self, async_db_session: AsyncSession
+    ):
         """Test: Goal event sends FCM notification to all match subscribers."""
         # Arrange
         user1 = User(
@@ -167,7 +175,9 @@ class TestEventToNotification:
         await async_db_session.commit()
 
         # Mock FCM
-        with patch("app.services.notification_service.send_fcm_notification") as mock_fcm:
+        with patch(
+            "app.services.notification_service.send_fcm_notification"
+        ) as mock_fcm:
             mock_fcm.return_value = True
 
             # Act: Simulate goal event
@@ -175,18 +185,23 @@ class TestEventToNotification:
                 user_id=user1.id,
                 match_id=match.id,
                 notification_type="goal",
-                payload=json.dumps({
-                    "team": "home",
-                    "player": "Lewandowski",
-                    "minute": 45,
-                }),
+                payload=json.dumps(
+                    {
+                        "team": "home",
+                        "player": "Lewandowski",
+                        "minute": 45,
+                    }
+                ),
             )
             async_db_session.add(notification_history)
             await async_db_session.commit()
 
         # Assert
         from sqlalchemy import select
-        stmt = select(NotificationHistory).where(NotificationHistory.match_id == match.id)
+
+        stmt = select(NotificationHistory).where(
+            NotificationHistory.match_id == match.id
+        )
         result = await async_db_session.execute(stmt)
         notifications = result.scalars().all()
 
@@ -198,7 +213,9 @@ class TestNotificationHistory:
     """Tests for notification history tracking"""
 
     @pytest.mark.asyncio
-    async def test_notification_history_tracks_sent(self, async_db_session: AsyncSession):
+    async def test_notification_history_tracks_sent(
+        self, async_db_session: AsyncSession
+    ):
         """Test: Notification history tracks all sent notifications."""
         # Arrange
         user = User(
@@ -244,6 +261,7 @@ class TestNotificationHistory:
 
         # Assert
         from sqlalchemy import select
+
         stmt = select(NotificationHistory).where(NotificationHistory.user_id == user.id)
         result = await async_db_session.execute(stmt)
         history = result.scalars().all()

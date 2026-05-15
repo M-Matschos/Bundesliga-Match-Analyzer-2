@@ -16,6 +16,7 @@ router = APIRouter(tags=["teams"])
 
 # ─── Helpers ──────────────────────────────────────────────────
 
+
 async def _get_team(team_id: str, db: AsyncSession) -> Team:
     """Lookup by UUID first, fall back to name (mobile passes names as IDs)."""
     try:
@@ -32,6 +33,7 @@ async def _get_team(team_id: str, db: AsyncSession) -> Team:
 
 
 # ─── Standings (defined before /{team_id} to avoid routing conflict) ──
+
 
 @router.get("/standings/{league}")
 async def get_standings(
@@ -54,29 +56,34 @@ async def get_standings(
     standings = []
     for rank, t in enumerate(teams, start=1):
         played = t.wins + t.draws + t.losses
-        standings.append({
-            "rank": rank,
-            "team_id": str(t.id),
-            "team_name": t.name,
-            "logo_url": t.logo_url,
-            "played": played,
-            "wins": t.wins,
-            "draws": t.draws,
-            "losses": t.losses,
-            "goals_for": t.goals_for,
-            "goals_against": t.goals_against,
-            "goal_difference": t.goals_for - t.goals_against,
-            "points": t.points,
-        })
+        standings.append(
+            {
+                "rank": rank,
+                "team_id": str(t.id),
+                "team_name": t.name,
+                "logo_url": t.logo_url,
+                "played": played,
+                "wins": t.wins,
+                "draws": t.draws,
+                "losses": t.losses,
+                "goals_for": t.goals_for,
+                "goals_against": t.goals_against,
+                "goal_difference": t.goals_for - t.goals_against,
+                "points": t.points,
+            }
+        )
 
     return {"league": league, "season": season, "standings": standings}
 
 
 # ─── List Teams ───────────────────────────────────────────────
 
+
 @router.get("")
 async def list_teams(
-    league: Optional[str] = Query(None, description="Filter by league (e.g. bundesliga)"),
+    league: Optional[str] = Query(
+        None, description="Filter by league (e.g. bundesliga)"
+    ),
     db: AsyncSession = Depends(get_db),
 ) -> dict:
     """List all teams, optionally filtered by league."""
@@ -105,6 +112,7 @@ async def list_teams(
 
 
 # ─── Get Single Team ──────────────────────────────────────────
+
 
 @router.get("/{team_id}")
 async def get_team(
@@ -135,6 +143,7 @@ async def get_team(
 
 
 # ─── Team Form ────────────────────────────────────────────────
+
 
 @router.get("/{team_id}/form")
 async def get_team_form(
@@ -180,16 +189,18 @@ async def get_team_form(
         else:
             result_label = "?"
 
-        recent.append({
-            "match_id": str(m.id),
-            "kickoff": m.kickoff.isoformat(),
-            "home_team_id": str(m.home_team_id),
-            "away_team_id": str(m.away_team_id),
-            "home_score": m.home_score,
-            "away_score": m.away_score,
-            "result": result_label,
-            "location": "home" if is_home else "away",
-        })
+        recent.append(
+            {
+                "match_id": str(m.id),
+                "kickoff": m.kickoff.isoformat(),
+                "home_team_id": str(m.home_team_id),
+                "away_team_id": str(m.away_team_id),
+                "home_score": m.home_score,
+                "away_score": m.away_score,
+                "result": result_label,
+                "location": "home" if is_home else "away",
+            }
+        )
 
     return {
         "team_id": str(team.id),
@@ -207,6 +218,7 @@ async def get_team_form(
 
 
 # ─── Head-to-Head ─────────────────────────────────────────────
+
 
 @router.get("/{team_id}/h2h/{opponent_id}")
 async def get_head_to_head(
@@ -252,14 +264,16 @@ async def get_head_to_head(
             goals_for += ts
             goals_against += os_
 
-        h2h_matches.append({
-            "match_id": str(m.id),
-            "kickoff": m.kickoff.isoformat(),
-            "home_team_id": str(m.home_team_id),
-            "away_team_id": str(m.away_team_id),
-            "home_score": m.home_score,
-            "away_score": m.away_score,
-        })
+        h2h_matches.append(
+            {
+                "match_id": str(m.id),
+                "kickoff": m.kickoff.isoformat(),
+                "home_team_id": str(m.home_team_id),
+                "away_team_id": str(m.away_team_id),
+                "home_score": m.home_score,
+                "away_score": m.away_score,
+            }
+        )
 
     return {
         "team": {"id": str(team.id), "name": team.name},
@@ -277,6 +291,7 @@ async def get_head_to_head(
 
 # ─── Extended Stats ───────────────────────────────────────────
 
+
 @router.get("/{team_id}/extended")
 async def get_team_extended(
     team_id: str,
@@ -286,15 +301,25 @@ async def get_team_extended(
     team = await _get_team(team_id, db)
     played = team.wins + team.draws + team.losses
 
-    home_r = (await db.execute(
-        select(func.count(), func.coalesce(func.sum(Match.home_score), 0), func.coalesce(func.sum(Match.away_score), 0))
-        .where(Match.home_team_id == team.id, Match.status == "finished")
-    )).one()
+    home_r = (
+        await db.execute(
+            select(
+                func.count(),
+                func.coalesce(func.sum(Match.home_score), 0),
+                func.coalesce(func.sum(Match.away_score), 0),
+            ).where(Match.home_team_id == team.id, Match.status == "finished")
+        )
+    ).one()
 
-    away_r = (await db.execute(
-        select(func.count(), func.coalesce(func.sum(Match.away_score), 0), func.coalesce(func.sum(Match.home_score), 0))
-        .where(Match.away_team_id == team.id, Match.status == "finished")
-    )).one()
+    away_r = (
+        await db.execute(
+            select(
+                func.count(),
+                func.coalesce(func.sum(Match.away_score), 0),
+                func.coalesce(func.sum(Match.home_score), 0),
+            ).where(Match.away_team_id == team.id, Match.status == "finished")
+        )
+    ).one()
 
     home_played, home_gf, home_ga = home_r[0] or 0, home_r[1] or 0, home_r[2] or 0
     away_played, away_gf, away_ga = away_r[0] or 0, away_r[1] or 0, away_r[2] or 0
@@ -316,6 +341,7 @@ async def get_team_extended(
 
 # ─── Table Position ───────────────────────────────────────────
 
+
 @router.get("/{team_id}/position")
 async def get_team_position(
     team_id: str,
@@ -334,15 +360,20 @@ async def get_team_position(
 
 # ─── Create / Update (admin) ──────────────────────────────────
 
+
 @router.post("", status_code=status.HTTP_201_CREATED)
 async def create_team(
     payload: TeamCreate,
     db: AsyncSession = Depends(get_db),
 ) -> dict:
     """Create a new team entry."""
-    existing = (await db.execute(select(Team).where(Team.name == payload.name))).scalar_one_or_none()
+    existing = (
+        await db.execute(select(Team).where(Team.name == payload.name))
+    ).scalar_one_or_none()
     if existing:
-        raise HTTPException(status_code=409, detail=f"Team already exists: {payload.name}")
+        raise HTTPException(
+            status_code=409, detail=f"Team already exists: {payload.name}"
+        )
 
     team = Team(
         id=uuid.uuid4(),

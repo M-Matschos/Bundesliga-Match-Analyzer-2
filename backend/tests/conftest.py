@@ -24,9 +24,17 @@ os.environ["REDIS_URL"] = "redis://localhost:6379/1"
 from app.core.config import get_settings, Settings
 from app.core.security import hash_password, create_token
 from app.core.redis_pubsub import RedisPubSubManager
-from app.models.db import Base, User, Team, Match, Bet, Device, MatchSubscription, Prediction
+from app.models.db import (
+    Base,
+    User,
+    Team,
+    Match,
+    Bet,
+    Device,
+    MatchSubscription,
+    Prediction,
+)
 from app.main import app
-
 
 
 @pytest.fixture
@@ -38,6 +46,7 @@ def settings() -> Settings:
 # ============================================================================
 # SYNC FIXTURES (for TestClient-based integration tests)
 # ============================================================================
+
 
 @pytest.fixture
 def db_session() -> Generator[Session, None, None]:
@@ -253,7 +262,9 @@ def db_device(db_session: Session, db_user: User) -> Device:
 
 
 @pytest.fixture
-def db_match_subscription(db_session: Session, db_user: User, db_match: Match) -> MatchSubscription:
+def db_match_subscription(
+    db_session: Session, db_user: User, db_match: Match
+) -> MatchSubscription:
     """Create test match subscription."""
     subscription = MatchSubscription(
         id=uuid4(),
@@ -285,6 +296,7 @@ def mock_cache():
 
     Returns a simple in-memory cache implementation.
     """
+
     class InMemoryCache:
         def __init__(self):
             self.store = {}
@@ -304,8 +316,11 @@ def mock_cache():
 
         async def clear_pattern(self, pattern: str):
             import fnmatch
+
             count = 0
-            keys_to_delete = [k for k in self.store.keys() if fnmatch.fnmatch(k, pattern)]
+            keys_to_delete = [
+                k for k in self.store.keys() if fnmatch.fnmatch(k, pattern)
+            ]
             for key in keys_to_delete:
                 del self.store[key]
                 count += 1
@@ -323,7 +338,8 @@ def clear_rate_limit_state():
     # Clear before test
     try:
         from app.routers import auth
-        if hasattr(auth, 'limiter') and hasattr(auth.limiter, '_storage'):
+
+        if hasattr(auth, "limiter") and hasattr(auth.limiter, "_storage"):
             auth.limiter._storage.reset()
     except TypeError as e:
         # clear() requires key argument in slowapi, use reset() instead
@@ -331,7 +347,8 @@ def clear_rate_limit_state():
 
     try:
         from app.main import app
-        if hasattr(app.state, 'limiter') and hasattr(app.state.limiter, '_storage'):
+
+        if hasattr(app.state, "limiter") and hasattr(app.state.limiter, "_storage"):
             app.state.limiter._storage.reset()
     except TypeError as e:
         # reset() properly clears slowapi storage without arguments
@@ -342,7 +359,8 @@ def clear_rate_limit_state():
     # Optionally clear after test
     try:
         from app.routers import auth
-        if hasattr(auth, 'limiter') and hasattr(auth.limiter, '_storage'):
+
+        if hasattr(auth, "limiter") and hasattr(auth.limiter, "_storage"):
             auth.limiter._storage.reset()
     except TypeError as e:
         pass
@@ -363,6 +381,7 @@ def client(db_session: Session) -> TestClient:
     # Setup in-memory cache BEFORE importing app
     from app.core.cache import _InMemoryCache
     import app.core.cache as cache_module
+
     cache_module.cache = _InMemoryCache()
 
     # Use the same test database file as db_session
@@ -413,6 +432,7 @@ def client_with_auth(client: TestClient, auth_headers: dict) -> TestClient:
 # ASYNC FIXTURES (for true async tests with @pytest.mark.asyncio)
 # ============================================================================
 
+
 @pytest.fixture
 async def async_db_session() -> AsyncGenerator[AsyncSession, None]:
     """Create async database session for testing.
@@ -429,7 +449,9 @@ async def async_db_session() -> AsyncGenerator[AsyncSession, None]:
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
 
-    async_session = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
+    async_session = async_sessionmaker(
+        engine, class_=AsyncSession, expire_on_commit=False
+    )
 
     async with async_session() as session:
         yield session
@@ -528,7 +550,9 @@ async def async_db_completed_match(async_db_session: AsyncSession) -> Match:
 
 
 @pytest.fixture
-async def async_db_bet(async_db_session: AsyncSession, async_db_user: User, async_db_match: Match) -> Bet:
+async def async_db_bet(
+    async_db_session: AsyncSession, async_db_user: User, async_db_match: Match
+) -> Bet:
     """Create test bet in async database (pending status)."""
     bet = Bet(
         id=uuid4(),
@@ -548,6 +572,7 @@ async def async_db_bet(async_db_session: AsyncSession, async_db_user: User, asyn
 # ============================================================================
 # TEST DATA FIXTURES
 # ============================================================================
+
 
 @pytest.fixture
 def test_user_data() -> dict:
@@ -599,6 +624,7 @@ def test_prediction_data() -> dict:
 # MOCKED SERVICES
 # ============================================================================
 
+
 @pytest.fixture
 async def pubsub_manager(mocker) -> RedisPubSubManager:
     """Create a RedisPubSubManager instance with mocked Redis for testing.
@@ -621,6 +647,7 @@ async def pubsub_manager(mocker) -> RedisPubSubManager:
 # ============================================================================
 # CACHE INITIALIZATION FIXTURES
 # ============================================================================
+
 
 @pytest.fixture(scope="session")
 async def init_cache_fixture():

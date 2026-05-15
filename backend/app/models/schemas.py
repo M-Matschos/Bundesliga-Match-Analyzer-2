@@ -246,7 +246,9 @@ class MatchDetailResponse(MatchResponse):
 
     home_xg: Optional[float] = Field(None, description="Expected goals (home)")
     away_xg: Optional[float] = Field(None, description="Expected goals (away)")
-    api_football_id: Optional[int] = Field(None, description="API-Football ID for external sync")
+    api_football_id: Optional[int] = Field(
+        None, description="API-Football ID for external sync"
+    )
 
     class Config:
         """Pydantic config."""
@@ -285,12 +287,7 @@ class MatchListResponse(BaseModel):
 
         from_attributes = True
         json_schema_extra = {
-            "example": {
-                "total": 306,
-                "limit": 50,
-                "offset": 0,
-                "matches": []
-            }
+            "example": {"total": 306, "limit": 50, "offset": 0, "matches": []}
         }
 
 

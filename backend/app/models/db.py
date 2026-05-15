@@ -27,12 +27,14 @@ engine_kwargs = {
 }
 
 if not is_sqlite:
-    engine_kwargs.update({
-        "pool_size": settings.db_pool_size,
-        "max_overflow": settings.db_max_overflow,
-        "pool_pre_ping": True,
-        "pool_recycle": 3600,
-    })
+    engine_kwargs.update(
+        {
+            "pool_size": settings.db_pool_size,
+            "max_overflow": settings.db_max_overflow,
+            "pool_pre_ping": True,
+            "pool_recycle": 3600,
+        }
+    )
 else:
     # SQLite-specific settings
     engine_kwargs["connect_args"] = {"timeout": 30, "check_same_thread": False}
@@ -100,7 +102,16 @@ async def close_db() -> None:
         logger.error(f"Error closing database: {e}")
 
 
-from sqlalchemy import Column, String, Boolean, Integer, Float, ForeignKey, Index, DateTime
+from sqlalchemy import (
+    Column,
+    String,
+    Boolean,
+    Integer,
+    Float,
+    ForeignKey,
+    Index,
+    DateTime,
+)
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlalchemy.orm import relationship
 
@@ -118,10 +129,14 @@ class User(Base):
     is_active = Column(Boolean, default=True, nullable=False)
     is_superuser = Column(Boolean, default=False, nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+    updated_at = Column(
+        DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False
+    )
     last_login = Column(DateTime, nullable=True)
 
-    predictions = relationship("Prediction", back_populates="user", cascade="all, delete-orphan")
+    predictions = relationship(
+        "Prediction", back_populates="user", cascade="all, delete-orphan"
+    )
     bets = relationship("Bet", back_populates="user", cascade="all, delete-orphan")
 
 
@@ -142,10 +157,16 @@ class Team(Base):
     goals_against = Column(Integer, default=0, nullable=False)
     points = Column(Integer, default=0, nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+    updated_at = Column(
+        DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False
+    )
 
-    home_matches = relationship("Match", foreign_keys="[Match.home_team_id]", back_populates="home_team")
-    away_matches = relationship("Match", foreign_keys="[Match.away_team_id]", back_populates="away_team")
+    home_matches = relationship(
+        "Match", foreign_keys="[Match.home_team_id]", back_populates="home_team"
+    )
+    away_matches = relationship(
+        "Match", foreign_keys="[Match.away_team_id]", back_populates="away_team"
+    )
 
 
 class Match(Base):
@@ -155,8 +176,18 @@ class Match(Base):
 
     id = Column(PG_UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     api_football_id = Column(Integer, unique=True, nullable=True, index=True)
-    home_team_id = Column(PG_UUID(as_uuid=True), ForeignKey("teams.id", ondelete="RESTRICT"), nullable=False, index=True)
-    away_team_id = Column(PG_UUID(as_uuid=True), ForeignKey("teams.id", ondelete="RESTRICT"), nullable=False, index=True)
+    home_team_id = Column(
+        PG_UUID(as_uuid=True),
+        ForeignKey("teams.id", ondelete="RESTRICT"),
+        nullable=False,
+        index=True,
+    )
+    away_team_id = Column(
+        PG_UUID(as_uuid=True),
+        ForeignKey("teams.id", ondelete="RESTRICT"),
+        nullable=False,
+        index=True,
+    )
     league_id = Column(String(50), nullable=False, index=True)
     season = Column(String(10), nullable=False, index=True)
     matchday = Column(Integer, nullable=False)
@@ -167,16 +198,22 @@ class Match(Base):
     home_xg = Column(Float, nullable=True)
     away_xg = Column(Float, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
-
-    predictions = relationship("Prediction", back_populates="match", cascade="all, delete-orphan")
-    bets = relationship("Bet", back_populates="match", cascade="all, delete-orphan")
-    home_team = relationship("Team", foreign_keys=[home_team_id], back_populates="home_matches")
-    away_team = relationship("Team", foreign_keys=[away_team_id], back_populates="away_matches")
-
-    __table_args__ = (
-        Index("ix_matches_league_season", "league_id", "season"),
+    updated_at = Column(
+        DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False
     )
+
+    predictions = relationship(
+        "Prediction", back_populates="match", cascade="all, delete-orphan"
+    )
+    bets = relationship("Bet", back_populates="match", cascade="all, delete-orphan")
+    home_team = relationship(
+        "Team", foreign_keys=[home_team_id], back_populates="home_matches"
+    )
+    away_team = relationship(
+        "Team", foreign_keys=[away_team_id], back_populates="away_matches"
+    )
+
+    __table_args__ = (Index("ix_matches_league_season", "league_id", "season"),)
 
 
 class Prediction(Base):
@@ -185,8 +222,18 @@ class Prediction(Base):
     __tablename__ = "predictions"
 
     id = Column(PG_UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    match_id = Column(PG_UUID(as_uuid=True), ForeignKey("matches.id", ondelete="CASCADE"), nullable=False, index=True)
-    user_id = Column(PG_UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=True, index=True)
+    match_id = Column(
+        PG_UUID(as_uuid=True),
+        ForeignKey("matches.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    user_id = Column(
+        PG_UUID(as_uuid=True),
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=True,
+        index=True,
+    )
     home_win_prob = Column(Float, nullable=False)
     draw_prob = Column(Float, nullable=False)
     away_win_prob = Column(Float, nullable=False)
@@ -207,7 +254,9 @@ class Prediction(Base):
     betting_outcome = Column(String(20), nullable=True)
 
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+    updated_at = Column(
+        DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False
+    )
 
     match = relationship("Match", back_populates="predictions")
     user = relationship("User", back_populates="predictions")
@@ -219,15 +268,27 @@ class Bet(Base):
     __tablename__ = "bets"
 
     id = Column(PG_UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    user_id = Column(PG_UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
-    match_id = Column(PG_UUID(as_uuid=True), ForeignKey("matches.id", ondelete="CASCADE"), nullable=False, index=True)
+    user_id = Column(
+        PG_UUID(as_uuid=True),
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    match_id = Column(
+        PG_UUID(as_uuid=True),
+        ForeignKey("matches.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
     bet_type = Column(String(20), nullable=False)
     odds = Column(Float, nullable=False)
     amount = Column(Float, nullable=False)
     status = Column(String(20), default="pending", nullable=False)
     win_amount = Column(Float, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+    updated_at = Column(
+        DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False
+    )
 
     user = relationship("User", back_populates="bets")
     match = relationship("Match", back_populates="bets")
@@ -239,12 +300,19 @@ class Device(Base):
     __tablename__ = "devices"
 
     id = Column(PG_UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    user_id = Column(PG_UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    user_id = Column(
+        PG_UUID(as_uuid=True),
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
     device_token = Column(String(255), nullable=False, index=True)
     platform = Column(String(20), nullable=False)  # ios, android, web
     is_active = Column(Boolean, default=True, nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+    updated_at = Column(
+        DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False
+    )
 
     user = relationship("User", cascade="all")
 
@@ -255,8 +323,18 @@ class MatchSubscription(Base):
     __tablename__ = "match_subscriptions"
 
     id = Column(PG_UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    user_id = Column(PG_UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
-    match_id = Column(PG_UUID(as_uuid=True), ForeignKey("matches.id", ondelete="CASCADE"), nullable=False, index=True)
+    user_id = Column(
+        PG_UUID(as_uuid=True),
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    match_id = Column(
+        PG_UUID(as_uuid=True),
+        ForeignKey("matches.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
     subscribed_at = Column(DateTime, default=datetime.utcnow, nullable=False)
 
     user = relationship("User", cascade="all")
@@ -269,9 +347,21 @@ class NotificationHistory(Base):
     __tablename__ = "notification_history"
 
     id = Column(PG_UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    user_id = Column(PG_UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
-    match_id = Column(PG_UUID(as_uuid=True), ForeignKey("matches.id", ondelete="CASCADE"), nullable=False, index=True)
-    notification_type = Column(String(50), nullable=False)  # goal, card, substitution, kickoff, final_whistle
+    user_id = Column(
+        PG_UUID(as_uuid=True),
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    match_id = Column(
+        PG_UUID(as_uuid=True),
+        ForeignKey("matches.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    notification_type = Column(
+        String(50), nullable=False
+    )  # goal, card, substitution, kickoff, final_whistle
     payload = Column(String(1000), nullable=True)
     is_read = Column(Boolean, default=False, nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)

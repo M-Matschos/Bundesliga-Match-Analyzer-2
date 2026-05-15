@@ -60,10 +60,11 @@ class ModelTrainer:
             min_date = datetime.utcnow() - timedelta(days=365 * years)
 
         async with async_session_maker() as session:
-            query = select(Match).where(
-                (Match.kickoff >= min_date) &
-                (Match.status == "finished")
-            ).order_by(Match.kickoff.asc())
+            query = (
+                select(Match)
+                .where((Match.kickoff >= min_date) & (Match.status == "finished"))
+                .order_by(Match.kickoff.asc())
+            )
 
             result = await session.execute(query)
             matches_orm = result.scalars().all()
@@ -71,16 +72,18 @@ class ModelTrainer:
         # Convert ORM to dicts
         matches = []
         for m in matches_orm:
-            matches.append({
-                "id": str(m.id),
-                "home_team": m.home_team_id,
-                "away_team": m.away_team_id,
-                "home_goals": m.home_score or 0,
-                "away_goals": m.away_score or 0,
-                "date": m.kickoff,
-                "league": m.league_id,
-                "season": m.season,
-            })
+            matches.append(
+                {
+                    "id": str(m.id),
+                    "home_team": m.home_team_id,
+                    "away_team": m.away_team_id,
+                    "home_goals": m.home_score or 0,
+                    "away_goals": m.away_score or 0,
+                    "date": m.kickoff,
+                    "league": m.league_id,
+                    "season": m.season,
+                }
+            )
 
         return matches
 
@@ -183,9 +186,15 @@ class ModelTrainer:
         self.metrics["dixon_coles"]["accuracy"] = dc_correct / total
         self.metrics["elo"]["accuracy"] = elo_correct / total
 
-        print(f"   Poisson accuracy: {poisson_correct}/{total} ({self.metrics['poisson']['accuracy']:.2%})")
-        print(f"   Dixon-Coles accuracy: {dc_correct}/{total} ({self.metrics['dixon_coles']['accuracy']:.2%})")
-        print(f"   Elo accuracy: {elo_correct}/{total} ({self.metrics['elo']['accuracy']:.2%})")
+        print(
+            f"   Poisson accuracy: {poisson_correct}/{total} ({self.metrics['poisson']['accuracy']:.2%})"
+        )
+        print(
+            f"   Dixon-Coles accuracy: {dc_correct}/{total} ({self.metrics['dixon_coles']['accuracy']:.2%})"
+        )
+        print(
+            f"   Elo accuracy: {elo_correct}/{total} ({self.metrics['elo']['accuracy']:.2%})"
+        )
 
     def _backtest(self, matches: List[Dict]) -> None:
         """Backtest betting strategy using models.
@@ -243,11 +252,13 @@ class ModelTrainer:
 
             # Only track home/away bets for simplicity
             if actual != 0.5:
-                bets.append({
-                    "our_probability": bet_prob,
-                    "market_odds": bet_odds,
-                    "result": bet_result,
-                })
+                bets.append(
+                    {
+                        "our_probability": bet_prob,
+                        "market_odds": bet_odds,
+                        "result": bet_result,
+                    }
+                )
 
         # Run simulation
         if bets:

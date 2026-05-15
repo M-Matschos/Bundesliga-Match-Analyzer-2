@@ -24,10 +24,10 @@ from app.models.schemas import (
 # ── Shared test fixtures ──────────────────────────────────────────────────────
 # Pydantic v2 enforces UUID fields strictly — always use proper UUIDs.
 
-TEST_USER_UUID  = "550e8400-e29b-41d4-a716-446655440000"
+TEST_USER_UUID = "550e8400-e29b-41d4-a716-446655440000"
 TEST_MATCH_UUID = "660e8400-e29b-41d4-a716-446655440001"
-TEST_PRED_UUID  = "770e8400-e29b-41d4-a716-446655440002"
-TEST_NOW        = datetime.utcnow()
+TEST_PRED_UUID = "770e8400-e29b-41d4-a716-446655440002"
+TEST_NOW = datetime.utcnow()
 
 
 class TestUserSchemas:
@@ -35,35 +35,23 @@ class TestUserSchemas:
 
     def test_user_register_valid(self):
         """Test valid user registration schema."""
-        user = UserRegister(
-            email="test@example.com",
-            password="secure_password_123"
-        )
+        user = UserRegister(email="test@example.com", password="secure_password_123")
         assert user.email == "test@example.com"
         assert user.password == "secure_password_123"
 
     def test_user_register_invalid_email(self):
         """Test invalid email in registration."""
         with pytest.raises(ValidationError):
-            UserRegister(
-                email="not-an-email",
-                password="secure_password_123"
-            )
+            UserRegister(email="not-an-email", password="secure_password_123")
 
     def test_user_register_short_password(self):
         """Test password validation — passwords below min_length=8 must be rejected."""
         with pytest.raises(ValidationError):
-            UserRegister(
-                email="test@example.com",
-                password="short"
-            )
+            UserRegister(email="test@example.com", password="short")
 
     def test_user_login_valid(self):
         """Test valid user login schema."""
-        login = UserLogin(
-            email="test@example.com",
-            password="secure_password_123"
-        )
+        login = UserLogin(email="test@example.com", password="secure_password_123")
         assert login.email == "test@example.com"
         assert login.password == "secure_password_123"
 
@@ -73,7 +61,7 @@ class TestUserSchemas:
             access_token="eyJhbGciOiJIUzI1NiIs...",
             refresh_token="eyJhbGciOiJIUzI1NiIs...",
             token_type="bearer",
-            expires_in=604800
+            expires_in=604800,
         )
         assert token.access_token is not None
         assert token.token_type == "bearer"
@@ -102,7 +90,7 @@ class TestMatchSchemas:
             league_id="bundesliga",
             season="2024-25",
             matchday=28,
-            kickoff="2025-03-29T18:30:00Z"
+            kickoff="2025-03-29T18:30:00Z",
         )
         assert match.home_team_id == "fcb"
         assert match.league_id == "bundesliga"
@@ -169,7 +157,7 @@ class TestPredictionSchemas:
             home_win_prob=0.58,
             draw_prob=0.22,
             away_win_prob=0.20,
-            confidence=0.72
+            confidence=0.72,
         )
         assert pred.home_win_prob == 0.58
         assert pred.confidence == 0.72
@@ -181,7 +169,7 @@ class TestPredictionSchemas:
             home_win_prob=0.58,
             draw_prob=0.22,
             away_win_prob=0.20,
-            confidence=0.72
+            confidence=0.72,
         )
         total_prob = pred.home_win_prob + pred.draw_prob + pred.away_win_prob
         assert abs(total_prob - 1.0) < 0.01
@@ -230,7 +218,7 @@ class TestWeekendCalculatorSchemas:
         req = WeekendCalculateRequest(
             leagues=["bundesliga", "bundesliga2"],
             date_from="2025-03-29",
-            date_to="2025-03-30"
+            date_to="2025-03-30",
         )
         assert len(req.leagues) == 2
         assert "bundesliga" in req.leagues
@@ -238,9 +226,7 @@ class TestWeekendCalculatorSchemas:
     def test_weekend_calculate_request_single_league(self):
         """Test request with single league."""
         req = WeekendCalculateRequest(
-            leagues=["bundesliga"],
-            date_from="2025-03-29",
-            date_to="2025-03-30"
+            leagues=["bundesliga"], date_from="2025-03-29", date_to="2025-03-30"
         )
         assert len(req.leagues) == 1
 
@@ -250,7 +236,7 @@ class TestWeekendCalculatorSchemas:
             leagues=["bundesliga"],
             date_from="2025-03-29",
             date_to="2025-03-30",
-            simulations=100000
+            simulations=100000,
         )
         assert req.simulations == 100000
 
@@ -316,23 +302,13 @@ class TestPaginationSchemas:
             {"id": "1", "name": "Item 1"},
             {"id": "2", "name": "Item 2"},
         ]
-        paged = PagedResponse(
-            total=100,
-            limit=20,
-            offset=0,
-            items=items
-        )
+        paged = PagedResponse(total=100, limit=20, offset=0, items=items)
         assert paged.total == 100
         assert len(paged.items) == 2
 
     def test_paged_response_empty(self):
         """Test paged response with no items."""
-        paged = PagedResponse(
-            total=0,
-            limit=20,
-            offset=0,
-            items=[]
-        )
+        paged = PagedResponse(total=0, limit=20, offset=0, items=[])
         assert paged.total == 0
         assert len(paged.items) == 0
 
@@ -345,7 +321,7 @@ class TestErrorResponse:
         error = ErrorResponse(
             detail="User not found",
             status_code=404,
-            timestamp=datetime.utcnow().isoformat()
+            timestamp=datetime.utcnow().isoformat(),
         )
         assert error.status_code == 404
         assert "User not found" in error.detail
@@ -355,7 +331,7 @@ class TestErrorResponse:
         error = ErrorResponse(
             detail="Internal server error",
             status_code=500,
-            timestamp=datetime.utcnow().isoformat()
+            timestamp=datetime.utcnow().isoformat(),
         )
         assert error.status_code == 500
 
@@ -364,7 +340,7 @@ class TestErrorResponse:
         error = ErrorResponse(
             detail="Validation failed: invalid email format",
             status_code=422,
-            timestamp=datetime.utcnow().isoformat()
+            timestamp=datetime.utcnow().isoformat(),
         )
         assert error.status_code == 422
 

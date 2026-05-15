@@ -118,9 +118,7 @@ class TestPredictionsRouter:
         )
         assert response.status_code == 200
         data = response.json()
-        prob_sum = (
-            data["home_win_prob"] + data["draw_prob"] + data["away_win_prob"]
-        )
+        prob_sum = data["home_win_prob"] + data["draw_prob"] + data["away_win_prob"]
         assert 0.99 <= prob_sum <= 1.01  # Allow small float rounding error
 
     def test_confidence_score_valid_range(self, client, auth_headers, db_match):

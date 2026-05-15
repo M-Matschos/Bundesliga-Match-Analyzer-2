@@ -38,6 +38,7 @@ class TestEventPublishingEndpoint:
     def admin_token(self, db_session):
         """Create admin user and return JWT token."""
         from app.core.security import hash_password, create_token
+
         admin = User(
             id=uuid4(),
             email="admin@test.com",
@@ -87,8 +88,9 @@ class TestEventPublishingEndpoint:
             json=goal_event,
         )
 
-        assert response.status_code == 401, \
-            f"Expected 401, got {response.status_code}: {response.text}"
+        assert (
+            response.status_code == 401
+        ), f"Expected 401, got {response.status_code}: {response.text}"
         assert "authorization" in response.json().get("detail", "").lower()
 
     @pytest.mark.asyncio
@@ -356,7 +358,10 @@ class TestEventNotificationIntegration:
     @pytest.mark.asyncio
     async def test_goal_event_notification_format(self):
         """Test: Goal event formatting produces correct title and body."""
-        from app.routers.events import _format_notification_title, _format_notification_body
+        from app.routers.events import (
+            _format_notification_title,
+            _format_notification_body,
+        )
 
         goal_event = GoalEvent(
             event_type=EventType.GOAL,
@@ -384,7 +389,10 @@ class TestEventNotificationIntegration:
     @pytest.mark.asyncio
     async def test_card_event_notification_format(self):
         """Test: Card event formatting produces correct title and body."""
-        from app.routers.events import _format_notification_title, _format_notification_body
+        from app.routers.events import (
+            _format_notification_title,
+            _format_notification_body,
+        )
 
         card_event = CardEvent(
             event_type=EventType.RED_CARD,
@@ -442,9 +450,7 @@ class TestEventNotificationIntegration:
         from sqlalchemy import select
 
         history_records = await async_db_session.execute(
-            select(NotificationHistory).where(
-                NotificationHistory.match_id == match.id
-            )
+            select(NotificationHistory).where(NotificationHistory.match_id == match.id)
         )
         records = history_records.scalars().all()
 

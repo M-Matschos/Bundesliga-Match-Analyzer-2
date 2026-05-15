@@ -8,7 +8,14 @@ from fastapi import APIRouter, HTTPException, Depends, status, Header
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
-from app.models.db import User, Match, Device, MatchSubscription, NotificationHistory, get_db
+from app.models.db import (
+    User,
+    Match,
+    Device,
+    MatchSubscription,
+    NotificationHistory,
+    get_db,
+)
 from app.models.events import (
     GoalEvent,
     CardEvent,
@@ -144,7 +151,9 @@ async def _send_notifications_to_subscribers(
                     )
                     db.add(notification)
                 except Exception as e:
-                    logger.warning(f"Failed to send FCM to device {device.device_token}: {e}")
+                    logger.warning(
+                        f"Failed to send FCM to device {device.device_token}: {e}"
+                    )
 
         # Commit all history records
         if notification_count > 0:
@@ -175,9 +184,13 @@ def _format_notification_body(event: GoalEvent | CardEvent | SubstitutionEvent) 
     if isinstance(event, GoalEvent):
         return f"{event.player_name} ({event.team}) {event.minute}'"
     elif isinstance(event, CardEvent):
-        return f"{event.card_type.upper()} card for {event.player_name} ({event.minute}')"
+        return (
+            f"{event.card_type.upper()} card for {event.player_name} ({event.minute}')"
+        )
     elif isinstance(event, SubstitutionEvent):
-        return f"{event.player_in_name} on, {event.player_out_name} off ({event.minute}')"
+        return (
+            f"{event.player_in_name} on, {event.player_out_name} off ({event.minute}')"
+        )
     return "Match event occurred"
 
 
@@ -221,7 +234,9 @@ async def publish_event(
         num_subscribers = await pubsub_manager.publish_event(match_id, event)
 
         # Send FCM notifications to match subscribers
-        notifications_sent = await _send_notifications_to_subscribers(db, match_id, event)
+        notifications_sent = await _send_notifications_to_subscribers(
+            db, match_id, event
+        )
 
         logger.info(
             f"Event published: match={match_id}, type={event.event_type}, "

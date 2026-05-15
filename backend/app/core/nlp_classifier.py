@@ -8,62 +8,121 @@ from app.models.alerts import AlertType, AlertPriority
 
 # Injury Keywords (Deutsch + Englisch)
 INJURY_KEYWORDS = [
-    r'verletz', r'injury', r'out', r'ausfallen', r'muskel',
-    r'adduktor', r'meniskus', r'kreuzband', r'zerrung',
-    r'faserriss', r'überbelastung', r'blessur', r'trauma'
+    r"verletz",
+    r"injury",
+    r"out",
+    r"ausfallen",
+    r"muskel",
+    r"adduktor",
+    r"meniskus",
+    r"kreuzband",
+    r"zerrung",
+    r"faserriss",
+    r"überbelastung",
+    r"blessur",
+    r"trauma",
 ]
 
 SUSPENSION_KEYWORDS = [
-    r'sperre', r'suspension', r'rot', r'gelb-rot', r'disqualifiziert'
+    r"sperre",
+    r"suspension",
+    r"rot",
+    r"gelb-rot",
+    r"disqualifiziert",
 ]
 
 TACTICAL_KEYWORDS = [
-    r'formation', r'taktik', r'system wechsel', r'3-5-2', r'4-2-3-1',
-    r'umstellen', r'umstellung', r'defensiv', r'offensiv', r'pressing',
-    r'rückzug', r'offensive'
+    r"formation",
+    r"taktik",
+    r"system wechsel",
+    r"3-5-2",
+    r"4-2-3-1",
+    r"umstellen",
+    r"umstellung",
+    r"defensiv",
+    r"offensiv",
+    r"pressing",
+    r"rückzug",
+    r"offensive",
 ]
 
 MANAGER_KEYWORDS = [
-    r'trainer', r'coach', r'manager', r'neuer', r'new', r'ablöse',
-    r'entlassung', r'kündigung', r'Fehler! Lesezeichen nicht definiert.'
+    r"trainer",
+    r"coach",
+    r"manager",
+    r"neuer",
+    r"new",
+    r"ablöse",
+    r"entlassung",
+    r"kündigung",
+    r"Fehler! Lesezeichen nicht definiert.",
 ]
 
 TRANSFER_KEYWORDS = [
-    r'transfer', r'deal', r'signing', r'ablöse', r'verpflicht',
-    r'leihvertrag', r'ausstiegsklausel', r'verhandlungen'
+    r"transfer",
+    r"deal",
+    r"signing",
+    r"ablöse",
+    r"verpflicht",
+    r"leihvertrag",
+    r"ausstiegsklausel",
+    r"verhandlungen",
 ]
 
 WEATHER_KEYWORDS = [
-    r'sturm', r'unwetter', r'hagel', r'schnee', r'hochwasser',
-    r'extreme', r'klima', r'regen'
+    r"sturm",
+    r"unwetter",
+    r"hagel",
+    r"schnee",
+    r"hochwasser",
+    r"extreme",
+    r"klima",
+    r"regen",
 ]
 
 ODDS_KEYWORDS = [
-    r'quoten', r'odds', r'manipulation', r'verdächtig', r'unsicher',
-    r'bewegung', r'sprung', r'flash crash'
+    r"quoten",
+    r"odds",
+    r"manipulation",
+    r"verdächtig",
+    r"unsicher",
+    r"bewegung",
+    r"sprung",
+    r"flash crash",
 ]
 
 # Team-Namen Mapping (Shortcodes)
 TEAM_MAPPING = {
-    'bayern': ['fc bayern', 'fcb', 'munich', 'münchen'],
-    'bvb': ['borussia dortmund', 'dortmund', 'bvb'],
-    'leverkusen': ['bayer leverkusen', 'werkself'],
-    'hamburg': ['fc st. pauli', 'hsv'],
-    'freiburg': ['sc freiburg'],
-    'rb': ['rb leipzig', 'rbl'],
-    'schalke': ['fc schalke'],
-    'cologne': ['1. fc köln', 'koeln'],
+    "bayern": ["fc bayern", "fcb", "munich", "münchen"],
+    "bvb": ["borussia dortmund", "dortmund", "bvb"],
+    "leverkusen": ["bayer leverkusen", "werkself"],
+    "hamburg": ["fc st. pauli", "hsv"],
+    "freiburg": ["sc freiburg"],
+    "rb": ["rb leipzig", "rbl"],
+    "schalke": ["fc schalke"],
+    "cologne": ["1. fc köln", "koeln"],
 }
 
 # Top-Spieler
 TOP_PLAYERS = [
-    'lewandowski', 'haaland', 'sane', 'müller', 'gnabry',
-    'reus', 'bellingham', 'akanji', 'ginter', 'neuer',
-    'ter stegen', 'nkunku', 'nkh', 'wirtz'
+    "lewandowski",
+    "haaland",
+    "sane",
+    "müller",
+    "gnabry",
+    "reus",
+    "bellingham",
+    "akanji",
+    "ginter",
+    "neuer",
+    "ter stegen",
+    "nkunku",
+    "nkh",
+    "wirtz",
 ]
 
 
-def classify_news(text: str, title: str = '') -> Tuple[AlertType, AlertPriority, float]:
+def classify_news(text: str, title: str = "") -> Tuple[AlertType, AlertPriority, float]:
     """
     Klassifiziere News-Text in Alert-Typ, Priorität und Relevanz-Score
 
@@ -124,7 +183,7 @@ def extract_entities(text: str) -> Dict[str, List[str]]:
 
     # Taktiken
     tactics = []
-    formation_pattern = r'\d-\d-\d'
+    formation_pattern = r"\d-\d-\d"
     formations = re.findall(formation_pattern, text_lower)
     if formations:
         tactics.extend(formations)
@@ -135,7 +194,7 @@ def extract_entities(text: str) -> Dict[str, List[str]]:
     return {
         "teams": list(set(teams)),
         "players": list(set(players)),
-        "tactics": list(set(tactics))
+        "tactics": list(set(tactics)),
     }
 
 
@@ -148,13 +207,13 @@ def calculate_impact_score(alert_type: AlertType, entities: Dict) -> float:
     Transfer-Gerüchte = niedriger Impact
     """
     base_scores = {
-        AlertType.INJURY: 0.8,              # Hoch: Spieler fehlt
+        AlertType.INJURY: 0.8,  # Hoch: Spieler fehlt
         AlertType.SUSPENSION: 0.8,
-        AlertType.TACTICAL_CHANGE: 0.6,    # Mittel: Taktik-Änderung
+        AlertType.TACTICAL_CHANGE: 0.6,  # Mittel: Taktik-Änderung
         AlertType.MANAGER_CHANGE: 0.7,
-        AlertType.TRANSFER: 0.3,            # Niedrig: Zukunfts-News
+        AlertType.TRANSFER: 0.3,  # Niedrig: Zukunfts-News
         AlertType.WEATHER: 0.5,
-        AlertType.ODDS_MOVEMENT: 0.9,      # Sehr hoch: Market-Signal
+        AlertType.ODDS_MOVEMENT: 0.9,  # Sehr hoch: Market-Signal
         AlertType.TEAM_NEWS: 0.4,
     }
 
@@ -187,7 +246,9 @@ def _calculate_priority(alert_type: AlertType, text: str) -> AlertPriority:
 
     # Kritisch: Spieler definitiv verletzt/gesperrt
     if alert_type == AlertType.INJURY:
-        if any(word in text for word in ['ausfallen', 'out', 'wochenüber', 'monatelang']):
+        if any(
+            word in text for word in ["ausfallen", "out", "wochenüber", "monatelang"]
+        ):
             return AlertPriority.CRITICAL
         return AlertPriority.HIGH
 
@@ -204,7 +265,7 @@ def _calculate_priority(alert_type: AlertType, text: str) -> AlertPriority:
 
     # Transfer/Weather: Medium-Low
     if alert_type == AlertType.TRANSFER:
-        if any(word in text for word in ['bestätigt', 'offiziell', 'deal']):
+        if any(word in text for word in ["bestätigt", "offiziell", "deal"]):
             return AlertPriority.HIGH
         return AlertPriority.LOW
 
@@ -212,7 +273,9 @@ def _calculate_priority(alert_type: AlertType, text: str) -> AlertPriority:
     return AlertPriority.MEDIUM
 
 
-def _calculate_relevance_score(alert_type: AlertType, text: str, description: str) -> float:
+def _calculate_relevance_score(
+    alert_type: AlertType, text: str, description: str
+) -> float:
     """
     Berechne Relevanz-Score (0-1)
 
@@ -238,13 +301,17 @@ def _calculate_relevance_score(alert_type: AlertType, text: str, description: st
     score = base_scores.get(alert_type, 0.5)
 
     # Certainty Boost/Penalty
-    if any(word in text for word in ['bestätigt', 'offiziell', 'announced', 'confirmed']):
+    if any(
+        word in text for word in ["bestätigt", "offiziell", "announced", "confirmed"]
+    ):
         score = min(1.0, score + 0.15)
-    elif any(word in text for word in ['gerücht', 'rumor', 'möglich', 'possible', 'claims']):
+    elif any(
+        word in text for word in ["gerücht", "rumor", "möglich", "possible", "claims"]
+    ):
         score = max(0.1, score - 0.2)
 
     # Text-Länge Signal (längere Berichte = detaillierter)
-    text_length = len(description or '')
+    text_length = len(description or "")
     if text_length > 500:
         score = min(1.0, score + 0.1)
     elif text_length < 100:

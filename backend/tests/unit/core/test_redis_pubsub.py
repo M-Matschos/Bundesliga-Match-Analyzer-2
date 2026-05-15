@@ -185,9 +185,7 @@ async def test_publish_event_success(pubsub_manager, sample_goal_event):
     pubsub_manager.redis = AsyncMock()
     pubsub_manager.redis.publish = AsyncMock(return_value=3)  # 3 subscribers
 
-    num_subscribers = await pubsub_manager.publish_event(
-        "match_123", sample_goal_event
-    )
+    num_subscribers = await pubsub_manager.publish_event("match_123", sample_goal_event)
 
     assert num_subscribers == 3
     pubsub_manager.redis.publish.assert_called_once()
@@ -451,9 +449,7 @@ async def test_publish_and_subscribe_workflow(pubsub_manager, sample_goal_event)
     await pubsub_manager.subscribe("match:123:events", callback)
 
     # Publish
-    num_subscribers = await pubsub_manager.publish_event(
-        "match_123", sample_goal_event
-    )
+    num_subscribers = await pubsub_manager.publish_event("match_123", sample_goal_event)
 
     assert num_subscribers == 2
     assert "match:123:events" in pubsub_manager.subscribers

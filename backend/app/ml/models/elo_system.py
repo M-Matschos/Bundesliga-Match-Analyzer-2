@@ -103,8 +103,12 @@ class EloSystem:
         goal_factor = 1 + 0.1 * min(goal_diff, 3)  # Cap at 3-goal difference
 
         # Update ratings
-        new_home_elo = home_elo + self.k_factor * goal_factor * (home_result - expected_home)
-        new_away_elo = away_elo + self.k_factor * goal_factor * (away_result - expected_away)
+        new_home_elo = home_elo + self.k_factor * goal_factor * (
+            home_result - expected_home
+        )
+        new_away_elo = away_elo + self.k_factor * goal_factor * (
+            away_result - expected_away
+        )
 
         self.team_ratings[home_team] = new_home_elo
         self.team_ratings[away_team] = new_away_elo
@@ -149,6 +153,7 @@ class EloSystem:
             return {"mean": 0, "std": 0, "min": 0, "max": 0}
 
         import numpy as np
+
         ratings = list(self.team_ratings.values())
         return {
             "mean": float(np.mean(ratings)),
@@ -159,11 +164,14 @@ class EloSystem:
 
     def save(self, filepath: str) -> None:
         """Save system to disk."""
-        joblib.dump({
-            "team_ratings": self.team_ratings,
-            "k_factor": self.k_factor,
-            "initial_rating": self.initial_rating,
-        }, filepath)
+        joblib.dump(
+            {
+                "team_ratings": self.team_ratings,
+                "k_factor": self.k_factor,
+                "initial_rating": self.initial_rating,
+            },
+            filepath,
+        )
 
     def load(self, filepath: str) -> None:
         """Load system from disk."""

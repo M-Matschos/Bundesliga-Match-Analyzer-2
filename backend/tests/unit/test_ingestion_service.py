@@ -99,9 +99,7 @@ class TestMatchEventConverter:
             "time": 45,
         }
 
-        result = MatchEventConverter.convert_goal_event(
-            api_event, "match_123", 123
-        )
+        result = MatchEventConverter.convert_goal_event(api_event, "match_123", 123)
 
         assert result is None
 
@@ -118,9 +116,7 @@ class TestMatchEventConverter:
             "xg_value": 0.0,
         }
 
-        goal_event = MatchEventConverter.convert_goal_event(
-            api_event, "match_123", 123
-        )
+        goal_event = MatchEventConverter.convert_goal_event(api_event, "match_123", 123)
 
         assert goal_event is not None
         assert goal_event.player_name == "Unknown"
@@ -135,9 +131,7 @@ class TestMatchEventConverter:
             "time": 45,
         }
 
-        result = MatchEventConverter.convert_goal_event(
-            api_event, "match_123", 123
-        )
+        result = MatchEventConverter.convert_goal_event(api_event, "match_123", 123)
 
         assert result is None
 
@@ -152,9 +146,7 @@ class TestMatchEventConverter:
             "reason": "Violent conduct",
         }
 
-        card_event = MatchEventConverter.convert_card_event(
-            api_event, "match_789", 123
-        )
+        card_event = MatchEventConverter.convert_card_event(api_event, "match_789", 123)
 
         assert card_event is not None
         assert card_event.card_type == CardType.RED
@@ -173,9 +165,7 @@ class TestMatchEventConverter:
             "reason": "Foul play",
         }
 
-        card_event = MatchEventConverter.convert_card_event(
-            api_event, "match_789", 123
-        )
+        card_event = MatchEventConverter.convert_card_event(api_event, "match_789", 123)
 
         assert card_event is not None
         assert card_event.card_type == CardType.YELLOW
@@ -186,9 +176,7 @@ class TestMatchEventConverter:
         """Test: Non-card event returns None."""
         api_event = {"type": "Goal"}
 
-        result = MatchEventConverter.convert_card_event(
-            api_event, "match_789", 123
-        )
+        result = MatchEventConverter.convert_card_event(api_event, "match_789", 123)
 
         assert result is None
 
@@ -368,9 +356,7 @@ class TestAPIFootballIngestion:
         with patch("app.services.ingestion.httpx.AsyncClient") as mock_client_class:
             mock_client = AsyncMock()
             mock_client_class.return_value.__aenter__.return_value = mock_client
-            mock_client.get = AsyncMock(
-                side_effect=httpx.TimeoutException("Timeout")
-            )
+            mock_client.get = AsyncMock(side_effect=httpx.TimeoutException("Timeout"))
 
             events = await ingestion_service.get_match_events(match_id)
 
@@ -515,9 +501,7 @@ class TestAPIFootballIngestion:
                 assert mock_publish_event.call_count == 1  # Still 1
 
     @pytest.mark.asyncio
-    async def test_process_match_events_missing_fixture_id(
-        self, ingestion_service
-    ):
+    async def test_process_match_events_missing_fixture_id(self, ingestion_service):
         """Test: Match without fixture ID is skipped with warning."""
         match_data = {
             "fixture": {},  # Missing ID
@@ -529,9 +513,7 @@ class TestAPIFootballIngestion:
         assert events_published == 0
 
     @pytest.mark.asyncio
-    async def test_process_match_events_error_handling(
-        self, ingestion_service
-    ):
+    async def test_process_match_events_error_handling(self, ingestion_service):
         """Test: Exception during event processing doesn't crash loop."""
         match_data = {
             "fixture": {"id": 1003},
@@ -544,9 +526,7 @@ class TestAPIFootballIngestion:
         ) as mock_get_events:
             mock_get_events.side_effect = Exception("Random error")
 
-            events_published = await ingestion_service.process_match_events(
-                match_data
-            )
+            events_published = await ingestion_service.process_match_events(match_data)
 
             assert events_published == 0
 

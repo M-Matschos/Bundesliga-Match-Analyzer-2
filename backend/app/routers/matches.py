@@ -34,12 +34,24 @@ def _match_to_dict(match: Match) -> dict:
             "id": str(home.id),
             "name": home.name,
             "logo_url": home.logo_url,
-        } if home else {"id": str(match.home_team_id), "name": str(match.home_team_id), "logo_url": None},
+        }
+        if home
+        else {
+            "id": str(match.home_team_id),
+            "name": str(match.home_team_id),
+            "logo_url": None,
+        },
         "away_team": {
             "id": str(away.id),
             "name": away.name,
             "logo_url": away.logo_url,
-        } if away else {"id": str(match.away_team_id), "name": str(match.away_team_id), "logo_url": None},
+        }
+        if away
+        else {
+            "id": str(match.away_team_id),
+            "name": str(match.away_team_id),
+            "logo_url": None,
+        },
         "league_id": match.league_id,
         "league": match.league_id,
         "season": match.season,
@@ -60,7 +72,9 @@ async def list_matches(
     league: Optional[str] = Query(None, description="League ID (e.g., 'bundesliga')"),
     season: Optional[str] = Query(None, description="Season (e.g., '2024-25')"),
     matchday: Optional[int] = Query(None, description="Matchday number"),
-    status: Optional[str] = Query(None, description="Match status (scheduled, live, finished)"),
+    status: Optional[str] = Query(
+        None, description="Match status (scheduled, live, finished)"
+    ),
     limit: int = Query(50, ge=1, le=100, description="Results per page"),
     offset: int = Query(0, ge=0, description="Pagination offset"),
     db: AsyncSession = Depends(get_db),
@@ -262,8 +276,7 @@ async def get_matches_by_date(
         target_date = datetime.strptime(date_str, "%Y-%m-%d").date()
     except ValueError:
         raise HTTPException(
-            status_code=400,
-            detail="Invalid date format. Use YYYY-MM-DD"
+            status_code=400, detail="Invalid date format. Use YYYY-MM-DD"
         )
 
     # Matches on this date (00:00 to 23:59)
@@ -322,7 +335,9 @@ async def get_team_matches(
     if season:
         filters.append(Match.season == season)
 
-    query = select(Match).where(and_(*filters)).order_by(Match.kickoff.desc()).limit(limit)
+    query = (
+        select(Match).where(and_(*filters)).order_by(Match.kickoff.desc()).limit(limit)
+    )
     result = await db.execute(query)
     matches = result.scalars().all()
 

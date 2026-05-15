@@ -8,7 +8,11 @@ from unittest.mock import AsyncMock, MagicMock
 import asyncio
 from datetime import datetime, timedelta
 
-from app.services.circuit_breaker import CircuitBreaker, CircuitBreakerConfig, CircuitState
+from app.services.circuit_breaker import (
+    CircuitBreaker,
+    CircuitBreakerConfig,
+    CircuitState,
+)
 from app.services.local_notification_queue import LocalNotificationQueue
 
 
@@ -157,7 +161,9 @@ class TestCircuitBreakerFailureHandling:
         assert circuit_breaker.failure_count == 1
 
     @pytest.mark.asyncio
-    async def test_queue_fallback_integration(self, circuit_breaker, notification_queue):
+    async def test_queue_fallback_integration(
+        self, circuit_breaker, notification_queue
+    ):
         """Queue wird als Fallback verwendet wenn Circuit OPEN"""
         failing_func = AsyncMock(side_effect=Exception("Firebase down"))
 
@@ -187,6 +193,7 @@ class TestCircuitBreakerTimeoutHandling:
     @pytest.mark.asyncio
     async def test_timeout_triggers_failure(self, circuit_breaker):
         """Wenn Funktion zu lange dauert: Timeout → Fehler"""
+
         async def slow_func():
             await asyncio.sleep(3)  # Länger als Timeout (2s)
             return "success"
@@ -201,6 +208,7 @@ class TestCircuitBreakerTimeoutHandling:
     @pytest.mark.asyncio
     async def test_within_timeout_succeeds(self, circuit_breaker):
         """Wenn Funktion schnell genug ist: Kein Timeout"""
+
         async def fast_func():
             await asyncio.sleep(0.1)
             return "success"

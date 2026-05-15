@@ -170,8 +170,16 @@ class PoissonModel:
             lambda_a = away_attack * home_defense
 
             # Poisson log-likelihood
-            ll_h = -lambda_h + home_goals * np.log(lambda_h) - np.log(np.math.factorial(home_goals))
-            ll_a = -lambda_a + away_goals * np.log(lambda_a) - np.log(np.math.factorial(away_goals))
+            ll_h = (
+                -lambda_h
+                + home_goals * np.log(lambda_h)
+                - np.log(np.math.factorial(home_goals))
+            )
+            ll_a = (
+                -lambda_a
+                + away_goals * np.log(lambda_a)
+                - np.log(np.math.factorial(away_goals))
+            )
 
             nll -= weight * (ll_h + ll_a)
 
@@ -204,11 +212,14 @@ class PoissonModel:
 
     def save(self, filepath: str) -> None:
         """Save model to disk."""
-        joblib.dump({
-            "team_params": self.team_params,
-            "home_advantage": self.home_advantage,
-            "decay_factor": self.decay_factor,
-        }, filepath)
+        joblib.dump(
+            {
+                "team_params": self.team_params,
+                "home_advantage": self.home_advantage,
+                "decay_factor": self.decay_factor,
+            },
+            filepath,
+        )
 
     def load(self, filepath: str) -> None:
         """Load model from disk."""

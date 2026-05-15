@@ -39,7 +39,9 @@ def authenticated_client(client):
 class TestE2EUserJourney:
     """E2E Journey 1: New User Registration → Login → View Dashboard"""
 
-    @pytest.mark.skip(reason="Known issue: Token refresh returns same token (CHANGELOG_RC.md Issue 1)")
+    @pytest.mark.skip(
+        reason="Known issue: Token refresh returns same token (CHANGELOG_RC.md Issue 1)"
+    )
     def test_complete_user_onboarding(self, client):
         """
         User Story: New user signs up, logs in, accesses protected route
@@ -169,7 +171,9 @@ class TestE2EWeekendCalculatorFlow:
             assert bet_resp.status_code in [201, 400, 404]
 
         # 6. View portfolio
-        portfolio_resp = authenticated_client.get("/api/v1/virtual-bets/portfolio/stats")
+        portfolio_resp = authenticated_client.get(
+            "/api/v1/virtual-bets/portfolio/stats"
+        )
         assert portfolio_resp.status_code == 200
         portfolio = portfolio_resp.json()
         assert "total_balance" in portfolio
@@ -210,9 +214,7 @@ class TestE2EMobileAppFlow:
         assert valuebets_resp.status_code in [200, 404]
 
         # 5. Show SHAP explanation for tap-on match
-        explain_resp = authenticated_client.get(
-            "/api/v1/predictions/match-123/explain"
-        )
+        explain_resp = authenticated_client.get("/api/v1/predictions/match-123/explain")
         assert explain_resp.status_code in [200, 404]
 
 
@@ -237,9 +239,7 @@ class TestE2ETeamDetailsFlow:
         assert team_resp.status_code in [200, 404]
 
         # 2. View standings
-        standings_resp = authenticated_client.get(
-            f"/api/v1/teams/{team_id}/standings"
-        )
+        standings_resp = authenticated_client.get(f"/api/v1/teams/{team_id}/standings")
         assert standings_resp.status_code in [200, 404]
         if standings_resp.status_code == 200:
             standings = standings_resp.json()
@@ -292,7 +292,9 @@ class TestE2EBettingPortfolioFlow:
         assert place_bet_resp.status_code in [201, 400, 404]
 
         # 3. View portfolio stats
-        portfolio_resp = authenticated_client.get("/api/v1/virtual-bets/portfolio/stats")
+        portfolio_resp = authenticated_client.get(
+            "/api/v1/virtual-bets/portfolio/stats"
+        )
         assert portfolio_resp.status_code == 200
         portfolio = portfolio_resp.json()
         assert "total_balance" in portfolio
@@ -387,7 +389,11 @@ class TestE2EErrorRecovery:
         )
         assert weak_resp.status_code == 422
         error_detail = weak_resp.json()["detail"][0]["msg"].lower()
-        assert "8" in error_detail or "character" in error_detail or "password" in error_detail
+        assert (
+            "8" in error_detail
+            or "character" in error_detail
+            or "password" in error_detail
+        )
 
         # 2. Retry with valid password
         strong_resp = client.post(

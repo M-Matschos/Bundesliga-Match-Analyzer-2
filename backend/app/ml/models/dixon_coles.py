@@ -228,12 +228,15 @@ class DixonColesModel:
 
     def save(self, filepath: str) -> None:
         """Save model to disk."""
-        joblib.dump({
-            "team_params": self.team_params,
-            "home_advantage": self.home_advantage,
-            "rho": self.rho,
-            "decay_factor": self.decay_factor,
-        }, filepath)
+        joblib.dump(
+            {
+                "team_params": self.team_params,
+                "home_advantage": self.home_advantage,
+                "rho": self.rho,
+                "decay_factor": self.decay_factor,
+            },
+            filepath,
+        )
 
     def load(self, filepath: str) -> None:
         """Load model from disk."""

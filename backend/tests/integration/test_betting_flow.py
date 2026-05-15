@@ -51,7 +51,9 @@ class TestBettingFlow:
         assert cancel_response.status_code == 200
         assert cancel_response.json()["status"] == "cancelled"
 
-    def test_portfolio_statistics_calculation(self, client, auth_headers, db_user, db_match):
+    def test_portfolio_statistics_calculation(
+        self, client, auth_headers, db_user, db_match
+    ):
         """Test that portfolio statistics are calculated correctly."""
         # Place a bet on existing match
         client.post(
@@ -189,9 +191,7 @@ class TestBettingFlow:
             "/api/v1/auth/login",
             json={"email": db_other_user.email, "password": "test_password_123"},
         )
-        other_headers = {
-            "Authorization": f"Bearer {response.json()['access_token']}"
-        }
+        other_headers = {"Authorization": f"Bearer {response.json()['access_token']}"}
 
         # Try to access first user's bet
         response = client.get(

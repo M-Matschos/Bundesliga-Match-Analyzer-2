@@ -215,9 +215,7 @@ class RedisPubSubManager:
             raise RuntimeError("Redis not connected")
 
         channel = self.get_system_alerts_channel()
-        message = json.dumps(
-            {"type": "system_alert", "data": alert_message}
-        )
+        message = json.dumps({"type": "system_alert", "data": alert_message})
 
         try:
             num_subscribers = await self.redis.publish(channel, message)
@@ -232,9 +230,7 @@ class RedisPubSubManager:
 
     # ===== SUBSCRIBE =====
 
-    async def subscribe(
-        self, channel: str, callback: Callable[[str], Any]
-    ) -> None:
+    async def subscribe(self, channel: str, callback: Callable[[str], Any]) -> None:
         """
         Subscribe to a channel with a callback.
 
@@ -349,16 +345,12 @@ class RedisPubSubManager:
         Returns:
             Number of subscriptions cleared
         """
-        channels_to_clear = [
-            ch for ch in self.subscribers if match_id in ch
-        ]
+        channels_to_clear = [ch for ch in self.subscribers if match_id in ch]
 
         for channel in channels_to_clear:
             del self.subscribers[channel]
 
-        logger.info(
-            f"Cleared {len(channels_to_clear)} channels for match {match_id}"
-        )
+        logger.info(f"Cleared {len(channels_to_clear)} channels for match {match_id}")
         return len(channels_to_clear)
 
 

@@ -39,9 +39,7 @@ class TestPredictionsFlow:
         assert pred["expected_goals_away"] >= 0
 
         # Verify probabilities sum to ~1
-        total = (
-            pred["home_win_prob"] + pred["draw_prob"] + pred["away_win_prob"]
-        )
+        total = pred["home_win_prob"] + pred["draw_prob"] + pred["away_win_prob"]
         assert 0.98 <= total <= 1.02
 
     def test_value_bet_detection_flow(self, client, auth_headers):
@@ -82,9 +80,7 @@ class TestPredictionsFlow:
 
             # Verify prediction validity
             total_prob = (
-                pred["home_win_prob"]
-                + pred["draw_prob"]
-                + pred["away_win_prob"]
+                pred["home_win_prob"] + pred["draw_prob"] + pred["away_win_prob"]
             )
             assert 0.98 <= total_prob <= 1.02
 
@@ -160,9 +156,7 @@ class TestPredictionsFlow:
 
         # Filter high confidence predictions
         high_conf = [
-            bet
-            for bet in data.get("value_bets", [])
-            if bet.get("confidence", 0) > 0.7
+            bet for bet in data.get("value_bets", []) if bet.get("confidence", 0) > 0.7
         ]
 
         # High confidence bets should have lower edge requirement

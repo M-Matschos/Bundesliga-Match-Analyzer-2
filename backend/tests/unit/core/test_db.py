@@ -15,18 +15,21 @@ class TestDatabaseEngine:
     def test_database_engine_created(self):
         """Test database engine is created."""
         from app.core.db import engine
+
         assert engine is not None
         assert isinstance(engine, AsyncEngine)
 
     def test_database_url_async(self):
         """Test async database URL."""
         from app.core.db import engine
+
         # URL should use asyncpg driver
         assert "asyncpg" in str(engine.url) or "aiosqlite" in str(engine.url)
 
     def test_connection_pool_configured(self):
         """Test connection pool size."""
         from app.core.db import engine
+
         # Pool should be configured with reasonable defaults
         assert engine is not None
 
@@ -41,6 +44,7 @@ class TestAsyncSessionMaker:
     def test_async_sessionmaker_created(self):
         """Test async session maker is created."""
         from app.core.db import async_session
+
         assert async_session is not None
 
     @pytest.mark.asyncio
@@ -63,22 +67,25 @@ class TestDatabaseModels:
     def test_base_model_exists(self):
         """Test declarative base exists."""
         from app.models.db import Base
+
         assert Base is not None
 
     def test_base_registry(self):
         """Test base has registry for models."""
         from app.models.db import Base
-        assert hasattr(Base, 'registry')
+
+        assert hasattr(Base, "registry")
 
     @pytest.mark.asyncio
     async def test_create_all_tables(self, async_db_session):
         """Test all tables can be created."""
         from app.models.db import Base
+
         # Tables should already be created in fixture
         # This validates the fixture works and tables exist
         # Simply verify Base has metadata and registry
-        assert hasattr(Base, 'metadata')
-        assert hasattr(Base, 'registry')
+        assert hasattr(Base, "metadata")
+        assert hasattr(Base, "registry")
         # Verify AsyncSession is usable
         assert isinstance(async_db_session, AsyncSession)
 
@@ -96,7 +103,7 @@ class TestGetDbDependency:
     async def test_get_db_session_is_usable(self, async_db_session):
         """Test returned session can execute queries."""
         # Session should support execute()
-        assert hasattr(async_db_session, 'execute')
+        assert hasattr(async_db_session, "execute")
 
 
 class TestDatabaseInitialization:
@@ -106,10 +113,11 @@ class TestDatabaseInitialization:
     async def test_init_db_creates_tables(self, async_db_session):
         """Test init_db creates all tables."""
         from app.models.db import Base
+
         # Tables are already created by async_db_session fixture
         # This test validates that init_db function works properly
         # by verifying the Base metadata is properly configured
-        assert hasattr(Base, 'metadata')
+        assert hasattr(Base, "metadata")
         # Verify at least one table is defined in metadata
         assert len(Base.metadata.tables) > 0
 
@@ -132,19 +140,19 @@ class TestDatabaseTransactions:
     async def test_session_commit(self, async_db_session):
         """Test session commit."""
         # Should support commit without error
-        assert hasattr(async_db_session, 'commit')
+        assert hasattr(async_db_session, "commit")
 
     @pytest.mark.asyncio
     async def test_session_rollback(self, async_db_session):
         """Test session rollback."""
         # Should support rollback without error
-        assert hasattr(async_db_session, 'rollback')
+        assert hasattr(async_db_session, "rollback")
 
     @pytest.mark.asyncio
     async def test_session_flush(self, async_db_session):
         """Test session flush."""
         # Flush should work for intermediate persistence
-        assert hasattr(async_db_session, 'flush')
+        assert hasattr(async_db_session, "flush")
 
 
 class TestDatabasePooling:
@@ -157,6 +165,7 @@ class TestDatabasePooling:
     def test_pool_recycle_configured(self):
         """Test connection recycling is configured."""
         from app.core.db import engine
+
         # Connection pool should have recycling configured
         # This prevents "MySQL has gone away" type errors
         assert engine is not None
@@ -201,12 +210,13 @@ class TestDatabaseErrorHandling:
     async def test_session_cleanup_on_error(self, async_db_session):
         """Test session cleanup on error."""
         # Session should have proper cleanup mechanisms
-        assert hasattr(async_db_session, 'close')
+        assert hasattr(async_db_session, "close")
 
     @pytest.mark.asyncio
     async def test_engine_connection_error_handling(self):
         """Test handling of connection errors."""
         from app.core.db import engine
+
         # Should handle connection errors gracefully
         assert engine is not None
 
@@ -218,6 +228,7 @@ class TestDatabaseQueryInterface:
     async def test_session_select_available(self, async_db_session):
         """Test SQLAlchemy 2.0 select() is available."""
         from sqlalchemy import select
+
         # Select interface should be available
         assert callable(select)
 
@@ -225,13 +236,13 @@ class TestDatabaseQueryInterface:
     async def test_session_scalars_available(self, async_db_session):
         """Test scalars() method for single columns."""
         # Should support scalars() for simplified queries
-        assert hasattr(async_db_session, 'scalars')
+        assert hasattr(async_db_session, "scalars")
 
     @pytest.mark.asyncio
     async def test_session_execute_available(self, async_db_session):
         """Test execute() method for queries."""
         # Should support execute() for SQL execution
-        assert hasattr(async_db_session, 'execute')
+        assert hasattr(async_db_session, "execute")
 
 
 class TestDatabaseORM:
@@ -240,16 +251,19 @@ class TestDatabaseORM:
     def test_base_has_metadata(self):
         """Test Base has metadata."""
         from app.models.db import Base
-        assert hasattr(Base, 'metadata')
+
+        assert hasattr(Base, "metadata")
 
     def test_base_has_registry(self):
         """Test Base has registry."""
         from app.models.db import Base
-        assert hasattr(Base, 'registry')
+
+        assert hasattr(Base, "registry")
 
     @pytest.mark.asyncio
     async def test_orm_objects_queryable(self, async_db_session):
         """Test ORM objects support queries."""
         from sqlalchemy import select
+
         # Should be able to construct select queries
         assert callable(select)

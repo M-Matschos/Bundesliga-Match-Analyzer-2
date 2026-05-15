@@ -164,11 +164,13 @@ class KellyCriterion:
 
             bankroll += pnl
 
-            results.append({
-                "bet_size": bet_size,
-                "bankroll": bankroll,
-                "pnl": pnl,
-            })
+            results.append(
+                {
+                    "bet_size": bet_size,
+                    "bankroll": bankroll,
+                    "pnl": pnl,
+                }
+            )
 
         # Calculate statistics
         pnls = [r["pnl"] for r in results]
@@ -189,7 +191,9 @@ class KellyCriterion:
             "sharpe_ratio": self._calculate_sharpe(pnls),
         }
 
-    def _calculate_sharpe(self, returns: List[float], risk_free_rate: float = 0.02) -> float:
+    def _calculate_sharpe(
+        self, returns: List[float], risk_free_rate: float = 0.02
+    ) -> float:
         """Calculate Sharpe ratio of betting returns."""
         if len(returns) < 2:
             return 0.0
@@ -230,7 +234,10 @@ class KellyCriterion:
             }
 
         # Apply confidence discount
-        adjusted_prob = our_probability * confidence + (1 - confidence) * value["market_probability"]
+        adjusted_prob = (
+            our_probability * confidence
+            + (1 - confidence) * value["market_probability"]
+        )
 
         # Kelly calculation with adjusted probability
         kelly = self.calculate_bet_size(adjusted_prob, market_odds)

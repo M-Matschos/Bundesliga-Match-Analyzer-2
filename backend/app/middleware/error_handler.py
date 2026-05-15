@@ -114,9 +114,7 @@ async def validation_exception_handler(
     return JSONResponse(status_code=422, content=response)
 
 
-async def generic_exception_handler(
-    request: Request, exc: Exception
-) -> JSONResponse:
+async def generic_exception_handler(request: Request, exc: Exception) -> JSONResponse:
     """Handle unexpected exceptions.
 
     Args:

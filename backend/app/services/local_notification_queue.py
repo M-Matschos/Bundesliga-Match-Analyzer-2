@@ -14,6 +14,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class QueuedNotification:
     """Notification in der lokalen Queue"""
+
     id: str
     device_token: str
     user_id: int
@@ -51,7 +52,9 @@ class LocalNotificationQueue:
     ) -> str:
         """Füge Notification zur Queue hinzu"""
         if len(self.queue) >= self.max_queue_size:
-            logger.warning(f"📦 Queue voll ({self.max_queue_size}), älteste Notification entfernt")
+            logger.warning(
+                f"📦 Queue voll ({self.max_queue_size}), älteste Notification entfernt"
+            )
             self.queue.pop(0)
 
         notification_id = f"{device_token}_{int(datetime.now().timestamp() * 1000)}"

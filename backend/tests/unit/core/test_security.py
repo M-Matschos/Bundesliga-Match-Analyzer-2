@@ -177,9 +177,7 @@ class TestTokenSecurity:
         settings = get_settings()
         data = {"sub": "attacker", "email": "attacker@example.com"}
         # Try to create token with wrong secret
-        forged_token = jwt.encode(
-            data, "wrong-secret-key", algorithm="HS256"
-        )
+        forged_token = jwt.encode(data, "wrong-secret-key", algorithm="HS256")
         # Should fail verification
         with pytest.raises(HTTPException):
             verify_token(forged_token)
@@ -189,9 +187,7 @@ class TestTokenSecurity:
         data = {"sub": "user-123", "email": "test@example.com"}
         token = create_token(data)
         # Try to decode and re-encode with modified data
-        payload = jwt.decode(
-            token, get_settings().jwt_secret, algorithms=["HS256"]
-        )
+        payload = jwt.decode(token, get_settings().jwt_secret, algorithms=["HS256"])
         payload["sub"] = "attacker"
         modified_token = jwt.encode(
             payload, get_settings().jwt_secret, algorithm="HS256"

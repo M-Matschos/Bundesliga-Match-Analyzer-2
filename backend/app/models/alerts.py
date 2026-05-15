@@ -4,7 +4,16 @@ Klassifiziert News-Events nach Wett-Relevanz (Verletzungen, Tactical Changes, et
 """
 from datetime import datetime
 from typing import Optional
-from sqlalchemy import Column, String, DateTime, Float, Boolean, Integer, Text, Enum as SQLEnum
+from sqlalchemy import (
+    Column,
+    String,
+    DateTime,
+    Float,
+    Boolean,
+    Integer,
+    Text,
+    Enum as SQLEnum,
+)
 from sqlalchemy.orm import declarative_base
 from enum import Enum
 
@@ -13,37 +22,41 @@ Base = declarative_base()
 
 class AlertType(str, Enum):
     """Alert Classification"""
-    INJURY = "injury"              # Spieler verletzt
-    SUSPENSION = "suspension"      # Spielsperre
-    TACTICAL_CHANGE = "tactical"   # Formation/Taktik-Änderung
-    MANAGER_CHANGE = "manager"     # Trainer-Wechsel
-    TRANSFER = "transfer"          # Transfer-News
-    WEATHER = "weather"            # Extremes Wetter
-    VENUE_CHANGE = "venue"         # Platz-Wechsel
-    TEAM_NEWS = "team_news"        # Sonstiges Team-News
-    ODDS_MOVEMENT = "odds"         # Verdächtige Quoten-Bewegung
-    EXTERNAL = "external"          # Externe Events
+
+    INJURY = "injury"  # Spieler verletzt
+    SUSPENSION = "suspension"  # Spielsperre
+    TACTICAL_CHANGE = "tactical"  # Formation/Taktik-Änderung
+    MANAGER_CHANGE = "manager"  # Trainer-Wechsel
+    TRANSFER = "transfer"  # Transfer-News
+    WEATHER = "weather"  # Extremes Wetter
+    VENUE_CHANGE = "venue"  # Platz-Wechsel
+    TEAM_NEWS = "team_news"  # Sonstiges Team-News
+    ODDS_MOVEMENT = "odds"  # Verdächtige Quoten-Bewegung
+    EXTERNAL = "external"  # Externe Events
 
 
 class AlertPriority(str, Enum):
     """Alert Importance for User"""
-    CRITICAL = "critical"          # Sofort: Spieler aus
-    HIGH = "high"                  # Wichtig: Formation-Änderung
-    MEDIUM = "medium"              # Standard: Transfer-Gerüchte
-    LOW = "low"                    # Info: Allgemeines News
+
+    CRITICAL = "critical"  # Sofort: Spieler aus
+    HIGH = "high"  # Wichtig: Formation-Änderung
+    MEDIUM = "medium"  # Standard: Transfer-Gerüchte
+    LOW = "low"  # Info: Allgemeines News
 
 
 class NewsSource(str, Enum):
     """Datenquellen"""
+
     TWITTER = "twitter"
     REDDIT = "reddit"
-    OFFICIAL = "official"          # Team offizielle Accounts
-    RSS = "rss"                    # News RSS Feeds
-    API = "api"                    # Externe APIs (transfermarkt, etc.)
+    OFFICIAL = "official"  # Team offizielle Accounts
+    RSS = "rss"  # News RSS Feeds
+    API = "api"  # Externe APIs (transfermarkt, etc.)
 
 
 class NewsAlert(Base):
     """Breaking News Alert — einzelnes Event"""
+
     __tablename__ = "news_alerts"
 
     id = Column(String, primary_key=True, index=True)  # UUID
@@ -65,8 +78,8 @@ class NewsAlert(Base):
 
     # Betroffene Entities
     team_id = Column(String, index=True)  # Beteiligtes Team
-    player_id = Column(String)            # Betroffener Spieler (optional)
-    match_id = Column(String, index=True) # Beteiligtes Match (wenn bekannt)
+    player_id = Column(String)  # Betroffener Spieler (optional)
+    match_id = Column(String, index=True)  # Beteiligtes Match (wenn bekannt)
 
     # Metadata
     source_url = Column(String)
@@ -77,7 +90,9 @@ class NewsAlert(Base):
     # Tracking
     is_verified = Column(Boolean, default=False)  # Wurde von Humans bestätigt?
     user_dismissed_count = Column(Integer, default=0)
-    user_acted_count = Column(Integer, default=0)  # Wie viele Nutzer haben Aktion getroffen?
+    user_acted_count = Column(
+        Integer, default=0
+    )  # Wie viele Nutzer haben Aktion getroffen?
 
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
@@ -85,6 +100,7 @@ class NewsAlert(Base):
 
 class UserAlertSubscription(Base):
     """User Alert Preferences"""
+
     __tablename__ = "user_alert_subscriptions"
 
     id = Column(String, primary_key=True)
@@ -109,6 +125,7 @@ class UserAlertSubscription(Base):
 
 class AlertImpact(Base):
     """Wie sehr beeinflussen Alerts die Odds/Predictions?"""
+
     __tablename__ = "alert_impacts"
 
     id = Column(String, primary_key=True)
@@ -119,10 +136,10 @@ class AlertImpact(Base):
 
     # Predicted Impact auf Odds
     odds_shift_percent = Column(Float)  # z.B. -5.2 (Odds fallen 5.2%)
-    confidence_shift = Column(Float)    # -0.08 (Confidence sinkt um 8%)
+    confidence_shift = Column(Float)  # -0.08 (Confidence sinkt um 8%)
 
     # Historical Accuracy
     past_alerts_same_type = Column(Integer)  # Wie viele ähnliche Alerts gab es?
-    historical_accuracy = Column(Float)      # Wie oft trat das ein? (0-1)
+    historical_accuracy = Column(Float)  # Wie oft trat das ein? (0-1)
 
     created_at = Column(DateTime, default=datetime.utcnow)

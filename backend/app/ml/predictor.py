@@ -60,9 +60,9 @@ class EnsemblePredictor:
             logger.warning(f"⚠️ Elo system not found: {e}")
 
         self.is_loaded = (
-            self.poisson.is_fitted or
-            self.dixon_coles.is_fitted or
-            bool(self.elo.team_ratings)
+            self.poisson.is_fitted
+            or self.dixon_coles.is_fitted
+            or bool(self.elo.team_ratings)
         )
 
         return self.is_loaded
@@ -141,14 +141,24 @@ class EnsemblePredictor:
         ensemble_away = 0.0
 
         if "poisson" in predictions:
-            ensemble_home += predictions["poisson"]["home_win_prob"] * normalized_weights[0]
+            ensemble_home += (
+                predictions["poisson"]["home_win_prob"] * normalized_weights[0]
+            )
             ensemble_draw += predictions["poisson"]["draw_prob"] * normalized_weights[0]
-            ensemble_away += predictions["poisson"]["away_win_prob"] * normalized_weights[0]
+            ensemble_away += (
+                predictions["poisson"]["away_win_prob"] * normalized_weights[0]
+            )
 
         if "dixon_coles" in predictions:
-            ensemble_home += predictions["dixon_coles"]["home_win_prob"] * normalized_weights[1]
-            ensemble_draw += predictions["dixon_coles"]["draw_prob"] * normalized_weights[1]
-            ensemble_away += predictions["dixon_coles"]["away_win_prob"] * normalized_weights[1]
+            ensemble_home += (
+                predictions["dixon_coles"]["home_win_prob"] * normalized_weights[1]
+            )
+            ensemble_draw += (
+                predictions["dixon_coles"]["draw_prob"] * normalized_weights[1]
+            )
+            ensemble_away += (
+                predictions["dixon_coles"]["away_win_prob"] * normalized_weights[1]
+            )
 
         if "elo" in predictions:
             ensemble_home += predictions["elo"]["home_win_prob"] * normalized_weights[2]
@@ -213,8 +223,12 @@ class EnsemblePredictor:
             "expected_goals_away": float(expected_goals_away),
             "individual_predictions": predictions,
             "model_weights": {
-                "poisson": float(normalized_weights[0]) if "poisson" in predictions else 0,
-                "dixon_coles": float(normalized_weights[1]) if "dixon_coles" in predictions else 0,
+                "poisson": float(normalized_weights[0])
+                if "poisson" in predictions
+                else 0,
+                "dixon_coles": float(normalized_weights[1])
+                if "dixon_coles" in predictions
+                else 0,
                 "elo": float(normalized_weights[2]) if "elo" in predictions else 0,
             },
             "value_bets": value_bets,

@@ -15,8 +15,9 @@ class TestAlertsRouterPrefix:
         response = client.get("/api/v1/alerts/feed")
 
         # Should NOT be 404 (which would indicate wrong prefix)
-        assert response.status_code != 404, \
-            f"GET /api/v1/alerts/feed returned 404 - prefix may be duplicated"
+        assert (
+            response.status_code != 404
+        ), f"GET /api/v1/alerts/feed returned 404 - prefix may be duplicated"
 
         # Expected: 401/403 (auth error) or 200 (if endpoint exists and auth passes)
         assert response.status_code in [200, 401, 403, 422]
@@ -25,8 +26,7 @@ class TestAlertsRouterPrefix:
         """Verify doubled prefix would return 404."""
         # This verifies that /api/v1/alerts/api/v1/alerts DOESN'T exist
         response = client.get("/api/v1/alerts/api/v1/alerts")
-        assert response.status_code == 404, \
-            "Doubled prefix endpoint should not exist"
+        assert response.status_code == 404, "Doubled prefix endpoint should not exist"
 
     def test_alerts_single_prefix_correct(self, client):
         """Verify single /api/v1/alerts prefix works for stats endpoint."""

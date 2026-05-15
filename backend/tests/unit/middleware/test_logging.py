@@ -33,7 +33,7 @@ class TestLoggingMiddleware:
         middleware = LoggingMiddleware(None)
         response = await middleware.dispatch(mock_request, call_next)
 
-        assert hasattr(mock_request, 'state')
+        assert hasattr(mock_request, "state")
 
     async def test_middleware_records_request_started(self):
         """Test middleware logs request started event."""
@@ -52,7 +52,7 @@ class TestLoggingMiddleware:
         async def call_next(request):
             return mock_response
 
-        with patch('app.middleware.logging.logger') as mock_logger:
+        with patch("app.middleware.logging.logger") as mock_logger:
             middleware = LoggingMiddleware(None)
             await middleware.dispatch(mock_request, call_next)
             # Should log request_started
@@ -75,7 +75,7 @@ class TestLoggingMiddleware:
         async def call_next(request):
             return mock_response
 
-        with patch('app.middleware.logging.logger') as mock_logger:
+        with patch("app.middleware.logging.logger") as mock_logger:
             middleware = LoggingMiddleware(None)
             await middleware.dispatch(mock_request, call_next)
             # Should log request_completed
@@ -98,7 +98,7 @@ class TestLoggingMiddleware:
         async def call_next(request):
             return mock_response
 
-        with patch('app.middleware.logging.logger') as mock_logger:
+        with patch("app.middleware.logging.logger") as mock_logger:
             middleware = LoggingMiddleware(None)
             await middleware.dispatch(mock_request, call_next)
 
@@ -120,7 +120,7 @@ class TestLoggingMiddleware:
         async def call_next(request):
             raise ValueError("Test error")
 
-        with patch('app.middleware.logging.logger') as mock_logger:
+        with patch("app.middleware.logging.logger") as mock_logger:
             middleware = LoggingMiddleware(None)
             with pytest.raises(ValueError):
                 await middleware.dispatch(mock_request, call_next)
@@ -168,7 +168,7 @@ class TestLoggingMiddleware:
         async def call_next(request):
             return mock_response
 
-        with patch('app.middleware.logging.logger') as mock_logger:
+        with patch("app.middleware.logging.logger") as mock_logger:
             middleware = LoggingMiddleware(None)
             await middleware.dispatch(mock_request, call_next)
 
@@ -294,6 +294,7 @@ class TestJsonFormatter:
             raise ValueError("Test exception")
         except Exception:
             import sys
+
             exc_info = sys.exc_info()
 
             record = logging.LogRecord(
@@ -317,7 +318,7 @@ class TestConfigureLogging:
 
     def test_configure_logging_sets_level(self):
         """Test configure_logging sets log level."""
-        with patch('logging.getLogger') as mock_get_logger:
+        with patch("logging.getLogger") as mock_get_logger:
             mock_logger = MagicMock()
             mock_get_logger.return_value = mock_logger
 
@@ -328,7 +329,7 @@ class TestConfigureLogging:
 
     def test_configure_logging_adds_handler(self):
         """Test configure_logging adds stream handler."""
-        with patch('logging.getLogger') as mock_get_logger:
+        with patch("logging.getLogger") as mock_get_logger:
             mock_logger = MagicMock()
             mock_get_logger.return_value = mock_logger
 
@@ -339,7 +340,7 @@ class TestConfigureLogging:
 
     def test_configure_logging_with_text_format(self):
         """Test configure_logging with text format."""
-        with patch('logging.getLogger') as mock_get_logger:
+        with patch("logging.getLogger") as mock_get_logger:
             mock_logger = MagicMock()
             mock_get_logger.return_value = mock_logger
 
@@ -350,7 +351,7 @@ class TestConfigureLogging:
 
     def test_configure_logging_clears_handlers(self):
         """Test configure_logging clears existing handlers."""
-        with patch('logging.getLogger') as mock_get_logger:
+        with patch("logging.getLogger") as mock_get_logger:
             mock_logger = MagicMock()
             mock_logger.handlers = [MagicMock()]
             mock_get_logger.return_value = mock_logger

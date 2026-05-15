@@ -14,19 +14,21 @@ logger = logging.getLogger(__name__)
 
 class CircuitState(Enum):
     """Circuit-Breaker Zustände"""
-    CLOSED = "closed"       # Normal operation
-    OPEN = "open"           # Too many failures, fast-fail
+
+    CLOSED = "closed"  # Normal operation
+    OPEN = "open"  # Too many failures, fast-fail
     HALF_OPEN = "half_open"  # Testing recovery
 
 
 class CircuitBreakerConfig:
     """Circuit-Breaker Konfiguration"""
+
     def __init__(
         self,
         failure_threshold: int = 5,  # Anzahl Fehler bis OPEN
-        recovery_timeout: int = 60,   # Sekunden bis HALF_OPEN
-        success_threshold: int = 2,   # Erfolgreiches Requests für CLOSED
-        timeout: int = 10,            # Request-Timeout in Sekunden
+        recovery_timeout: int = 60,  # Sekunden bis HALF_OPEN
+        success_threshold: int = 2,  # Erfolgreiches Requests für CLOSED
+        timeout: int = 10,  # Request-Timeout in Sekunden
     ):
         self.failure_threshold = failure_threshold
         self.recovery_timeout = recovery_timeout
@@ -84,7 +86,9 @@ class CircuitBreaker:
 
         if self.state == CircuitState.HALF_OPEN:
             self._open()
-            logger.warning(f"🔴 Circuit {self.name} erneut geöffnet (Fehler in HALF_OPEN)")
+            logger.warning(
+                f"🔴 Circuit {self.name} erneut geöffnet (Fehler in HALF_OPEN)"
+            )
 
         elif self.state == CircuitState.CLOSED:
             if self.failure_count >= self.config.failure_threshold:
@@ -164,9 +168,7 @@ class CircuitBreaker:
                 timeout=self.config.timeout,
             )
         except asyncio.TimeoutError:
-            raise TimeoutError(
-                f"{self.name} Timeout nach {self.config.timeout}s"
-            )
+            raise TimeoutError(f"{self.name} Timeout nach {self.config.timeout}s")
 
     def get_state(self) -> dict:
         """Status des Circuit-Breaker"""

@@ -121,8 +121,9 @@ class TestAutoResolveBets:
             json={},
         )
 
-        assert response.status_code == 401, \
-            f"Expected 401, got {response.status_code}: {response.text}"
+        assert (
+            response.status_code == 401
+        ), f"Expected 401, got {response.status_code}: {response.text}"
 
     @pytest.mark.asyncio
     async def test_auto_resolve_completed_matches(self):

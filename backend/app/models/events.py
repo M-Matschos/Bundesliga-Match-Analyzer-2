@@ -167,7 +167,9 @@ class GoalEvent(BaseEvent):
     is_own_goal: bool = Field(default=False, description="Whether own goal")
     score_before: dict = Field(..., description="Score before goal")
     score_after: dict = Field(..., description="Score after goal")
-    xg_value: Optional[float] = Field(None, ge=0, le=1, description="Expected goals value")
+    xg_value: Optional[float] = Field(
+        None, ge=0, le=1, description="Expected goals value"
+    )
 
     @field_validator("team")
     @classmethod
@@ -209,7 +211,9 @@ class VARReviewEvent(BaseEvent):
 
     event_type: EventType = Field(default=EventType.VAR_REVIEW)
     review_reason: str = Field(..., description="Reason for review")
-    review_team: Optional[Team] = Field(None, description="Team being reviewed (if applicable)")
+    review_team: Optional[Team] = Field(
+        None, description="Team being reviewed (if applicable)"
+    )
 
 
 class VARDecisionEvent(BaseEvent):
@@ -233,7 +237,9 @@ class SubstitutionEvent(BaseEvent):
     player_off_id: Optional[str] = Field(None, description="Player off ID")
     player_on_name: str = Field(..., description="Player coming on")
     player_on_id: Optional[str] = Field(None, description="Player on ID")
-    reason: Optional[str] = Field(None, description="Substitution reason (injury, tactical)")
+    reason: Optional[str] = Field(
+        None, description="Substitution reason (injury, tactical)"
+    )
 
 
 class InjuryEvent(BaseEvent):
@@ -273,8 +279,12 @@ class PossessionUpdateEvent(BaseEvent):
     """Possession percentage update."""
 
     event_type: EventType = Field(default=EventType.POSSESSION_UPDATE)
-    home_possession: float = Field(..., ge=0, le=100, description="Home team possession %")
-    away_possession: float = Field(..., ge=0, le=100, description="Away team possession %")
+    home_possession: float = Field(
+        ..., ge=0, le=100, description="Home team possession %"
+    )
+    away_possession: float = Field(
+        ..., ge=0, le=100, description="Away team possession %"
+    )
 
 
 class CornerEvent(BaseEvent):

@@ -10,7 +10,11 @@ import feedparser
 from loguru import logger
 
 from app.models.alerts import NewsAlert, NewsSource, AlertType, AlertPriority
-from app.core.nlp_classifier import classify_news, extract_entities, calculate_impact_score
+from app.core.nlp_classifier import (
+    classify_news,
+    extract_entities,
+    calculate_impact_score,
+)
 
 
 class NewsCollector:
@@ -93,8 +97,8 @@ class NewsCollector:
         news = []
 
         official_accounts = {
-            'bayern': 'https://twitter.com/FCBayernEN/search?q=injury',
-            'bvb': 'https://twitter.com/BVB/search?q=injury',
+            "bayern": "https://twitter.com/FCBayernEN/search?q=injury",
+            "bvb": "https://twitter.com/BVB/search?q=injury",
         }
 
         # TODO: Web-Scraping der Twitter-Accounts
@@ -112,14 +116,14 @@ class NewsCollector:
         """
         rss_feeds = [
             {
-                'url': 'https://www.kicker.de/news/fussball/bundesliga/aktuell/rss.xml',
-                'source': NewsSource.RSS,
-                'name': 'Kicker.de',
+                "url": "https://www.kicker.de/news/fussball/bundesliga/aktuell/rss.xml",
+                "source": NewsSource.RSS,
+                "name": "Kicker.de",
             },
             {
-                'url': 'https://www.sportschau.de/feed/bundesliga-news.xml',
-                'source': NewsSource.RSS,
-                'name': 'Sportschau',
+                "url": "https://www.sportschau.de/feed/bundesliga-news.xml",
+                "source": NewsSource.RSS,
+                "name": "Sportschau",
             },
         ]
 
@@ -127,17 +131,17 @@ class NewsCollector:
 
         for feed_config in rss_feeds:
             try:
-                parsed = feedparser.parse(feed_config['url'])
+                parsed = feedparser.parse(feed_config["url"])
 
                 for entry in parsed.entries[:20]:  # Letzte 20 Artikel
                     try:
                         item = {
-                            'title': entry.get('title', ''),
-                            'description': entry.get('summary', ''),
-                            'source_url': entry.get('link', ''),
-                            'published_at': datetime(*entry.published_parsed[:6]),
-                            'source': feed_config['source'],
-                            'source_name': feed_config['name'],
+                            "title": entry.get("title", ""),
+                            "description": entry.get("summary", ""),
+                            "source_url": entry.get("link", ""),
+                            "published_at": datetime(*entry.published_parsed[:6]),
+                            "source": feed_config["source"],
+                            "source_name": feed_config["name"],
                         }
                         news.append(item)
                     except Exception as e:
@@ -166,12 +170,11 @@ class NewsCollector:
             try:
                 # NLP Klassifikation
                 alert_type, priority, relevance = classify_news(
-                    item['description'],
-                    item['title']
+                    item["description"], item["title"]
                 )
 
                 # Entities extrahieren
-                entities = extract_entities(item['description'])
+                entities = extract_entities(item["description"])
 
                 # Impact berechnen
                 impact_score = calculate_impact_score(alert_type, entities)
@@ -182,17 +185,19 @@ class NewsCollector:
                         id=self._generate_id(),
                         alert_type=alert_type,
                         priority=priority,
-                        source=item.get('source', NewsSource.RSS),
-                        title=item['title'],
-                        description=item['description'],
-                        raw_text=item['description'],
+                        source=item.get("source", NewsSource.RSS),
+                        title=item["title"],
+                        description=item["description"],
+                        raw_text=item["description"],
                         relevance_score=relevance,
                         confidence=impact_score,
                         nlp_tags=str(entities),
-                        team_id=entities['teams'][0] if entities['teams'] else None,
-                        player_id=entities['players'][0] if entities['players'] else None,
-                        source_url=item.get('source_url'),
-                        published_at=item.get('published_at', datetime.utcnow()),
+                        team_id=entities["teams"][0] if entities["teams"] else None,
+                        player_id=entities["players"][0]
+                        if entities["players"]
+                        else None,
+                        source_url=item.get("source_url"),
+                        published_at=item.get("published_at", datetime.utcnow()),
                         expires_at=datetime.utcnow() + timedelta(days=7),
                     )
 
@@ -215,6 +220,7 @@ class NewsCollector:
     def _generate_id(self) -> str:
         """Generiere eindeutige Alert-ID"""
         import uuid
+
         return f"alert_{uuid.uuid4().hex[:8]}"
 
 
@@ -237,7 +243,9 @@ async def run_news_collection_worker(db_session, poll_interval: int = 300):
                 # Verarbeite & speichere
                 if raw_news:
                     alert_ids = await collector.process_and_store(raw_news)
-                    logger.info(f"Created {len(alert_ids)} alerts from {len(raw_news)} news items")
+                    logger.info(
+                        f"Created {len(alert_ids)} alerts from {len(raw_news)} news items"
+                    )
 
         except Exception as e:
             logger.error(f"News collection worker error: {e}")

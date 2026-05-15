@@ -66,9 +66,7 @@ class TestCacheManager:
         """Test get_or_set with existing cache."""
         mock_redis.get.return_value = b'{"cached": true}'
         result = await cache_manager.get_or_set(
-            "test_key",
-            lambda: {"new": "value"},
-            ttl=3600
+            "test_key", lambda: {"new": "value"}, ttl=3600
         )
         assert result == {"cached": True}
         mock_redis.get.assert_called_once()
@@ -102,13 +100,14 @@ class TestCacheDecorator:
         mock_cache_mgr = AsyncMock()
         mock_cache_mgr.get = AsyncMock(return_value=None)  # First call: not cached
         mock_cache_mgr.set = AsyncMock(return_value=True)
-        with patch('app.core.cache.cache_manager', mock_cache_mgr):
+        with patch("app.core.cache.cache_manager", mock_cache_mgr):
             result = await expensive_function(10)
             assert result == 20
             mock_cache_mgr.set.assert_called_once()
 
     async def test_decorator_uses_function_name(self):
         """Test that decorator uses function name for cache key."""
+
         @cache_decorator(ttl=3600)
         async def my_function(x):
             return x * 2
@@ -116,13 +115,14 @@ class TestCacheDecorator:
         mock_cache_mgr = AsyncMock()
         mock_cache_mgr.get = AsyncMock(return_value=None)
         mock_cache_mgr.set = AsyncMock(return_value=True)
-        with patch('app.core.cache.cache_manager', mock_cache_mgr):
+        with patch("app.core.cache.cache_manager", mock_cache_mgr):
             await my_function(10)
             call_args = mock_cache_mgr.set.call_args
             assert "my_function" in call_args[0][0]
 
     async def test_decorator_with_multiple_args(self):
         """Test decorator with multiple function arguments."""
+
         @cache_decorator(ttl=3600)
         async def add(a, b):
             return a + b
@@ -130,7 +130,7 @@ class TestCacheDecorator:
         mock_cache_mgr = AsyncMock()
         mock_cache_mgr.get = AsyncMock(return_value=None)
         mock_cache_mgr.set = AsyncMock(return_value=True)
-        with patch('app.core.cache.cache_manager', mock_cache_mgr):
+        with patch("app.core.cache.cache_manager", mock_cache_mgr):
             result = await add(10, 5)
             assert result == 15
             mock_cache_mgr.set.assert_called_once()
@@ -197,7 +197,7 @@ class TestCacheSerializationDeserialization:
             "list": [1, 2, 3],
             "nested": {"a": [1, 2], "b": {"c": "d"}},
             "null": None,
-            "bool": True
+            "bool": True,
         }
         serialized = cache_manager._serialize(data)
         deserialized = cache_manager._deserialize(serialized.encode())

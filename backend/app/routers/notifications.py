@@ -14,7 +14,10 @@ from app.models.notification import (
     NotificationResponse,
     NotificationHistory,
 )
-from app.services.notification_service import get_notification_service, NotificationService
+from app.services.notification_service import (
+    get_notification_service,
+    NotificationService,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -27,7 +30,9 @@ async def get_service() -> NotificationService:
         return get_notification_service()
     except RuntimeError as e:
         logger.error(f"Notification-Service nicht initialisiert: {e}")
-        raise HTTPException(status_code=500, detail="Notification-Service nicht verfügbar")
+        raise HTTPException(
+            status_code=500, detail="Notification-Service nicht verfügbar"
+        )
 
 
 @router.post("/register-device", response_model=NotificationResponse)
@@ -49,7 +54,9 @@ async def register_device(
             platform=request.platform,
         )
 
-        logger.info(f"✓ Gerät registriert: user_id={request.user_id}, platform={request.platform}")
+        logger.info(
+            f"✓ Gerät registriert: user_id={request.user_id}, platform={request.platform}"
+        )
 
         return NotificationResponse(
             status="success",
@@ -113,7 +120,9 @@ async def unsubscribe_from_match(
             match_id=request.match_id,
         )
 
-        logger.info(f"✓ Benutzer {request.user_id} abgemeldet von Match {request.match_id}")
+        logger.info(
+            f"✓ Benutzer {request.user_id} abgemeldet von Match {request.match_id}"
+        )
 
         return NotificationResponse(
             status="success",
@@ -146,7 +155,9 @@ async def get_notification_history(
 
         history = await service.get_notification_history(user_id=user_id, limit=limit)
 
-        logger.info(f"✓ Notification-Historie abgerufen: user_id={user_id}, records={len(history)}")
+        logger.info(
+            f"✓ Notification-Historie abgerufen: user_id={user_id}, records={len(history)}"
+        )
 
         return history
 

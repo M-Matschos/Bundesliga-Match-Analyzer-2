@@ -58,14 +58,14 @@ async def get_player(
         "nationality": "Germany",
         "date_of_birth": "1986-03-27",
         "height": 193,  # cm
-        "weight": 92,   # kg
+        "weight": 92,  # kg
         "stats": {
             "appearances": 0,
             "goals": 0,
             "assists": 0,
             "yellow_cards": 0,
             "red_cards": 0,
-        }
+        },
     }
 
 
@@ -109,7 +109,7 @@ async def get_player_stats(
             "clearances": 0,
             "saves": 0,  # For goalkeepers
             "clean_sheets": 0,  # For goalkeepers
-        }
+        },
     }
 
 
@@ -165,5 +165,5 @@ async def get_team_squad(
             "defenders": [],
             "midfielders": [],
             "forwards": [],
-        }
+        },
     }

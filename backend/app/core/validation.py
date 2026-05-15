@@ -6,6 +6,7 @@ import re
 
 class ValidationError(Exception):
     """Custom validation error with field + message."""
+
     def __init__(self, field: str, message: str):
         self.field = field
         self.message = message
@@ -16,7 +17,7 @@ class FormValidator:
     """Centralized validation logic for all forms."""
 
     # Email regex pattern (simple, but effective)
-    EMAIL_PATTERN = re.compile(r'^[^\s@]+@[^\s@]+\.[^\s@]+$')
+    EMAIL_PATTERN = re.compile(r"^[^\s@]+@[^\s@]+\.[^\s@]+$")
 
     @staticmethod
     def validate_email(email: str) -> Tuple[bool, Optional[str]]:
@@ -32,7 +33,7 @@ class FormValidator:
         if len(email) < 5:
             return False, "E-Mail too short (min 5 chars)"
 
-        if '@' not in email:
+        if "@" not in email:
             return False, "E-Mail must contain @"
 
         if not FormValidator.EMAIL_PATTERN.match(email):
@@ -58,15 +59,14 @@ class FormValidator:
         if len(password) > 128:
             return False, "Password too long (max 128 chars)"
 
-        if ' ' in password:
+        if " " in password:
             return False, "Password cannot contain spaces"
 
         return True, None
 
     @staticmethod
     def validate_password_confirmation(
-        password: str,
-        confirmation: str
+        password: str, confirmation: str
     ) -> Tuple[bool, Optional[str]]:
         """
         Validate password matches confirmation.
@@ -117,7 +117,7 @@ class FormValidator:
             return False, "Bet amount max €10,000"
 
         # Check decimal places (max 2)
-        if len(str(amount).split('.')[-1]) > 2:
+        if len(str(amount).split(".")[-1]) > 2:
             return False, "Bet amount max 2 decimal places"
 
         return True, None

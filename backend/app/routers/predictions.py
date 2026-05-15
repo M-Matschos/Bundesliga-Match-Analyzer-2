@@ -38,6 +38,7 @@ async def verify_auth(authorization: Optional[str] = Header(None)) -> str:
 
 class SimulateRequest(BaseModel):
     """Request body for simulate prediction endpoint."""
+
     home_team: str
     away_team: str
     market_odds: Optional[str] = None
@@ -73,6 +74,7 @@ async def simulate_prediction(
     if market_odds:
         try:
             import json
+
             odds_dict = json.loads(market_odds)
         except json.JSONDecodeError:
             raise HTTPException(status_code=400, detail="Invalid market_odds JSON")
@@ -116,6 +118,7 @@ async def get_value_bets(
     """
     # Fetch upcoming scheduled matches
     from datetime import datetime, timedelta
+
     now = datetime.utcnow()
     future = now + timedelta(days=14)
 
@@ -129,7 +132,10 @@ async def get_value_bets(
         filters.append(Match.league_id == league)
 
     from sqlalchemy import and_
-    query = select(Match).where(and_(*filters)).order_by(Match.kickoff.asc()).limit(limit)
+
+    query = (
+        select(Match).where(and_(*filters)).order_by(Match.kickoff.asc()).limit(limit)
+    )
     result = await db.execute(query)
     matches = result.scalars().all()
 
@@ -271,7 +277,9 @@ async def get_team_strength(
 
         return {
             "team_id": team_id,
-            "strength_index": strength.get("poisson") or strength.get("elo", {}).get("rating") or 0,
+            "strength_index": strength.get("poisson")
+            or strength.get("elo", {}).get("rating")
+            or 0,
             "elo": strength.get("elo"),
             "poisson": strength.get("poisson"),
         }

@@ -22,9 +22,7 @@ class TestErrorResponse:
     def test_error_response_creation(self):
         """Test creating an error response."""
         error = ErrorResponse(
-            detail="Test error message",
-            status_code=400,
-            error_type="validation_error"
+            detail="Test error message", status_code=400, error_type="validation_error"
         )
         assert error.detail == "Test error message"
         assert error.status_code == 400
@@ -33,9 +31,7 @@ class TestErrorResponse:
     def test_error_response_to_dict(self):
         """Test converting error response to dictionary."""
         error = ErrorResponse(
-            detail="User not found",
-            status_code=404,
-            error_type="not_found_error"
+            detail="User not found", status_code=404, error_type="not_found_error"
         )
         error_dict = error.to_dict()
 
@@ -46,20 +42,14 @@ class TestErrorResponse:
 
     def test_error_response_timestamp_included(self):
         """Test error response includes timestamp."""
-        error = ErrorResponse(
-            detail="Test error",
-            status_code=500
-        )
+        error = ErrorResponse(detail="Test error", status_code=500)
         assert error.timestamp is not None
         # Should be ISO format string
         datetime.fromisoformat(error.timestamp)
 
     def test_error_response_default_error_type(self):
         """Test default error type."""
-        error = ErrorResponse(
-            detail="Test error",
-            status_code=400
-        )
+        error = ErrorResponse(detail="Test error", status_code=400)
         assert error.error_type == "error"
 
 
@@ -72,10 +62,7 @@ class TestHttpExceptionHandler:
         mock_request.url.path = "/api/v1/test"
         mock_request.method = "POST"
 
-        exc = HTTPException(
-            status_code=400,
-            detail="Invalid request body"
-        )
+        exc = HTTPException(status_code=400, detail="Invalid request body")
 
         response = await http_exception_handler(mock_request, exc)
 
@@ -90,10 +77,7 @@ class TestHttpExceptionHandler:
         mock_request.url.path = "/api/v1/test"
         mock_request.method = "GET"
 
-        exc = HTTPException(
-            status_code=401,
-            detail="Invalid token"
-        )
+        exc = HTTPException(status_code=401, detail="Invalid token")
 
         response = await http_exception_handler(mock_request, exc)
 
@@ -107,10 +91,7 @@ class TestHttpExceptionHandler:
         mock_request.url.path = "/api/v1/admin"
         mock_request.method = "DELETE"
 
-        exc = HTTPException(
-            status_code=403,
-            detail="Insufficient permissions"
-        )
+        exc = HTTPException(status_code=403, detail="Insufficient permissions")
 
         response = await http_exception_handler(mock_request, exc)
 
@@ -124,10 +105,7 @@ class TestHttpExceptionHandler:
         mock_request.url.path = "/api/v1/users/999"
         mock_request.method = "GET"
 
-        exc = HTTPException(
-            status_code=404,
-            detail="User not found"
-        )
+        exc = HTTPException(status_code=404, detail="User not found")
 
         response = await http_exception_handler(mock_request, exc)
 
@@ -141,10 +119,7 @@ class TestHttpExceptionHandler:
         mock_request.url.path = "/api/v1/test"
         mock_request.method = "POST"
 
-        exc = HTTPException(
-            status_code=500,
-            detail="Internal server error"
-        )
+        exc = HTTPException(status_code=500, detail="Internal server error")
 
         response = await http_exception_handler(mock_request, exc)
 
@@ -158,12 +133,9 @@ class TestHttpExceptionHandler:
         mock_request.url.path = "/api/v1/test"
         mock_request.method = "GET"
 
-        exc = HTTPException(
-            status_code=400,
-            detail="Test error"
-        )
+        exc = HTTPException(status_code=400, detail="Test error")
 
-        with patch('app.middleware.error_handler.logger') as mock_logger:
+        with patch("app.middleware.error_handler.logger") as mock_logger:
             await http_exception_handler(mock_request, exc)
             mock_logger.warning.assert_called_once()
 
@@ -258,7 +230,7 @@ class TestValidationExceptionHandler:
 
         exc = RequestValidationError(errors=mock_error.errors())
 
-        with patch('app.middleware.error_handler.logger') as mock_logger:
+        with patch("app.middleware.error_handler.logger") as mock_logger:
             await validation_exception_handler(mock_request, exc)
             mock_logger.warning.assert_called_once()
 
@@ -303,13 +275,13 @@ class TestGenericExceptionHandler:
 
         exc = Exception("Test exception")
 
-        with patch('app.middleware.error_handler.logger') as mock_logger:
+        with patch("app.middleware.error_handler.logger") as mock_logger:
             await generic_exception_handler(mock_request, exc)
 
             # Should log error with exc_info
             mock_logger.error.assert_called_once()
             call_kwargs = mock_logger.error.call_args[1]
-            assert call_kwargs.get('exc_info') is True
+            assert call_kwargs.get("exc_info") is True
 
     async def test_generic_exception_handler_includes_request_context(self):
         """Test handler includes request context in logs."""
@@ -319,14 +291,14 @@ class TestGenericExceptionHandler:
 
         exc = Exception("Processing error")
 
-        with patch('app.middleware.error_handler.logger') as mock_logger:
+        with patch("app.middleware.error_handler.logger") as mock_logger:
             await generic_exception_handler(mock_request, exc)
 
             # Should include path and method in context
             call_args = mock_logger.error.call_args
-            extra = call_args[1].get('extra', {})
-            assert extra.get('path') == "/api/v1/predictions"
-            assert extra.get('method') == "POST"
+            extra = call_args[1].get("extra", {})
+            assert extra.get("path") == "/api/v1/predictions"
+            assert extra.get("method") == "POST"
 
     async def test_generic_exception_handler_never_exposes_internal_details(self):
         """Test handler doesn't expose internal error details to client."""
@@ -349,20 +321,14 @@ class TestErrorResponseTimestamp:
 
     def test_error_response_timestamp_format(self):
         """Test timestamp is ISO 8601 format."""
-        error = ErrorResponse(
-            detail="Test error",
-            status_code=400
-        )
+        error = ErrorResponse(detail="Test error", status_code=400)
         # Should be parseable as ISO 8601
         dt = datetime.fromisoformat(error.timestamp)
         assert isinstance(dt, datetime)
 
     def test_error_response_timestamp_is_utc(self):
         """Test timestamp uses UTC."""
-        error = ErrorResponse(
-            detail="Test error",
-            status_code=400
-        )
+        error = ErrorResponse(detail="Test error", status_code=400)
         # Timestamp should be roughly current time (within 1 second)
         error_time = datetime.fromisoformat(error.timestamp)
         now = datetime.utcnow()

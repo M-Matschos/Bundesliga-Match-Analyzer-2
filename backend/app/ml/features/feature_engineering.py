@@ -34,7 +34,7 @@ async def build_features(match: Dict[str, Any]) -> Dict[str, Any]:
 
     # Fall back to league average with home advantage when no xG present
     if lambda_home == 0 and lambda_away == 0:
-        lambda_home = round(_DEFAULT_LAMBDA * 1.10, 3)   # +10 % home advantage
+        lambda_home = round(_DEFAULT_LAMBDA * 1.10, 3)  # +10 % home advantage
         lambda_away = round(_DEFAULT_LAMBDA * 0.92, 3)
 
     logger.debug(
@@ -47,5 +47,5 @@ async def build_features(match: Dict[str, Any]) -> Dict[str, Any]:
     return {
         "lambda_home": lambda_home,
         "lambda_away": lambda_away,
-        "shap_top3": [],   # TODO: full SHAP integration (P2 task)
+        "shap_top3": [],  # TODO: full SHAP integration (P2 task)
     }

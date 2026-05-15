@@ -86,9 +86,7 @@ class NotificationService:
 
         message = messaging.Message(
             notification=messaging.Notification(
-                title=title,
-                body=body,
-                image_url=image_url
+                title=title, body=body, image_url=image_url
             ),
             data=data or {},
             token=device_token,
@@ -192,7 +190,7 @@ class NotificationService:
                 JOIN device_tokens ds ON ns.user_id = ds.user_id
                 WHERE ns.match_id = $1
                 """,
-                match_id
+                match_id,
             )
 
             if not subscriptions:
@@ -200,7 +198,9 @@ class NotificationService:
                 return 0
 
             # Format notification
-            notification_title = title or self._format_event_title(event_type, event_data)
+            notification_title = title or self._format_event_title(
+                event_type, event_data
+            )
             notification_body = body or self._format_event_body(event_type, event_data)
 
             # Prepare data payload
@@ -208,10 +208,13 @@ class NotificationService:
                 "match_id": str(match_id),
                 "event_type": event_type,
             }
-            notification_data.update({
-                k: str(v) for k, v in event_data.items()
-                if k not in ["match_id", "event_type"]
-            })
+            notification_data.update(
+                {
+                    k: str(v)
+                    for k, v in event_data.items()
+                    if k not in ["match_id", "event_type"]
+                }
+            )
 
             # Send to all subscribers
             sent_count = 0
@@ -240,7 +243,9 @@ class NotificationService:
                     )
                     sent_count += 1
                 except Exception as e:
-                    logger.error(f"Failed to send notification to user {subscription['user_id']}: {str(e)}")
+                    logger.error(
+                        f"Failed to send notification to user {subscription['user_id']}: {str(e)}"
+                    )
 
             return sent_count
         except Exception as e:

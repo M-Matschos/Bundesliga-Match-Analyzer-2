@@ -149,7 +149,7 @@ async def get_user_bets(
 @router.get("/portfolio/stats")
 async def get_portfolio_stats(
     db: AsyncSession = Depends(get_db),
-    current_user = Depends(get_current_user),
+    current_user=Depends(get_current_user),
 ) -> dict:
     """Get user's betting portfolio statistics.
 
@@ -183,7 +183,9 @@ async def get_portfolio_stats(
     void_bets = sum(1 for b in bets if b.status == "void")
     net_profit = total_returns - total_losses
 
-    roi = round((total_returns - total_staked) / total_staked if total_staked > 0 else 0.0, 4)
+    roi = round(
+        (total_returns - total_staked) / total_staked if total_staked > 0 else 0.0, 4
+    )
     win_rate = round(won_bets / len(bets) if bets else 0.0, 4)
 
     return {
@@ -191,7 +193,9 @@ async def get_portfolio_stats(
         "total_balance": round(net_profit, 2),
         "total_staked": round(total_staked, 2),
         "total_returns": round(total_returns, 2),
-        "roi_percent": round((net_profit / total_staked * 100) if total_staked > 0 else 0.0, 2),
+        "roi_percent": round(
+            (net_profit / total_staked * 100) if total_staked > 0 else 0.0, 2
+        ),
         "roi": roi,
         "win_rate": win_rate,
         "wins": won_bets,
@@ -217,7 +221,7 @@ async def get_portfolio_stats(
 async def get_bet_detail(
     bet_id: str,
     db: AsyncSession = Depends(get_db),
-    current_user = Depends(get_current_user),
+    current_user=Depends(get_current_user),
 ) -> dict:
     """Get bet details.
 
@@ -263,7 +267,9 @@ async def get_bet_detail(
             "status": match.status if match else None,
             "home_score": match.home_score if match else None,
             "away_score": match.away_score if match else None,
-        } if match else None,
+        }
+        if match
+        else None,
         "bet_type": bet.bet_type,
         "odds": float(bet.odds),
         "amount": float(bet.amount),
@@ -277,7 +283,7 @@ async def get_bet_detail(
 async def cancel_bet(
     bet_id: str,
     db: AsyncSession = Depends(get_db),
-    current_user = Depends(get_current_user),
+    current_user=Depends(get_current_user),
 ) -> dict:
     """Cancel a pending bet.
 
@@ -308,7 +314,9 @@ async def cancel_bet(
         raise HTTPException(status_code=404, detail="Bet not found")
 
     if bet.status != "pending":
-        raise HTTPException(status_code=400, detail="Only pending bets can be cancelled")
+        raise HTTPException(
+            status_code=400, detail="Only pending bets can be cancelled"
+        )
 
     # Cancel bet
     bet.status = "cancelled"
@@ -327,7 +335,7 @@ async def resolve_bet(
     bet_id: UUID,
     outcome: str = Query(..., description="won, lost, or void"),
     db: AsyncSession = Depends(get_db),
-    current_user = Depends(get_current_user),
+    current_user=Depends(get_current_user),
 ) -> dict:
     """Resolve a pending bet (won, lost, or void).
 
@@ -344,7 +352,9 @@ async def resolve_bet(
     """
     # Validate outcome
     if outcome not in ["won", "lost", "void"]:
-        raise HTTPException(status_code=400, detail="Invalid outcome. Must be 'won', 'lost', or 'void'")
+        raise HTTPException(
+            status_code=400, detail="Invalid outcome. Must be 'won', 'lost', or 'void'"
+        )
 
     # Get bet
     query = select(Bet).where(
@@ -425,6 +435,7 @@ async def auto_resolve_bets(
     # Get user and check admin status
     try:
         from sqlalchemy import select
+
         stmt = select(User).where(User.id == UUID(user_id))
         result = await db.execute(stmt)
         current_user = result.scalar_one_or_none()
@@ -499,7 +510,9 @@ async def auto_resolve_bets(
                     bet.win_amount = 0.0
 
                 resolved_count += 1
-                logger.info(f"Auto-resolved bet {bet.id}: {bet.status}, win_amount={bet.win_amount}")
+                logger.info(
+                    f"Auto-resolved bet {bet.id}: {bet.status}, win_amount={bet.win_amount}"
+                )
 
             await db.commit()
 

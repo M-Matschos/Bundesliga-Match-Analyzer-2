@@ -81,7 +81,9 @@ async def get_current_user(
     return user
 
 
-@router.post("/register", status_code=status.HTTP_201_CREATED, response_model=TokenResponse)
+@router.post(
+    "/register", status_code=status.HTTP_201_CREATED, response_model=TokenResponse
+)
 @limiter.limit("3/minute")
 async def register(
     request: Request,

@@ -11,7 +11,13 @@ from pydantic import BaseModel
 
 from app.core.security import get_current_user
 from app.models.db import get_db, User
-from app.models.alerts import NewsAlert, UserAlertSubscription, AlertType, AlertPriority, NewsSource
+from app.models.alerts import (
+    NewsAlert,
+    UserAlertSubscription,
+    AlertType,
+    AlertPriority,
+    NewsSource,
+)
 from app.models.schemas import UserResponse
 
 router = APIRouter(tags=["alerts"])
@@ -21,8 +27,10 @@ router = APIRouter(tags=["alerts"])
 # PYDANTIC MODELS
 # ─────────────────────────────────────────────────────────────
 
+
 class AlertResponse(BaseModel):
     """Single Alert Response"""
+
     id: str
     alert_type: str
     priority: str
@@ -46,6 +54,7 @@ class AlertResponse(BaseModel):
 
 class AlertsListResponse(BaseModel):
     """List of alerts with pagination"""
+
     alerts: List[AlertResponse]
     total: int
     page: int
@@ -54,6 +63,7 @@ class AlertsListResponse(BaseModel):
 
 class AlertSubscriptionRequest(BaseModel):
     """User Alert Subscription Preferences"""
+
     alert_types: List[str]  # ["injury", "tactical", "odds"]
     min_priority: str  # "critical" | "high" | "medium" | "low"
     enable_push: bool = True
@@ -65,6 +75,7 @@ class AlertSubscriptionRequest(BaseModel):
 
 class AlertStatsResponse(BaseModel):
     """Alert statistics for dashboard"""
+
     total_alerts_24h: int
     critical_alerts: int
     high_priority_alerts: int
@@ -75,6 +86,7 @@ class AlertStatsResponse(BaseModel):
 # ─────────────────────────────────────────────────────────────
 # API ENDPOINTS
 # ─────────────────────────────────────────────────────────────
+
 
 @router.get("/feed", response_model=AlertsListResponse)
 async def get_alerts_feed(
@@ -116,15 +128,10 @@ async def get_alerts_feed(
         query = query.where(NewsAlert.team_id == team_id)
 
     # Sortiere nach Priorität + Relevanz
-    query = query.order_by(
-        desc(NewsAlert.priority),
-        desc(NewsAlert.relevance_score)
-    )
+    query = query.order_by(desc(NewsAlert.priority), desc(NewsAlert.relevance_score))
 
     # Pagination
-    total = await db.scalar(
-        select(func.count(NewsAlert.id)).where(query.whereclause)
-    )
+    total = await db.scalar(select(func.count(NewsAlert.id)).where(query.whereclause))
     offset = (page - 1) * limit
     query = query.offset(offset).limit(limit)
 
@@ -148,9 +155,7 @@ async def get_alert_detail(
     """
     GET /alerts/{alert_id} — Details eines einzelnen Alerts
     """
-    result = await db.execute(
-        select(NewsAlert).where(NewsAlert.id == alert_id)
-    )
+    result = await db.execute(select(NewsAlert).where(NewsAlert.id == alert_id))
     alert = result.scalar_one_or_none()
 
     if not alert:
@@ -241,13 +246,20 @@ async def get_alert_subscription(
         }
 
     import json
+
     return {
-        "alert_types": json.loads(subscription.alert_types) if subscription.alert_types else [],
+        "alert_types": json.loads(subscription.alert_types)
+        if subscription.alert_types
+        else [],
         "min_priority": subscription.min_priority,
         "enable_push": subscription.enable_push,
         "enable_email": subscription.enable_email,
-        "favorite_teams": json.loads(subscription.favorite_teams) if subscription.favorite_teams else [],
-        "favorite_players": json.loads(subscription.favorite_players) if subscription.favorite_players else [],
+        "favorite_teams": json.loads(subscription.favorite_teams)
+        if subscription.favorite_teams
+        else [],
+        "favorite_players": json.loads(subscription.favorite_players)
+        if subscription.favorite_players
+        else [],
     }
 
 
@@ -277,25 +289,19 @@ async def get_alert_statistics(
 
     critical_result = await db.scalar(
         select(func.count(NewsAlert.id)).where(
-            and_(
-                query.whereclause,
-                NewsAlert.priority == AlertPriority.CRITICAL
-            )
+            and_(query.whereclause, NewsAlert.priority == AlertPriority.CRITICAL)
         )
     )
 
     high_result = await db.scalar(
         select(func.count(NewsAlert.id)).where(
-            and_(
-                query.whereclause,
-                NewsAlert.priority == AlertPriority.HIGH
-            )
+            and_(query.whereclause, NewsAlert.priority == AlertPriority.HIGH)
         )
     )
 
     # Most common type
     result = await db.execute(
-        select(NewsAlert.alert_type, func.count(NewsAlert.id).label('count'))
+        select(NewsAlert.alert_type, func.count(NewsAlert.id).label("count"))
         .where(query.whereclause)
         .group_by(NewsAlert.alert_type)
         .order_by(desc(func.count(NewsAlert.id)))
@@ -324,9 +330,7 @@ async def dismiss_alert(
 
     Tracking für relevance Scoring
     """
-    result = await db.execute(
-        select(NewsAlert).where(NewsAlert.id == alert_id)
-    )
+    result = await db.execute(select(NewsAlert).where(NewsAlert.id == alert_id))
     alert = result.scalar_one_or_none()
 
     if not alert:
@@ -356,10 +360,11 @@ async def search_alerts(
     query_text = f"%{q.lower()}%"
 
     result = await db.execute(
-        select(NewsAlert).where(
-            (NewsAlert.title.ilike(query_text)) |
-            (NewsAlert.description.ilike(query_text)) |
-            (NewsAlert.nlp_tags.ilike(query_text))
+        select(NewsAlert)
+        .where(
+            (NewsAlert.title.ilike(query_text))
+            | (NewsAlert.description.ilike(query_text))
+            | (NewsAlert.nlp_tags.ilike(query_text))
         )
         .order_by(desc(NewsAlert.detected_at))
         .limit(limit)

@@ -464,6 +464,7 @@ class TestBettingRouter:
 
         # Create bet (using query parameters, not JSON body)
         from uuid import uuid4
+
         match_id = str(uuid4())
         response = client.post(
             "/api/v1/virtual-bets",
