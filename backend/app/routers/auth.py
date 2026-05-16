@@ -248,17 +248,21 @@ async def refresh_token(
             detail="User not found or inactive",
         )
 
-    # Create new access token
+    # Create new access and refresh tokens (token rotation)
     new_access_token = create_token(
         data={"sub": str(user.id), "email": user.email},
         token_type="access",
+    )
+    new_refresh_token = create_token(
+        data={"sub": str(user.id), "email": user.email},
+        token_type="refresh",
     )
 
     logger.info(f"Token refreshed for user: {user.email}")
 
     return TokenResponse(
         access_token=new_access_token,
-        refresh_token=request.refresh_token,
+        refresh_token=new_refresh_token,
         token_type="bearer",
         expires_in=settings.jwt_expire_minutes * 60,
     )

@@ -39,9 +39,6 @@ def authenticated_client(client):
 class TestE2EUserJourney:
     """E2E Journey 1: New User Registration → Login → View Dashboard"""
 
-    @pytest.mark.skip(
-        reason="Known issue: Token refresh returns same token (CHANGELOG_RC.md Issue 1)"
-    )
     def test_complete_user_onboarding(self, client):
         """
         User Story: New user signs up, logs in, accesses protected route
@@ -50,11 +47,7 @@ class TestE2EUserJourney:
         1. POST /auth/register → Create account
         2. POST /auth/login → Get JWT token
         3. GET /auth/me → Access protected endpoint
-        4. POST /auth/refresh → Refresh token
-
-        NOTE: This test is skipped due to a pre-existing bug where the token refresh
-        endpoint returns the same token instead of generating a new one. This is
-        documented in CHANGELOG_RC.md (Issue 1) and will be fixed in Phase 5.
+        4. POST /auth/refresh → Refresh token (token rotation fixed in v1.0.1)
         """
         # 1. Register
         register_resp = client.post(

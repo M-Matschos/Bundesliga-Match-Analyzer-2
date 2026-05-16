@@ -164,7 +164,8 @@ class TestRefreshTokenEndpoint:
         assert response.status_code == 200
         data = response.json()
         assert "access_token" in data
-        assert data["refresh_token"] == refresh_token
+        assert "refresh_token" in data
+        assert data["refresh_token"] != refresh_token
 
     async def test_refresh_token_invalid(self, client):
         """Test refresh with invalid token."""
@@ -178,6 +179,32 @@ class TestRefreshTokenEndpoint:
         """Test refresh without token."""
         response = client.post("/api/v1/auth/refresh", json={})
         assert response.status_code == 422
+
+    async def test_refresh_token_rotates_refresh_token(
+        self, client, async_db_session: AsyncSession, test_user_data: dict
+    ):
+        """Token rotation: /auth/refresh must return a NEW refresh token, not the same one."""
+        client.post(
+            "/api/v1/auth/register",
+            json={
+                "email": test_user_data["email"],
+                "password": test_user_data["password"],
+            },
+        )
+        login_response = client.post(
+            "/api/v1/auth/login",
+            json={
+                "email": test_user_data["email"],
+                "password": test_user_data["password"],
+            },
+        )
+        original_refresh_token = login_response.json()["refresh_token"]
+
+        response = client.post(
+            "/api/v1/auth/refresh", json={"refresh_token": original_refresh_token}
+        )
+        assert response.status_code == 200
+        assert response.json()["refresh_token"] != original_refresh_token
 
 
 class TestGetCurrentUserEndpoint:
