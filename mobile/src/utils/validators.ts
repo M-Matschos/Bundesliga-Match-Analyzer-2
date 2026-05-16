@@ -11,7 +11,7 @@
  * @returns true if email format is valid
  */
 export function validateEmail(email: string): boolean {
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+\$"/
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
   return emailRegex.test(email)
 }
 
@@ -68,7 +68,7 @@ export function validateUsername(username: string): boolean {
     return false
   }
   // Must start with letter, can contain letters, numbers, and underscores
-  const usernameRegex = /^[a-zA-Z][a-zA-Z0-9_]*\$"/
+  const usernameRegex = /^[a-zA-Z][a-zA-Z0-9_]*$/
   return usernameRegex.test(username)
 }
 

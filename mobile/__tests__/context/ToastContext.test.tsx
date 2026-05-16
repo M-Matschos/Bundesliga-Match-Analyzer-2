@@ -3,6 +3,7 @@
  */
 
 import React from 'react'
+import { Text } from 'react-native'
 import { render, waitFor } from '@testing-library/react-native'
 import { ToastProvider, useToast } from '../../src/context/ToastContext'
 
@@ -10,9 +11,9 @@ function TestComponent() {
   const { success, error, info } = useToast()
   return (
     <>
-      <>{typeof success === 'function' ? 'has-success' : 'no-success'}</>
-      <>{typeof error === 'function' ? 'has-error' : 'no-error'}</>
-      <>{typeof info === 'function' ? 'has-info' : 'no-info'}</>
+      <Text>{typeof success === 'function' ? 'has-success' : 'no-success'}</Text>
+      <Text>{typeof error === 'function' ? 'has-error' : 'no-error'}</Text>
+      <Text>{typeof info === 'function' ? 'has-info' : 'no-info'}</Text>
     </>
   )
 }

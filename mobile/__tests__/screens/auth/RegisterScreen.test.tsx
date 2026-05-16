@@ -1,4 +1,4 @@
-﻿import React from 'react'
+import React from 'react'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react-native'
 import RegisterScreen from '../../../src/screens/auth/RegisterScreen'
 
@@ -35,7 +35,8 @@ describe('RegisterScreen', () => {
   it('renders registration form', () => {
     render(<RegisterScreen navigation={mockNavigation} />)
     expect(screen.getByPlaceholderText('max@example.com')).toBeTruthy()
-    expect(screen.getByPlaceholderText('••••••••')).toBeTruthy()
+    // Two password fields exist (password + confirm password)
+    expect(screen.getAllByPlaceholderText('••••••••')).toHaveLength(2)
   })
 
   it('renders username input as optional', () => {
@@ -50,8 +51,9 @@ describe('RegisterScreen', () => {
 
   it('disables register button when form is invalid', () => {
     render(<RegisterScreen navigation={mockNavigation} />)
-    const registerButton = screen.getByText('Konto erstellen')
-    expect(registerButton.props.disabled).toBe(true)
+    // TouchableOpacity exposes disabled via accessibilityState
+    const registerButton = screen.getByLabelText('Registrierung bestätigen')
+    expect(registerButton.props.accessibilityState?.disabled).toBe(true)
   })
 
   it('validates email format', () => {
@@ -64,7 +66,7 @@ describe('RegisterScreen', () => {
 
   it('validates password minimum length', () => {
     render(<RegisterScreen navigation={mockNavigation} />)
-    const passwordInput = screen.getByPlaceholderText('••••••••')
+    const passwordInput = screen.getAllByPlaceholderText('••••••••')[0]
 
     fireEvent.changeText(passwordInput, '123')
     expect(screen.getByText(/mindestens 6 Zeichen/i)).toBeTruthy()
@@ -82,26 +84,26 @@ describe('RegisterScreen', () => {
 
   it('shows password strength indicator when password is valid', () => {
     render(<RegisterScreen navigation={mockNavigation} />)
-    const passwordInput = screen.getByPlaceholderText('••••••••')
+    const passwordInput = screen.getAllByPlaceholderText('••••••••')[0]
 
     fireEvent.changeText(passwordInput, 'password123')
     expect(screen.getByText(/stark genug/i)).toBeTruthy()
   })
 
-  it('enables register button when all fields are valid and match', () => {
+  it('enables register button when all fields are valid and match', async () => {
     render(<RegisterScreen navigation={mockNavigation} />)
 
     const emailInput = screen.getByPlaceholderText('max@example.com')
     const inputs = screen.getAllByPlaceholderText('••••••••')
-    const passwordInput = inputs[0]
-    const confirmPasswordInput = inputs[1]
 
     fireEvent.changeText(emailInput, 'test@example.com')
-    fireEvent.changeText(passwordInput, 'password123')
-    fireEvent.changeText(confirmPasswordInput, 'password123')
+    fireEvent.changeText(inputs[0], 'password123')
+    fireEvent.changeText(inputs[1], 'password123')
 
-    const registerButton = screen.getByText('Konto erstellen')
-    expect(registerButton.props.disabled).toBe(false)
+    await waitFor(() => {
+      const registerButton = screen.getByLabelText('Registrierung bestätigen')
+      expect(registerButton.props.accessibilityState?.disabled).toBe(false)
+    })
   })
 
   it('navigates to login screen on link click', () => {
@@ -112,25 +114,26 @@ describe('RegisterScreen', () => {
     expect(mockNavigate).toHaveBeenCalledWith('Login')
   })
 
-  it('allows optional username field', () => {
+  it('allows optional username field', async () => {
     render(<RegisterScreen navigation={mockNavigation} />)
     const emailInput = screen.getByPlaceholderText('max@example.com')
     const inputs = screen.getAllByPlaceholderText('••••••••')
-    const passwordInput = inputs[0]
-    const confirmPasswordInput = inputs[1]
 
     fireEvent.changeText(emailInput, 'test@example.com')
-    fireEvent.changeText(passwordInput, 'password123')
-    fireEvent.changeText(confirmPasswordInput, 'password123')
+    fireEvent.changeText(inputs[0], 'password123')
+    fireEvent.changeText(inputs[1], 'password123')
 
-    const registerButton = screen.getByText('Konto erstellen')
     // Button should be enabled even without username
-    expect(registerButton.props.disabled).toBe(false)
+    await waitFor(() => {
+      const registerButton = screen.getByLabelText('Registrierung bestätigen')
+      expect(registerButton.props.accessibilityState?.disabled).toBe(false)
+    })
   })
 
   it('has accessibility labels', () => {
     render(<RegisterScreen navigation={mockNavigation} />)
     const emailInput = screen.getByPlaceholderText('max@example.com')
+    // FormInputGroup sets accessibilityLabel from its own `label` prop
     expect(emailInput.props.accessibilityLabel).toBe('E-Mail-Adresse')
   })
 })

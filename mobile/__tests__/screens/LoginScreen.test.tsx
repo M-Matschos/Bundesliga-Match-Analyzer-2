@@ -1,97 +1,76 @@
 import React from 'react'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react-native'
 import LoginScreen from '../../src/screens/auth/LoginScreen'
-import { useAuth } from '../../src/context/AuthContext'
-import { useToast } from '../../src/context/ToastContext'
 
-jest.mock('../../src/context/AuthContext')
-jest.mock('../../src/context/ToastContext')
+// Mock navigation (LoginScreen requires navigation prop)
+const mockNavigate = jest.fn()
+const mockNavigation = { navigate: mockNavigate } as any
 
 const mockLogin = jest.fn()
-const mockToast = { error: jest.fn(), success: jest.fn() }
+const mockToastError = jest.fn()
+const mockToastSuccess = jest.fn()
+
+// Component imports from hooks/useAuth, not context/AuthContext
+jest.mock('../../src/hooks/useAuth', () => ({
+  useAuth: () => ({ login: mockLogin }),
+}))
+jest.mock('../../src/context/ToastContext', () => ({
+  useToast: () => ({ error: mockToastError, success: mockToastSuccess }),
+}))
 
 beforeEach(() => {
-  ;(useAuth as jest.Mock).mockReturnValue({ login: mockLogin })
-  ;(useToast as jest.Mock).mockReturnValue(mockToast)
   jest.clearAllMocks()
+  mockLogin.mockResolvedValue({})
 })
 
 describe('LoginScreen', () => {
   it('renders email and password inputs', () => {
-    render(<LoginScreen />)
-    expect(screen.getByPlaceholderText('user@example.com')).toBeTruthy()
+    render(<LoginScreen navigation={mockNavigation} />)
+    expect(screen.getByPlaceholderText('max@example.com')).toBeTruthy()
     expect(screen.getByPlaceholderText('••••••••')).toBeTruthy()
   })
 
   it('renders login button', () => {
-    render(<LoginScreen />)
+    render(<LoginScreen navigation={mockNavigation} />)
     expect(screen.getByText('Anmelden')).toBeTruthy()
   })
 
   it('renders register link', () => {
-    render(<LoginScreen />)
-    expect(screen.getByText('Jetzt registrieren')).toBeTruthy()
+    render(<LoginScreen navigation={mockNavigation} />)
+    expect(screen.getByText('Registrieren')).toBeTruthy()
   })
 
-  it('shows email validation error for empty email', async () => {
-    render(<LoginScreen />)
-    const loginButton = screen.getByText('Anmelden')
-
-    fireEvent.press(loginButton)
-
-    await waitFor(() => {
-      expect(screen.getByText('E-Mail erforderlich')).toBeTruthy()
-    })
+  it('disables login button when email and password are empty', () => {
+    render(<LoginScreen navigation={mockNavigation} />)
+    const loginButton = screen.getByLabelText('Anmeldung bestätigen')
+    expect(loginButton.props.accessibilityState?.disabled).toBe(true)
   })
 
   it('shows email validation error for invalid email', async () => {
-    render(<LoginScreen />)
-    const emailInput = screen.getByPlaceholderText('user@example.com')
-
-    fireEvent.changeText(emailInput, 'invalid-email')
-    fireEvent.press(screen.getByText('Anmelden'))
-
+    render(<LoginScreen navigation={mockNavigation} />)
+    fireEvent.changeText(screen.getByPlaceholderText('max@example.com'), 'invalid-email')
     await waitFor(() => {
-      expect(screen.getByText('Ungültige E-Mail')).toBeTruthy()
-    })
-  })
-
-  it('shows password validation error for empty password', async () => {
-    render(<LoginScreen />)
-    const emailInput = screen.getByPlaceholderText('user@example.com')
-
-    fireEvent.changeText(emailInput, 'test@example.com')
-    fireEvent.press(screen.getByText('Anmelden'))
-
-    await waitFor(() => {
-      expect(screen.getByText('Passwort erforderlich')).toBeTruthy()
+      expect(screen.getByText('Bitte geben Sie eine gültige E-Mail-Adresse ein')).toBeTruthy()
     })
   })
 
   it('shows password validation error for short password', async () => {
-    render(<LoginScreen />)
-    const emailInput = screen.getByPlaceholderText('user@example.com')
-    const passwordInput = screen.getByPlaceholderText('••••••••')
-
-    fireEvent.changeText(emailInput, 'test@example.com')
-    fireEvent.changeText(passwordInput, 'short')
-    fireEvent.press(screen.getByText('Anmelden'))
-
+    render(<LoginScreen navigation={mockNavigation} />)
+    fireEvent.changeText(screen.getByPlaceholderText('max@example.com'), 'test@example.com')
+    fireEvent.changeText(screen.getByPlaceholderText('••••••••'), 'short')
     await waitFor(() => {
-      expect(screen.getByText('Passwort mindestens 8 Zeichen')).toBeTruthy()
+      expect(screen.getByText('Passwort muss mindestens 6 Zeichen lang sein')).toBeTruthy()
     })
   })
 
   it('calls login with valid credentials', async () => {
-    mockLogin.mockResolvedValueOnce({})
-    render(<LoginScreen />)
+    render(<LoginScreen navigation={mockNavigation} />)
+    fireEvent.changeText(screen.getByPlaceholderText('max@example.com'), 'test@example.com')
+    fireEvent.changeText(screen.getByPlaceholderText('••••••••'), 'password123')
 
-    const emailInput = screen.getByPlaceholderText('user@example.com')
-    const passwordInput = screen.getByPlaceholderText('••••••••')
-
-    fireEvent.changeText(emailInput, 'test@example.com')
-    fireEvent.changeText(passwordInput, 'password123')
-    fireEvent.press(screen.getByText('Anmelden'))
+    await waitFor(() => {
+      fireEvent.press(screen.getByLabelText('Anmeldung bestätigen'))
+    })
 
     await waitFor(() => {
       expect(mockLogin).toHaveBeenCalledWith('test@example.com', 'password123')
@@ -99,75 +78,71 @@ describe('LoginScreen', () => {
   })
 
   it('shows success toast on successful login', async () => {
-    mockLogin.mockResolvedValueOnce({})
-    render(<LoginScreen />)
-
-    const emailInput = screen.getByPlaceholderText('user@example.com')
-    const passwordInput = screen.getByPlaceholderText('••••••••')
-
-    fireEvent.changeText(emailInput, 'test@example.com')
-    fireEvent.changeText(passwordInput, 'password123')
-    fireEvent.press(screen.getByText('Anmelden'))
+    render(<LoginScreen navigation={mockNavigation} />)
+    fireEvent.changeText(screen.getByPlaceholderText('max@example.com'), 'test@example.com')
+    fireEvent.changeText(screen.getByPlaceholderText('••••••••'), 'password123')
 
     await waitFor(() => {
-      expect(mockToast.success).toHaveBeenCalledWith('Erfolgreich angemeldet!')
+      fireEvent.press(screen.getByLabelText('Anmeldung bestätigen'))
+    })
+
+    await waitFor(() => {
+      expect(mockToastSuccess).toHaveBeenCalledWith('Erfolgreich angemeldet!', 2000)
     })
   })
 
   it('shows error toast on login failure', async () => {
-    const error = new Error('Login failed')
-    mockLogin.mockRejectedValueOnce(error)
-    render(<LoginScreen />)
-
-    const emailInput = screen.getByPlaceholderText('user@example.com')
-    const passwordInput = screen.getByPlaceholderText('••••••••')
-
-    fireEvent.changeText(emailInput, 'test@example.com')
-    fireEvent.changeText(passwordInput, 'password123')
-    fireEvent.press(screen.getByText('Anmelden'))
+    mockLogin.mockRejectedValueOnce(new Error('Login failed'))
+    render(<LoginScreen navigation={mockNavigation} />)
+    fireEvent.changeText(screen.getByPlaceholderText('max@example.com'), 'test@example.com')
+    fireEvent.changeText(screen.getByPlaceholderText('••••••••'), 'password123')
 
     await waitFor(() => {
-      expect(mockToast.error).toHaveBeenCalled()
+      fireEvent.press(screen.getByLabelText('Anmeldung bestätigen'))
+    })
+
+    await waitFor(() => {
+      expect(mockToastError).toHaveBeenCalled()
     })
   })
 
   it('disables button while loading', async () => {
     mockLogin.mockImplementationOnce(() => new Promise(resolve => setTimeout(resolve, 1000)))
-    render(<LoginScreen />)
-
-    const emailInput = screen.getByPlaceholderText('user@example.com')
-    const passwordInput = screen.getByPlaceholderText('••••••••')
-
-    fireEvent.changeText(emailInput, 'test@example.com')
-    fireEvent.changeText(passwordInput, 'password123')
-
-    const loginButton = screen.getByText('Anmelden')
-    fireEvent.press(loginButton)
-
-    expect(loginButton.props.disabled).toBe(true)
-  })
-
-  it('clears error when user starts typing', async () => {
-    render(<LoginScreen />)
-    const loginButton = screen.getByText('Anmelden')
-
-    fireEvent.press(loginButton)
+    render(<LoginScreen navigation={mockNavigation} />)
+    fireEvent.changeText(screen.getByPlaceholderText('max@example.com'), 'test@example.com')
+    fireEvent.changeText(screen.getByPlaceholderText('••••••••'), 'password123')
 
     await waitFor(() => {
-      expect(screen.getByText('E-Mail erforderlich')).toBeTruthy()
+      fireEvent.press(screen.getByLabelText('Anmeldung bestätigen'))
     })
 
-    const emailInput = screen.getByPlaceholderText('user@example.com')
-    fireEvent.changeText(emailInput, 't')
-
     await waitFor(() => {
-      expect(screen.queryByText('E-Mail erforderlich')).toBeNull()
+      expect(screen.getByLabelText('Anmeldung bestätigen').props.accessibilityState?.disabled).toBe(true)
     })
   })
 
-  it('handles terms of service links', () => {
-    render(<LoginScreen />)
-    expect(screen.getByText('Nutzungsbedingungen')).toBeTruthy()
-    expect(screen.getByText('Datenschutzrichtlinie')).toBeTruthy()
+  it('clears email error when user fixes the input', async () => {
+    render(<LoginScreen navigation={mockNavigation} />)
+    fireEvent.changeText(screen.getByPlaceholderText('max@example.com'), 'invalid-email')
+
+    await waitFor(() => {
+      expect(screen.getByText('Bitte geben Sie eine gültige E-Mail-Adresse ein')).toBeTruthy()
+    })
+
+    fireEvent.changeText(screen.getByPlaceholderText('max@example.com'), 'valid@example.com')
+
+    await waitFor(() => {
+      expect(screen.queryByText('Bitte geben Sie eine gültige E-Mail-Adresse ein')).toBeNull()
+    })
+  })
+
+  it('shows forgot password link', () => {
+    render(<LoginScreen navigation={mockNavigation} />)
+    expect(screen.getByText('Passwort vergessen?')).toBeTruthy()
+  })
+
+  it('shows register section text', () => {
+    render(<LoginScreen navigation={mockNavigation} />)
+    expect(screen.getByText('Noch kein Konto?')).toBeTruthy()
   })
 })

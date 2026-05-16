@@ -3,6 +3,7 @@
  */
 
 import React from 'react'
+import { Text } from 'react-native'
 import { render, screen, waitFor } from '@testing-library/react-native'
 import { AuthProvider, useAuth } from '../../src/context/AuthContext'
 import AsyncStorage from '@react-native-async-storage/async-storage'
@@ -10,12 +11,12 @@ import AsyncStorage from '@react-native-async-storage/async-storage'
 jest.mock('@react-native-async-storage/async-storage')
 
 function TestComponent() {
-  const { isAuthenticated, user, isLoading } = useAuth()
+  const { isLoggedIn, user, loading } = useAuth()
   return (
     <>
-      <>{isLoading ? 'loading' : 'ready'}</>
-      <>{isAuthenticated ? 'authenticated' : 'unauthenticated'}</>
-      <>{user?.email || 'no-email'}</>
+      <Text>{loading ? 'loading' : 'ready'}</Text>
+      <Text>{isLoggedIn ? 'authenticated' : 'unauthenticated'}</Text>
+      <Text>{user?.email || 'no-email'}</Text>
     </>
   )
 }
@@ -26,13 +27,15 @@ describe('AuthContext Provider', () => {
     ;(AsyncStorage.getItem as jest.Mock).mockResolvedValue(null)
   })
 
-  it('should provide auth context to children', () => {
+  it('should provide auth context to children', async () => {
     render(
       <AuthProvider>
         <TestComponent />
       </AuthProvider>
     )
-    expect(screen.getByText('ready')).toBeTruthy()
+    await waitFor(() => {
+      expect(screen.getByText('ready')).toBeTruthy()
+    })
   })
 
   it('should indicate loading state during auth check', async () => {
@@ -61,12 +64,14 @@ describe('AuthContext Provider', () => {
     })
   })
 
-  it('should handle unauthenticated state', () => {
+  it('should handle unauthenticated state', async () => {
     render(
       <AuthProvider>
         <TestComponent />
       </AuthProvider>
     )
-    expect(screen.getByText('unauthenticated')).toBeTruthy()
+    await waitFor(() => {
+      expect(screen.getByText('unauthenticated')).toBeTruthy()
+    })
   })
 })
