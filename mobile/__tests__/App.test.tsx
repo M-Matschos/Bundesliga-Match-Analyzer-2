@@ -1,5 +1,6 @@
 ﻿import React from 'react'
-import { render, screen, waitFor } from '@testing-library/react-native'
+import { Text } from 'react-native'
+import { render, screen } from '@testing-library/react-native'
 import App from '../App'
 
 // Mock the context providers and RootNavigator
@@ -21,9 +22,12 @@ jest.mock('../src/context/ToastContext', () => ({
   }),
 }))
 
+// Must return a native Text node — RTNL getByText only finds native Text elements
 jest.mock('../src/_layout', () => {
+  const React = require('react')
+  const { Text } = require('react-native')
   return function MockRootNavigator() {
-    return <>Root Navigator</>
+    return <Text>Root Navigator</Text>
   }
 })
 

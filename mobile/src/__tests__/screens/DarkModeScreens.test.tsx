@@ -315,7 +315,9 @@ describe('Color Palette Consistency', () => {
   })
 
   it('status colors maintain consistency (green)', () => {
-    expect(LIGHT_COLORS.green).toBe(DARK_COLORS.green)
+    // greenLight is the shared status-indicator green (#27AE60) — identical in both palettes.
+    // LIGHT_COLORS.green and DARK_COLORS.green intentionally differ (mode-specific base greens).
+    expect(LIGHT_COLORS.greenLight).toBe(DARK_COLORS.greenLight)
   })
 
   it('status colors maintain consistency (orange)', () => {

@@ -3,15 +3,16 @@
  */
 
 import React from 'react'
+import { Text } from 'react-native'
 import { render, waitFor } from '@testing-library/react-native'
-import { NotificationProvider, useNotificationContext } from '../../src/context/NotificationContext'
+import { NotificationProvider, useNotification } from '../../src/context/NotificationContext'
 
 function TestComponent() {
-  const { notifications, unreadCount } = useNotificationContext()
+  const { notifications, unreadCount } = useNotification()
   return (
     <>
-      <>{Array.isArray(notifications) ? 'has-notifications' : 'no-notifications'}</>
-      <>{typeof unreadCount === 'number' ? 'has-count' : 'no-count'}</>
+      <Text>{Array.isArray(notifications) ? 'has-notifications' : 'no-notifications'}</Text>
+      <Text>{typeof unreadCount === 'number' ? 'has-count' : 'no-count'}</Text>
     </>
   )
 }
