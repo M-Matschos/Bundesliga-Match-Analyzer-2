@@ -3,7 +3,7 @@
  * Tests memory tracking, trend analysis, and leak detection
  */
 
-import { renderHook, waitFor } from '@testing-library/react-native';
+import { act, renderHook, waitFor } from '@testing-library/react-native';
 import { useMemoryMonitor } from '../../src/hooks/useMemoryMonitor';
 import * as PerformanceProfiler from '../../src/services/PerformanceProfiler';
 
@@ -349,15 +349,21 @@ describe('useMemoryMonitor', () => {
 
       // Let some measurements accumulate
       for (let i = 0; i < 5; i++) {
-        jest.advanceTimersByTime(5000);
+        act(() => { jest.advanceTimersByTime(5000); });
       }
 
       await waitFor(() => {
         expect(result.current.metrics.measurements.length).toBeGreaterThan(0);
       });
 
-      // Reset metrics
-      result.current.resetMetrics();
+      // Reset metrics — wrap in act to flush all pending state updates and
+      // microtask continuations from in-flight pollMemory promises before asserting
+      await act(async () => {
+        result.current.resetMetrics();
+        // Flush microtask queue so any already-resolved pollMemory promises
+        // complete before resetMetrics overwrites metricsRef
+        await Promise.resolve();
+      });
 
       expect(result.current.metrics.measurements.length).toBe(0);
       expect(result.current.metrics.average).toBe(0);
@@ -370,7 +376,13 @@ describe('useMemoryMonitor', () => {
         expect(result.current.memoryUsage).toBeGreaterThan(0);
       });
 
-      result.current.resetMetrics();
+      // Flush all in-flight async state updates before calling reset,
+      // then reset inside act so React re-renders synchronously
+      await act(async () => {
+        await Promise.resolve();
+        result.current.resetMetrics();
+        await Promise.resolve();
+      });
 
       expect(result.current.memoryUsage).toBe(0);
       expect(result.current.isWarning).toBe(false);

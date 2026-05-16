@@ -317,40 +317,75 @@ describe('useMatchPrediction Hook', () => {
 
     /**
      * Test 12: Hook uses stale cache on error if available
+     *
+     * refresh() clears the cache entry before re-fetching, so the stale-cache
+     * fallback path is only reachable when fetchPrediction runs while the
+     * cache entry still exists but is TTL-expired.
+     *
+     * Strategy: (1) fetch succeeds → cache populated, (2) spy on Date.now to
+     * return a future timestamp so isCacheValid returns false, (3) rerender
+     * with a new matchId to trigger a fresh fetch for that matchId, then rerender
+     * back to the original matchId — the hook calls fetchPrediction, sees the
+     * stale entry (TTL expired → bypasses cache), calls API which fails, and
+     * the catch block finds the still-present cache entry → "cached data" error.
+     *
+     * We avoid an intermediate matchId switch by simply calling refresh() after
+     * the Date.now spy is in place. refresh() calls delete() then fetchPrediction.
+     * After delete(), the cache is empty — so no fallback. Therefore we must
+     * trigger fetchPrediction WITHOUT going through refresh(). We do this by
+     * changing matchId (which re-runs the useEffect → fetchPrediction) twice:
+     * first to a new id (populates a new cache entry with a controlled mock),
+     * then back to the original (stale cache exists, API fails, fallback fires).
      */
     it('should use stale cache as fallback on error', async () => {
-      // First successful call
+      const matchId = 'test_match_fallback_001'
+      const realDateNow = Date.now.bind(global.Date)
+
+      // First call: success — populates cache for matchId
       ;(matchAnalyticsService.predictMatch as jest.Mock).mockResolvedValueOnce(
         mockPredictionResult
       )
 
       const { result, rerender } = renderHook(
-        ({ matchId }: { matchId: string }) =>
-          useMatchPrediction(matchId, mockMatchData),
-        {
-          initialProps: { matchId: 'test_match_fallback_001' },
-        }
+        ({ id }: { id: string }) => useMatchPrediction(id, mockMatchData),
+        { initialProps: { id: matchId } }
       )
 
       await waitFor(() => {
         expect(result.current.prediction).toEqual(mockPredictionResult)
       })
 
-      // Now mock error for next call
+      // Spy on Date.now to simulate TTL expiry for subsequent calls
+      const futureTime = realDateNow() + 31 * 60 * 1000
+      jest.spyOn(global.Date, 'now').mockReturnValue(futureTime)
+
+      // Switch to a different matchId so the hook fetches fresh data for it
+      // (this keeps the original matchId's cache entry intact)
+      ;(matchAnalyticsService.predictMatch as jest.Mock).mockResolvedValueOnce(
+        mockPredictionResult
+      )
+      rerender({ id: 'tmp_switch_match' })
+
+      await waitFor(() => {
+        expect(result.current.loading).toBe(false)
+      })
+
+      // Now switch back to original matchId.
+      // isCacheValid returns false (Date.now mocked to future).
+      // API call will fail → catch finds stale cache → "cached data" error.
       ;(matchAnalyticsService.predictMatch as jest.Mock).mockRejectedValueOnce(
         new Error('Network error')
       )
-
-      // Refresh should fail but use cached data
-      act(() => {
-        result.current.refresh()
-      })
+      rerender({ id: matchId })
 
       await waitFor(() => {
-        // Stale cache should still be used
-        expect(result.current.prediction).toBeDefined()
+        expect(result.current.loading).toBe(false)
         expect(result.current.error).toContain('cached data')
       })
+
+      expect(result.current.prediction).toBeDefined()
+
+      jest.spyOn(global.Date, 'now').mockRestore()
     })
 
     /**

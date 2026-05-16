@@ -69,24 +69,25 @@ describe('React Core Features', () => {
 })
 
 describe('React Testing Library', () => {
+  // Import at describe scope so module lifecycle hooks (beforeAll/afterAll/afterEach)
+  // registered by @testing-library/react-native are set up during the collection
+  // phase, not inside a running test body (which Jest forbids).
+  const rtl = require('@testing-library/react-native')
+
   it('should have render available', () => {
-    const { render } = require('@testing-library/react-native')
-    expect(typeof render).toBe('function')
+    expect(typeof rtl.render).toBe('function')
   })
 
   it('should have screen available', () => {
-    const { screen } = require('@testing-library/react-native')
-    expect(screen).toBeDefined()
+    expect(rtl.screen).toBeDefined()
   })
 
   it('should have fireEvent available', () => {
-    const { fireEvent } = require('@testing-library/react-native')
-    expect(fireEvent).toBeDefined()
+    expect(rtl.fireEvent).toBeDefined()
   })
 
   it('should have waitFor available', () => {
-    const { waitFor } = require('@testing-library/react-native')
-    expect(typeof waitFor).toBe('function')
+    expect(typeof rtl.waitFor).toBe('function')
   })
 })
 
