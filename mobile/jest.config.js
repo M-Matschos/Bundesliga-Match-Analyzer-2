@@ -4,6 +4,8 @@ module.exports = {
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/src/$1',
     '^@tests/(.*)$': '<rootDir>/__tests__/$1',
+    '(.+[\\/]context[\\/]ThemeContext)$': '<rootDir>/src/__mocks__/ThemeContext.ts',
+    '(.+[\\/]hooks[\\/]useTheme)$': '<rootDir>/src/__mocks__/useTheme.ts',
   },
   transform: {
     '^.+\\.(ts|tsx|js|jsx)$': 'babel-jest',

@@ -191,20 +191,52 @@ jest.mock('react-native', () => ({
     View: 'AnimatedView',
     ScrollView: 'AnimatedScrollView',
     timing: jest.fn((value, config) => ({
-      start: jest.fn(),
+      start: jest.fn((cb) => cb && cb({ finished: true })),
+    })),
+    spring: jest.fn((value, config) => ({
+      start: jest.fn((cb) => cb && cb({ finished: true })),
+    })),
+    loop: jest.fn((animation) => ({
+      start: jest.fn((cb) => cb && cb({ finished: true })),
+      stop: jest.fn(),
+    })),
+    sequence: jest.fn((animations) => ({
+      start: jest.fn((cb) => cb && cb({ finished: true })),
+      stop: jest.fn(),
+    })),
+    parallel: jest.fn((animations) => ({
+      start: jest.fn((cb) => cb && cb({ finished: true })),
+      stop: jest.fn(),
     })),
     Value: jest.fn(() => ({
       setValue: jest.fn(),
       addListener: jest.fn(),
       removeListener: jest.fn(),
+      removeAllListeners: jest.fn(),
+      interpolate: jest.fn(() => ({
+        interpolate: jest.fn(),
+      })),
     })),
     createValue: jest.fn(() => ({
       setValue: jest.fn(),
       addListener: jest.fn(),
+      removeAllListeners: jest.fn(),
+      interpolate: jest.fn(() => ({
+        interpolate: jest.fn(),
+      })),
     })),
   },
   StyleSheet: {
     create: (obj) => obj,
+    flatten: (style) => {
+      if (!style) return {}
+      if (Array.isArray(style)) {
+        return style.reduce((acc, s) => Object.assign(acc, s || {}), {})
+      }
+      return style
+    },
+    hairlineWidth: 0.5,
+    absoluteFill: { position: 'absolute', left: 0, right: 0, top: 0, bottom: 0 },
   },
   LayoutAnimation: {
     configureNext: jest.fn(),
@@ -301,18 +333,6 @@ jest.mock('@react-native-toast-community/toast', () => ({
     show: jest.fn(),
     hideAll: jest.fn(),
   })),
-}), { virtual: true })
-
-// ============================================================================
-// TESTING LIBRARY SETUP
-// ============================================================================
-
-jest.mock('react-test-renderer', () => ({
-  create: jest.fn(() => ({
-    root: { instance: null },
-    unmount: jest.fn(),
-  })),
-  act: jest.fn((callback) => callback()),
 }), { virtual: true })
 
 // ============================================================================
