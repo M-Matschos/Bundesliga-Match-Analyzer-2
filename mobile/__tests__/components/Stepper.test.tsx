@@ -1,4 +1,5 @@
 import React from 'react'
+import { Text } from 'react-native'
 import { render, screen, fireEvent } from '@testing-library/react-native'
 import Stepper from '../../src/components/Stepper'
 

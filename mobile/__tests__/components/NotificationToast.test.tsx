@@ -6,16 +6,12 @@
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react-native';
 import { useColorScheme } from 'react-native';
-import NotificationToast from '../../src/components/NotificationToast';
-import { PushNotification } from '../../src/hooks/useNotifications';
+import NotificationToast, { ToastNotification } from '../../src/components/NotificationToast';
 
-const mockNotification: PushNotification = {
+const mockNotification: ToastNotification = {
   id: '1',
   title: 'GOAL Notification',
   body: 'Player scored a goal',
-  data: { match_id: '123' },
-  timestamp: new Date().toISOString(),
-  read: false,
 };
 
 describe('NotificationToast Dark Mode Support', () => {
@@ -28,7 +24,7 @@ describe('NotificationToast Dark Mode Support', () => {
     (useColorScheme as jest.Mock).mockReturnValue('light');
 
     const { getByText } = render(
-      <NotificationToast notification={mockNotification} />
+      <NotificationToast notification={mockNotification} onDismiss={jest.fn()} />
     );
 
     await waitFor(() => {
@@ -42,7 +38,7 @@ describe('NotificationToast Dark Mode Support', () => {
     (useColorScheme as jest.Mock).mockReturnValue('dark');
 
     const { getByText } = render(
-      <NotificationToast notification={mockNotification} />
+      <NotificationToast notification={mockNotification} onDismiss={jest.fn()} />
     );
 
     await waitFor(() => {
@@ -55,17 +51,14 @@ describe('NotificationToast Dark Mode Support', () => {
   test('displays success color in light mode for GOAL events', async () => {
     (useColorScheme as jest.Mock).mockReturnValue('light');
 
-    const goalNotification: PushNotification = {
+    const goalNotification: ToastNotification = {
       id: '1',
       title: 'GOAL',
       body: 'Goal scored',
-      data: {},
-      timestamp: new Date().toISOString(),
-      read: false,
     };
 
     const { getByText } = render(
-      <NotificationToast notification={goalNotification} />
+      <NotificationToast notification={goalNotification} onDismiss={jest.fn()} />
     );
 
     await waitFor(() => {
@@ -77,17 +70,14 @@ describe('NotificationToast Dark Mode Support', () => {
   test('displays darker success color in dark mode for GOAL events', async () => {
     (useColorScheme as jest.Mock).mockReturnValue('dark');
 
-    const goalNotification: PushNotification = {
+    const goalNotification: ToastNotification = {
       id: '1',
       title: 'GOAL',
       body: 'Goal scored',
-      data: {},
-      timestamp: new Date().toISOString(),
-      read: false,
     };
 
     const { getByText } = render(
-      <NotificationToast notification={goalNotification} />
+      <NotificationToast notification={goalNotification} onDismiss={jest.fn()} />
     );
 
     await waitFor(() => {
@@ -98,12 +88,12 @@ describe('NotificationToast Dark Mode Support', () => {
   // Test 5: Theme Switch Behavior
   test('switches theme when colorScheme changes from light to dark', async () => {
     const { rerender } = render(
-      <NotificationToast notification={mockNotification} />
+      <NotificationToast notification={mockNotification} onDismiss={jest.fn()} />
     );
 
     (useColorScheme as jest.Mock).mockReturnValue('dark');
 
-    rerender(<NotificationToast notification={mockNotification} />);
+    rerender(<NotificationToast notification={mockNotification} onDismiss={jest.fn()} />);
 
     await waitFor(() => {
       expect(useColorScheme).toHaveBeenCalled();

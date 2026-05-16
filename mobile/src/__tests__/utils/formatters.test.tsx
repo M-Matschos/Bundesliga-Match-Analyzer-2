@@ -169,7 +169,7 @@ describe('Formatters Utility Functions', () => {
 
   it('should handle zero and negative numbers', () => {
     const formatNumber = (num: number) => {
-      return num.toLocaleString()
+      return num.toLocaleString('en-US')
     }
 
     expect(formatNumber(0)).toBe('0')

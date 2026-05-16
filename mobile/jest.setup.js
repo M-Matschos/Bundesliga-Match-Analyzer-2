@@ -326,6 +326,7 @@ jest.mock('react-native-screens', () => ({
   enableScreens: jest.fn(),
   Screen: 'Screen',
   ScreenStack: 'ScreenStack',
+  useReducedMotionEnabled: jest.fn(() => false),
 }), { virtual: true })
 
 jest.mock('@react-native-toast-community/toast', () => ({

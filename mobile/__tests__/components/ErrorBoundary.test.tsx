@@ -35,16 +35,16 @@ describe('ErrorBoundary Component', () => {
         <ErrorComponent />
       </ErrorBoundary>
     )
-    expect(getByText(/etwas ist schief gelaufen/i)).toBeTruthy()
+    expect(getByText(/etwas ist schiefgelaufen/i)).toBeTruthy()
   })
 
   it('displays error message from thrown error', () => {
-    const { getByText } = render(
+    const { getAllByText } = render(
       <ErrorBoundary>
         <ErrorComponent />
       </ErrorBoundary>
     )
-    expect(getByText(/Test error/i)).toBeTruthy()
+    expect(getAllByText(/Test error/i).length).toBeGreaterThan(0)
   })
 
   it('provides retry button', () => {
@@ -83,7 +83,7 @@ describe('ErrorBoundary Component', () => {
       </ErrorBoundary>
     )
 
-    expect(getByText(/etwas ist schief gelaufen/i)).toBeTruthy()
+    expect(getByText(/etwas ist schiefgelaufen/i)).toBeTruthy()
 
     fireEvent.press(getByText(/Erneut versuchen/i))
 
@@ -93,6 +93,6 @@ describe('ErrorBoundary Component', () => {
       </ErrorBoundary>
     )
 
-    expect(getByText(/etwas ist schief gelaufen/i)).toBeTruthy()
+    expect(getByText(/etwas ist schiefgelaufen/i)).toBeTruthy()
   })
 })

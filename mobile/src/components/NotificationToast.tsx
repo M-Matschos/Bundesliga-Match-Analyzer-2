@@ -78,15 +78,16 @@ export default function NotificationToast({
   }
 
   const getBackgroundColor = () => {
+    const themeColors = getColors('dark')
     switch (notification.type) {
       case 'success':
-        return colors.success
+        return themeColors.green
       case 'error':
-        return colors.error
+        return themeColors.red
       case 'warning':
-        return colors.warning
+        return themeColors.yellow
       default:
-        return colors.blue
+        return themeColors.blue
     }
   }
 

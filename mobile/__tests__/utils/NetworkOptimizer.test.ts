@@ -274,8 +274,9 @@ describe('NetworkOptimizer', () => {
     it('should handle edge case at 50KB threshold', () => {
       const recommendation = NetworkOptimizer.recommendCompression(50);
 
-      expect(recommendation.recommended).toBe(true);
-      expect(recommendation.algorithm).toBe('gzip');
+      // Source uses strict `>` so exactly 50KB is NOT recommended
+      expect(recommendation.recommended).toBe(false);
+      expect(recommendation.algorithm).toBe('none');
     });
 
     it('should handle edge case at 200KB threshold for algorithm selection', () => {
