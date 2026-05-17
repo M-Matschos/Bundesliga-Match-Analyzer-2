@@ -1,5 +1,23 @@
 # Changelog
 
+## [1.0.1] — 2026-05-17
+
+### Fixed
+- Admin-auth endpoint returned 401 on cold start: migrated `TestClient` → `httpx.AsyncClient`
+  with `ASGITransport` for proper async middleware execution (commit f612e1e)
+- Token refresh endpoint returned same token within same second: implemented token rotation
+  on `/auth/refresh` (commit 51e05fe)
+
+### Changed
+- Mobile test suite runtime: 56s → 7.5s via jest config optimization (commit a7a8eb1)
+- Backend test count: 498/500 passing (0 xfailed, 2 skipped)
+- Mobile test count: 853/882 passing (96.6%)
+
+### Infrastructure
+- Removed hardcoded credentials from docker-compose.yml (commit a71b7fa)
+
+---
+
 All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
