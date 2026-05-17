@@ -58,19 +58,29 @@ describe('ErrorBoundary Component', () => {
   })
 
   it('resets error state on retry', () => {
+    // Use a controllable flag to switch children
+    let shouldThrow = true
+    const MaybeError = () => {
+      if (shouldThrow) throw new Error('Test error')
+      return <SafeComponent />
+    }
+
     const { getByText, rerender } = render(
       <ErrorBoundary>
-        <ErrorComponent />
+        <MaybeError />
       </ErrorBoundary>
     )
 
     const retryButton = getByText(/Erneut versuchen/i)
+
+    // Switch to safe mode before pressing retry so the next render succeeds
+    shouldThrow = false
     fireEvent.press(retryButton)
 
-    // After retry, should show safe component
+    // After retry the boundary clears hasError and re-renders children (SafeComponent)
     rerender(
       <ErrorBoundary>
-        <SafeComponent />
+        <MaybeError />
       </ErrorBoundary>
     )
     expect(screen.getByText('Safe content')).toBeTruthy()

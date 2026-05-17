@@ -55,8 +55,11 @@ export default function Stepper({
         const isLast = index === steps.length - 1
 
         return (
-          <View
+          <TouchableOpacity
             key={step.id}
+            onPress={() => handleStepPress(index)}
+            disabled={!clickable || step.disabled}
+            activeOpacity={clickable && !step.disabled ? 0.7 : 1}
             style={[
               styles.stepContainer,
               orientation === 'horizontal' && styles.stepContainerHorizontal,
@@ -64,24 +67,14 @@ export default function Stepper({
             ]}
           >
             {/* Step Indicator Circle */}
-            <TouchableOpacity
-              onPress={() => handleStepPress(index)}
-              disabled={!clickable || step.disabled}
+            <View
               style={[
-                styles.stepButton,
-                clickable && !step.disabled && styles.stepButtonClickable,
+                styles.stepIndicator,
+                getIndicatorStyle(status, step.disabled),
               ]}
-              activeOpacity={0.7}
             >
-              <View
-                style={[
-                  styles.stepIndicator,
-                  getIndicatorStyle(status, step.disabled),
-                ]}
-              >
-                {getStepIcon(status, index + 1)}
-              </View>
-            </TouchableOpacity>
+              {getStepIcon(status, index + 1)}
+            </View>
 
             {/* Step Label + Description */}
             <View
@@ -129,7 +122,7 @@ export default function Stepper({
                 ]}
               />
             )}
-          </View>
+          </TouchableOpacity>
         )
       })}
 

@@ -194,5 +194,5 @@ describe('Stepper Component', () => {
 
 // Mock component for step content
 function MockContent({ text }: { text: string }) {
-  return <>{text}</>
+  return <Text>{text}</Text>
 }

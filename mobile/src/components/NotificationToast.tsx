@@ -12,6 +12,7 @@ import {
   Text,
   StyleSheet,
   Dimensions,
+  useColorScheme,
 } from 'react-native'
 import { getColors } from '../theme/colors'
 import { SPACING } from '../theme/spacing'
@@ -42,6 +43,7 @@ export default function NotificationToast({
   onPress,
   duration = 4000,
 }: NotificationToastProps) {
+  const colorScheme = useColorScheme()
   const [slideAnim] = useState(new Animated.Value(-TOAST_HEIGHT))
 
   useEffect(() => {
@@ -78,7 +80,7 @@ export default function NotificationToast({
   }
 
   const getBackgroundColor = () => {
-    const themeColors = getColors('dark')
+    const themeColors = getColors(colorScheme === 'dark' ? 'dark' : 'light')
     switch (notification.type) {
       case 'success':
         return themeColors.green

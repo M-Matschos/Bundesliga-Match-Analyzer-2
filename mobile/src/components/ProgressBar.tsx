@@ -25,7 +25,7 @@ export default function ProgressBar({
   const percentage = progress !== undefined
     ? Math.min(100, Math.max(0, progress))
     : total && total > 0
-    ? (current || 0 / total) * 100
+    ? ((current ?? 0) / total) * 100
     : 0
 
   const progressWidth = `${Math.min(percentage, 100)}%`

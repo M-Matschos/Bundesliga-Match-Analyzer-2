@@ -63,6 +63,7 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     borderColor: colors.border,
     borderWidth: 1,
+    minHeight: 160,
   },
   skeletonBlock: {
     backgroundColor: colors.surfaceHigh,
